@@ -234,4 +234,139 @@ describe('Stellar Estate Core Backend — Level 1 & Level 2 Test Suite', () => {
     expect(res.body.data.versionA.version_number).toBe(1);
     expect(res.body.data.versionB.version_number).toBe(2);
   });
+
+  // ============================================================================
+  // LEVEL 3 PROGRAMMABLE SETTLEMENT & RECONCILIATION TESTS
+  // ============================================================================
+
+  it('GET /api/properties/:id/revenue-pool should return accurate accounting state', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/revenue-pool');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const pool = res.body.data;
+    expect(pool.property_id).toBe('prop-meridian-abuja');
+    expect(pool.total_confirmed_revenue).toBe(10000.0);
+    expect(pool.available_for_settlement).toBe(10000.0);
+    expect(pool.revenue_entries_count).toBeGreaterThanOrEqual(1);
+  });
+
+  it('POST /api/settlements/preview should generate deterministic $10,000 waterfall matching Level 2 rules', async () => {
+    const res = await request(app)
+      .post('/api/settlements/preview')
+      .send({
+        propertyId: 'prop-meridian-abuja',
+        revenueIds: ['rev-meridian-001'],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const preview = res.body.data;
+    expect(preview.gross_revenue).toBe(10000.0);
+    // Since v2 was locked in the preceding test, settlement dynamically resolves v2 rules:
+    // OpEx = 1200, Reserve = 800, Fee (4%) = 400 => Distributable = 7600
+    expect(preview.expenses).toBe(1200.0);
+    expect(preview.reserve).toBe(800.0);
+    expect(preview.fees).toBe(400.0);
+    expect(preview.distributable_amount).toBe(7600.0);
+    expect(preview.accounting_balanced).toBe(true);
+
+    // In v2: Alice 45% (3,420), Bob 30% (2,280), Charlie 25% (1,900)
+    const alice = preview.stakeholder_allocations.find((s: any) => s.name.includes('Alice'));
+    const bob = preview.stakeholder_allocations.find((s: any) => s.name.includes('Bob'));
+    const charlie = preview.stakeholder_allocations.find((s: any) => s.name.includes('Charlie'));
+
+    expect(alice.allocated_amount).toBe(3420.0);
+    expect(bob.allocated_amount).toBe(2280.0);
+    expect(charlie.allocated_amount).toBe(1900.0);
+    expect(alice.allocated_amount + bob.allocated_amount + charlie.allocated_amount).toBe(7600.0);
+  });
+
+  it('POST /api/settlements/execute should execute settlement, pay recipients, and reconcile', async () => {
+    const res = await request(app)
+      .post('/api/settlements/execute')
+      .send({
+        propertyId: 'prop-meridian-abuja',
+        revenueIds: ['rev-meridian-001'],
+        executorAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const settlement = res.body.data;
+    expect(settlement.id).toContain('STL-MERIDIAN');
+    expect(settlement.status).toBe('RECONCILED');
+    expect(settlement.reconciliation_status).toBe('MATCHED');
+    expect(settlement.payouts.length).toBe(3);
+    expect(settlement.transaction_hashes.length).toBe(3);
+
+    // Check pool after settlement: available should now be 0
+    const poolRes = await request(app).get('/api/properties/prop-meridian-abuja/revenue-pool');
+    expect(poolRes.body.data.available_for_settlement).toBe(0.0);
+    expect(poolRes.body.data.total_settled_revenue).toBe(10000.0);
+    expect(poolRes.body.data.total_reserves_held).toBe(800.0);
+  });
+
+  it('POST /api/settlements/execute should reject double-spending of already consumed revenue', async () => {
+    const replayRes = await request(app)
+      .post('/api/settlements/execute')
+      .send({
+        propertyId: 'prop-meridian-abuja',
+        revenueIds: ['rev-meridian-001'], // already consumed in previous test!
+        executorAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      });
+
+    expect(replayRes.status).toBe(422);
+    expect(replayRes.body.error).toContain('already been consumed');
+  });
+
+  it('GET /api/settlements/:id/trace should return complete "Where Did My Rent Go?" audit trail', async () => {
+    const settlementsRes = await request(app).get('/api/properties/prop-meridian-abuja/settlements');
+    expect(settlementsRes.status).toBe(200);
+    expect(settlementsRes.body.data.length).toBeGreaterThan(0);
+
+    const settlementId = settlementsRes.body.data[0].id;
+    const traceRes = await request(app).get(`/api/settlements/${settlementId}/trace`);
+    expect(traceRes.status).toBe(200);
+    expect(traceRes.body.success).toBe(true);
+
+    const trace = traceRes.body.data;
+    expect(trace.settlement_id).toBe(settlementId);
+    expect(trace.property.name).toBe('The Meridian');
+    expect(trace.agreement.id).toBe('agr-meridian-001');
+    expect(trace.agreement.version).toBe(2);
+    expect(trace.waterfall_flow.gross_revenue).toBe(10000.0);
+    expect(trace.recipient_allocations.length).toBe(3);
+    expect(trace.recipient_allocations[0]).toHaveProperty('explorer_url');
+  });
+
+  it('GET /api/properties/:id/passport should return complete Property Financial Passport', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/passport');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const passport = res.body.data;
+    expect(passport.property_name).toBe('The Meridian');
+    expect(passport.total_lifetime_revenue).toBe(10000.0);
+    expect(passport.total_reserves).toBe(800.0);
+    expect(passport.total_distributed).toBe(7600.0);
+    expect(passport.reconciliation_status).toBe('CURRENT');
+    expect(passport.recent_settlements.length).toBeGreaterThan(0);
+  });
+
+  it('GET /api/stakeholders/:address/earnings should return real settled amounts for Alice', async () => {
+    const aliceAddress = 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD';
+    const res = await request(app).get(`/api/stakeholders/${aliceAddress}/earnings`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+
+    const earnings = res.body.data;
+    expect(earnings.wallet_address).toBe(aliceAddress);
+    expect(earnings.stakeholder_name).toContain('Alice');
+    expect(earnings.total_settled).toBe(3420.0);
+    expect(earnings.settlements.length).toBe(1);
+  });
 });
+

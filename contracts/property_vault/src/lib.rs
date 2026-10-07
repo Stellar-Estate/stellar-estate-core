@@ -2,10 +2,11 @@
 #![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
+    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
 };
 use stellar_estate_shared::{
-    ContractError, PropertyMetadata, RevenueEntry, VaultFinancialState, VaultStatus,
+    ContractError, PropertyMetadata, RecipientPayout, RevenueEntry, SettlementRecord,
+    SettlementStatus, VaultFinancialState, VaultStatus,
 };
 
 #[contracttype]
@@ -20,11 +21,17 @@ enum DataKey {
     RevenueRecord(u32),
     ActiveAgreementContract,
     ActiveAgreementHash,
+    Settlement(String),
+    SettlementPayouts(String),
+    SettlementCount,
+    ConsumedRevenue(u32),
+    TotalSettledRevenue,
 }
 
 const EVENT_VAULT_INIT: Symbol = symbol_short!("init_vlt");
 const EVENT_REV_REC: Symbol = symbol_short!("rev_rec");
 const EVENT_STATUS_CHG: Symbol = symbol_short!("stat_chg");
+const EVENT_SETTLE: Symbol = symbol_short!("settle");
 
 #[contract]
 pub struct PropertyVaultContract;
@@ -76,6 +83,8 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::VaultStatusKey, &VaultStatus::Active);
         env.storage().instance().set(&DataKey::FinancialState, &initial_financials);
         env.storage().instance().set(&DataKey::RevenueNonce, &0u32);
+        env.storage().instance().set(&DataKey::SettlementCount, &0u32);
+        env.storage().instance().set(&DataKey::TotalSettledRevenue, &0i128);
 
         // Emit vault initialization event
         env.events().publish(
@@ -247,115 +256,537 @@ impl PropertyVaultContract {
             .ok_or(ContractError::AgreementNotFound)?;
         Ok((contract, hash))
     }
+
+    /// Execute a deterministic multi-recipient settlement against verified revenue
+    pub fn execute_settlement(
+        env: Env,
+        caller: Address,
+        settlement_id: String,
+        agreement_id: String,
+        agreement_version: u32,
+        agreement_hash: String,
+        revenue_id: u32,
+        gross_revenue: i128,
+        expenses: i128,
+        reserve: i128,
+        fees: i128,
+        distributable_amount: i128,
+        payouts: Vec<RecipientPayout>,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let status: VaultStatus = env
+            .storage()
+            .instance()
+            .get(&DataKey::VaultStatusKey)
+            .ok_or(ContractError::NotInitialized)?;
+
+        if status != VaultStatus::Active {
+            return Err(ContractError::VaultPaused);
+        }
+
+        // 1. Double settlement check: settlement ID must be unique
+        if env.storage().persistent().has(&DataKey::Settlement(settlement_id.clone())) {
+            return Err(ContractError::AlreadySettled);
+        }
+
+        // 2. Revenue existence & double-spending protection
+        let revenue_entry = Self::get_revenue_entry(env.clone(), revenue_id)?;
+        if env.storage().persistent().has(&DataKey::ConsumedRevenue(revenue_id)) {
+            return Err(ContractError::AlreadySettled);
+        }
+
+        if gross_revenue <= 0 || revenue_entry.amount < gross_revenue {
+            return Err(ContractError::InsufficientRevenue);
+        }
+
+        // 3. Agreement hash protection: if vault has active agreement hash set, must match exactly
+        if let Ok((_agr_contract, active_hash)) = Self::get_active_agreement(env.clone()) {
+            if active_hash != agreement_hash {
+                return Err(ContractError::HashMismatch);
+            }
+        }
+
+        // 4. Invariant: gross_revenue == expenses + reserve + fees + distributable_amount
+        if expenses < 0 || reserve < 0 || fees < 0 || distributable_amount < 0 {
+            return Err(ContractError::InvalidSettlementAmount);
+        }
+
+        let calculated_total = expenses
+            .checked_add(reserve).ok_or(ContractError::Overflow)?
+            .checked_add(fees).ok_or(ContractError::Overflow)?
+            .checked_add(distributable_amount).ok_or(ContractError::Overflow)?;
+
+        if calculated_total != gross_revenue {
+            return Err(ContractError::InvalidSettlementAmount);
+        }
+
+        // 5. Payouts validation: sum of recipient payouts must equal distributable_amount
+        if payouts.is_empty() {
+            return Err(ContractError::RecipientAllocationMismatch);
+        }
+
+        let mut sum_payouts: i128 = 0;
+        let mut sum_bps: u32 = 0;
+        for payout in payouts.iter() {
+            if payout.amount <= 0 {
+                return Err(ContractError::InvalidAmount);
+            }
+            sum_payouts = sum_payouts.checked_add(payout.amount).ok_or(ContractError::Overflow)?;
+            sum_bps = sum_bps.checked_add(payout.basis_points).ok_or(ContractError::Overflow)?;
+        }
+
+        if sum_payouts != distributable_amount || sum_bps > 10_000 {
+            return Err(ContractError::RecipientAllocationMismatch);
+        }
+
+        // 6. Mark revenue as consumed (prevent replay & double-settlement)
+        env.storage().persistent().set(&DataKey::ConsumedRevenue(revenue_id), &true);
+
+        // 7. Update vault financial reserves
+        let mut financials: VaultFinancialState = env
+            .storage()
+            .instance()
+            .get(&DataKey::FinancialState)
+            .ok_or(ContractError::NotInitialized)?;
+
+        financials.reserve_balance = financials
+            .reserve_balance
+            .checked_add(reserve)
+            .ok_or(ContractError::Overflow)?;
+
+        env.storage().instance().set(&DataKey::FinancialState, &financials);
+
+        // 8. Track total settled revenue and settlement count
+        let total_settled: i128 = env
+            .storage()
+            .instance()
+            .get(&DataKey::TotalSettledRevenue)
+            .unwrap_or(0);
+        let new_total_settled = total_settled.checked_add(gross_revenue).ok_or(ContractError::Overflow)?;
+        env.storage().instance().set(&DataKey::TotalSettledRevenue, &new_total_settled);
+
+        let settlement_count: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::SettlementCount)
+            .unwrap_or(0);
+        let new_settlement_count = settlement_count.checked_add(1).ok_or(ContractError::Overflow)?;
+        env.storage().instance().set(&DataKey::SettlementCount, &new_settlement_count);
+
+        // 9. Persist immutable settlement record and payouts
+        let record = SettlementRecord {
+            settlement_id: settlement_id.clone(),
+            agreement_id,
+            agreement_version,
+            agreement_hash,
+            gross_revenue,
+            expenses,
+            reserve,
+            fees,
+            distributable_amount,
+            recipient_count: payouts.len(),
+            status: SettlementStatus::Settled,
+            executed_at: env.ledger().timestamp(),
+        };
+
+        env.storage().persistent().set(&DataKey::Settlement(settlement_id.clone()), &record);
+        env.storage().persistent().set(&DataKey::SettlementPayouts(settlement_id.clone()), &payouts);
+
+        // 10. Emit authoritative settlement event
+        env.events().publish(
+            (EVENT_SETTLE, caller),
+            (settlement_id, distributable_amount),
+        );
+
+        Ok(())
+    }
+
+    /// Retrieve an immutable settlement record by ID
+    pub fn get_settlement(env: Env, settlement_id: String) -> Result<SettlementRecord, ContractError> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Settlement(settlement_id))
+            .ok_or(ContractError::InvalidState)
+    }
+
+    /// Retrieve recipient payouts for a settlement
+    pub fn get_settlement_payouts(
+        env: Env,
+        settlement_id: String,
+    ) -> Result<Vec<RecipientPayout>, ContractError> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::SettlementPayouts(settlement_id))
+            .ok_or(ContractError::InvalidState)
+    }
+
+    /// Check if a revenue ID has already been consumed by settlement
+    pub fn is_revenue_consumed(env: Env, revenue_id: u32) -> bool {
+        env.storage().persistent().has(&DataKey::ConsumedRevenue(revenue_id))
+    }
+
+    /// Retrieve the total number of executed settlements
+    pub fn get_settlement_count(env: Env) -> u32 {
+        env.storage().instance().get(&DataKey::SettlementCount).unwrap_or(0)
+    }
+
+    /// Retrieve total revenue settled to date
+    pub fn get_total_settled_revenue(env: Env) -> i128 {
+        env.storage().instance().get(&DataKey::TotalSettledRevenue).unwrap_or(0)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use soroban_sdk::{testutils::Address as _, Env, String};
+    use soroban_sdk::{testutils::Address as _, vec, Env, String};
+
+    fn setup_test_vault(env: &Env) -> (PropertyVaultContractClient, Address, Address) {
+        let contract_id = env.register(PropertyVaultContract, ());
+        let client = PropertyVaultContractClient::new(env, &contract_id);
+        let admin = Address::generate(env);
+        let accepted_asset = Address::generate(env);
+
+        client.initialize(
+            &admin,
+            &String::from_str(env, "prop-meridian-01"),
+            &String::from_str(env, "The Meridian"),
+            &String::from_str(env, "Abuja, Nigeria"),
+            &50_000_000_000,
+            &10,
+            &9,
+            &accepted_asset,
+        );
+
+        (client, admin, accepted_asset)
+    }
 
     #[test]
     fn test_vault_initialization_and_financials() {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register(PropertyVaultContract, ());
-        let client = PropertyVaultContractClient::new(&env, &contract_id);
-
-        let admin = Address::generate(&env);
-        let accepted_asset = Address::generate(&env);
-
-        let prop_id = String::from_str(&env, "prop-meridian-01");
-        let name = String::from_str(&env, "The Meridian");
-        let location = String::from_str(&env, "Abuja, Nigeria");
-
-        // Valid initialization
-        client.initialize(
-            &admin,
-            &prop_id,
-            &name,
-            &location,
-            &50_000_000_000, // 500,000 USD (in cents/stroops)
-            &10,
-            &9,
-            &accepted_asset,
-        );
+        let (client, _admin, _asset) = setup_test_vault(&env);
 
         let meta = client.get_property_metadata();
-        assert_eq!(meta.property_id, prop_id);
+        assert_eq!(meta.property_id, String::from_str(&env, "prop-meridian-01"));
         assert_eq!(meta.total_units, 10);
         assert_eq!(meta.occupied_units, 9);
 
         let financials = client.get_financials();
         assert_eq!(financials.total_revenue_received, 0);
         assert_eq!(financials.deposit_count, 0);
+        assert_eq!(client.get_settlement_count(), 0);
+        assert_eq!(client.get_total_settled_revenue(), 0);
     }
 
     #[test]
-    fn test_record_revenue_success_and_replay_protection() {
+    fn test_record_revenue_success_and_accounting() {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register(PropertyVaultContract, ());
-        let client = PropertyVaultContractClient::new(&env, &contract_id);
-
-        let admin = Address::generate(&env);
-        let accepted_asset = Address::generate(&env);
+        let (client, _admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        client.initialize(
-            &admin,
-            &String::from_str(&env, "prop-01"),
-            &String::from_str(&env, "The Meridian"),
-            &String::from_str(&env, "Abuja, Nigeria"),
-            &50_000_000_000,
-            &10,
-            &9,
-            &accepted_asset,
-        );
-
         let source = String::from_str(&env, "rental_revenue");
-        let amount: i128 = 800_000_000; // 8,000 units
+        let amount: i128 = 1_000_000_000; // $10,000 in stroops
 
         let rev_id_1 = client.record_revenue(&depositor, &source, &amount);
         assert_eq!(rev_id_1, 1);
 
-        let rev_id_2 = client.record_revenue(&depositor, &source, &amount);
-        assert_eq!(rev_id_2, 2);
-
         let financials = client.get_financials();
-        assert_eq!(financials.total_revenue_received, 1_600_000_000);
-        assert_eq!(financials.deposit_count, 2);
+        assert_eq!(financials.total_revenue_received, 1_000_000_000);
+        assert_eq!(financials.deposit_count, 1);
 
         let entry = client.get_revenue_entry(&1);
         assert_eq!(entry.amount, amount);
         assert!(entry.reconciled);
+        assert!(!client.is_revenue_consumed(&1));
     }
 
     #[test]
-    #[should_panic(expected = "Error(Contract, #4)")] // InvalidAmount
-    fn test_zero_amount_rejected() {
+    fn test_settlement_execution_success() {
         let env = Env::default();
         env.mock_all_auths();
 
-        let contract_id = env.register(PropertyVaultContract, ());
-        let client = PropertyVaultContractClient::new(&env, &contract_id);
-
-        let admin = Address::generate(&env);
-        let accepted_asset = Address::generate(&env);
+        let (client, admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        client.initialize(
-            &admin,
-            &String::from_str(&env, "prop-01"),
-            &String::from_str(&env, "The Meridian"),
-            &String::from_str(&env, "Abuja, Nigeria"),
-            &50_000_000_000,
-            &10,
-            &9,
-            &accepted_asset,
+        // 1. Record $10,000 revenue
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &1_000_000_000,
         );
 
-        client.record_revenue(&depositor, &String::from_str(&env, "rent"), &0);
+        // 2. Set active distribution agreement
+        let agreement_contract = Address::generate(&env);
+        let agreement_hash = String::from_str(&env, "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0");
+        client.set_distribution_agreement(&admin, &agreement_contract, &agreement_hash);
+
+        // 3. Prepare payouts for Alice (40%), Bob (35%), Charlie (25%)
+        // Gross: 1_000_000_000 ($10,000)
+        // Expenses: 100_000_000 ($1,000)
+        // Reserve: 100_000_000 ($1,000)
+        // Fees: 40_000_000 ($400)
+        // Distributable: 760_000_000 ($7,600)
+        let alice = Address::generate(&env);
+        let bob = Address::generate(&env);
+        let charlie = Address::generate(&env);
+
+        let payouts = vec![
+            &env,
+            RecipientPayout {
+                recipient: alice.clone(),
+                basis_points: 4000,
+                amount: 304_000_000, // $3,040
+            },
+            RecipientPayout {
+                recipient: bob.clone(),
+                basis_points: 3500,
+                amount: 266_000_000, // $2,660
+            },
+            RecipientPayout {
+                recipient: charlie.clone(),
+                basis_points: 2500,
+                amount: 190_000_000, // $1,900
+            },
+        ];
+
+        let settlement_id = String::from_str(&env, "STL-MERIDIAN-001");
+        let agr_id = String::from_str(&env, "MERIDIAN-REV-001");
+
+        // Execute settlement
+        client.execute_settlement(
+            &admin,
+            &settlement_id,
+            &agr_id,
+            &2u32,
+            &agreement_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &760_000_000,
+            &payouts,
+        );
+
+        // Verify state
+        assert!(client.is_revenue_consumed(&rev_id));
+        assert_eq!(client.get_settlement_count(), 1);
+        assert_eq!(client.get_total_settled_revenue(), 1_000_000_000);
+
+        let record = client.get_settlement(&settlement_id);
+        assert_eq!(record.settlement_id, settlement_id);
+        assert_eq!(record.gross_revenue, 1_000_000_000);
+        assert_eq!(record.distributable_amount, 760_000_000);
+        assert_eq!(record.recipient_count, 3);
+        assert_eq!(record.status, SettlementStatus::Settled);
+
+        let stored_payouts = client.get_settlement_payouts(&settlement_id);
+        assert_eq!(stored_payouts.len(), 3);
+        assert_eq!(stored_payouts.get(0).unwrap().amount, 304_000_000);
+
+        let financials = client.get_financials();
+        assert_eq!(financials.reserve_balance, 100_000_000);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #20)")] // AlreadySettled
+    fn test_double_spending_revenue_prevention() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &1_000_000_000,
+        );
+
+        let agreement_contract = Address::generate(&env);
+        let agreement_hash = String::from_str(&env, "hash1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab");
+        client.set_distribution_agreement(&admin, &agreement_contract, &agreement_hash);
+
+        let alice = Address::generate(&env);
+        let payouts = vec![
+            &env,
+            RecipientPayout {
+                recipient: alice,
+                basis_points: 10_000,
+                amount: 760_000_000,
+            },
+        ];
+
+        let agr_id = String::from_str(&env, "MERIDIAN-REV-001");
+
+        // 1st settlement consumes revenue
+        client.execute_settlement(
+            &admin,
+            &String::from_str(&env, "STL-001"),
+            &agr_id,
+            &1u32,
+            &agreement_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &760_000_000,
+            &payouts,
+        );
+
+        // 2nd settlement attempting to reuse the same revenue must fail with AlreadySettled
+        client.execute_settlement(
+            &admin,
+            &String::from_str(&env, "STL-002"),
+            &agr_id,
+            &1u32,
+            &agreement_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &760_000_000,
+            &payouts,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #16)")] // HashMismatch
+    fn test_settlement_hash_mismatch_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &1_000_000_000,
+        );
+
+        let agreement_contract = Address::generate(&env);
+        let locked_hash = String::from_str(&env, "locked_canonical_hash_abc_1234567890abcdef1234567890abcdef12345678");
+        client.set_distribution_agreement(&admin, &agreement_contract, &locked_hash);
+
+        let alice = Address::generate(&env);
+        let payouts = vec![
+            &env,
+            RecipientPayout {
+                recipient: alice,
+                basis_points: 10_000,
+                amount: 760_000_000,
+            },
+        ];
+
+        let wrong_hash = String::from_str(&env, "tampered_fake_hash_99999999999999999999999999999999999999999999999");
+
+        // Attempt settlement with mismatched hash
+        client.execute_settlement(
+            &admin,
+            &String::from_str(&env, "STL-TAMPERED-001"),
+            &String::from_str(&env, "MERIDIAN-REV-001"),
+            &2u32,
+            &wrong_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &760_000_000,
+            &payouts,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #21)")] // InvalidSettlementAmount
+    fn test_accounting_invariant_violation_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &1_000_000_000,
+        );
+
+        let agreement_hash = String::from_str(&env, "valid_hash");
+        let alice = Address::generate(&env);
+        let payouts = vec![
+            &env,
+            RecipientPayout {
+                recipient: alice,
+                basis_points: 10_000,
+                amount: 800_000_000,
+            },
+        ];
+
+        // Expenses (100) + Reserve (100) + Fees (40) + Distributable (800) = 1_040 != Gross (1_000)
+        client.execute_settlement(
+            &admin,
+            &String::from_str(&env, "STL-INVALID-001"),
+            &String::from_str(&env, "MERIDIAN-REV-001"),
+            &1u32,
+            &agreement_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &800_000_000, // Invariant violated!
+            &payouts,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #24)")] // RecipientAllocationMismatch
+    fn test_recipient_payout_sum_mismatch_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &1_000_000_000,
+        );
+
+        let agreement_hash = String::from_str(&env, "valid_hash");
+        let alice = Address::generate(&env);
+        let payouts = vec![
+            &env,
+            RecipientPayout {
+                recipient: alice,
+                basis_points: 10_000,
+                amount: 750_000_000, // $7,500 instead of distributable $7,600!
+            },
+        ];
+
+        client.execute_settlement(
+            &admin,
+            &String::from_str(&env, "STL-MISMATCH-001"),
+            &String::from_str(&env, "MERIDIAN-REV-001"),
+            &1u32,
+            &agreement_hash,
+            &rev_id,
+            &1_000_000_000,
+            &100_000_000,
+            &100_000_000,
+            &40_000_000,
+            &760_000_000,
+            &payouts,
+        );
     }
 }

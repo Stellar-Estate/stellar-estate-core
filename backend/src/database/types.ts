@@ -210,3 +210,124 @@ export interface SettlementPreviewResult {
   precision_model: string;
   disclaimer: string;
 }
+
+// ==============================================================================
+// LEVEL 3: PROGRAMMABLE PROPERTY-REVENUE SETTLEMENT MODELS
+// ==============================================================================
+
+export type SettlementExecutionStatus =
+  | 'CREATED'
+  | 'VALIDATING'
+  | 'CALCULATING'
+  | 'READY'
+  | 'SUBMITTING'
+  | 'CONFIRMING'
+  | 'SETTLED'
+  | 'RECONCILED'
+  | 'FAILED'
+  | 'PARTIALLY_SETTLED'
+  | 'RECONCILIATION_REQUIRED';
+
+export interface SettlementPayoutRecord {
+  recipient_address: string;
+  recipient_name: string;
+  role: string;
+  basis_points: number;
+  expected_amount: number;
+  actual_amount: number;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  transaction_hash?: string;
+  reconciled: boolean;
+}
+
+export interface SettlementSnapshot {
+  revenue_ids: string[];
+  revenue_amounts: number[];
+  agreement_id: string;
+  agreement_version: number;
+  agreement_hash: string;
+  waterfall_rules: WaterfallRule[];
+  stakeholder_allocations: StakeholderPreviewAllocation[];
+  calculated_expenses: number;
+  calculated_reserve: number;
+  calculated_fees: number;
+  distributable_amount: number;
+  expected_payouts: Array<{ recipient: string; name: string; amount: number; bps: number }>;
+  dust_remainder: number;
+  timestamp: string;
+}
+
+export interface Settlement {
+  id: string; // e.g. "STL-MERIDIAN-001"
+  property_id: string;
+  revenue_ids: string[];
+  agreement_id: string;
+  agreement_version: number;
+  agreement_hash: string;
+  asset: string;
+  gross_revenue: number;
+  expenses: number;
+  reserve: number;
+  fees: number;
+  distributable_amount: number;
+  status: SettlementExecutionStatus;
+  created_at: string;
+  executed_at?: string;
+  reconciled_at?: string;
+  transaction_hashes: string[];
+  payouts: SettlementPayoutRecord[];
+  calculation_snapshot: SettlementSnapshot;
+  reconciliation_status: 'PENDING' | 'MATCHED' | 'DISCREPANCY';
+  reconciliation_notes?: string;
+}
+
+export interface RevenuePool {
+  property_id: string;
+  property_name: string;
+  total_confirmed_revenue: number;
+  total_pending_revenue: number;
+  total_settled_revenue: number;
+  available_for_settlement: number;
+  total_reserves_held: number;
+  total_fees_paid: number;
+  total_expenses_deducted: number;
+  revenue_entries_count: number;
+  settlement_count: number;
+}
+
+export interface PropertyFinancialPassport {
+  property_id: string;
+  property_name: string;
+  total_lifetime_revenue: number;
+  total_expenses: number;
+  total_reserves: number;
+  total_fees: number;
+  total_distributed: number;
+  settlement_count: number;
+  active_agreement_id: string;
+  active_agreement_version: number;
+  active_agreement_hash: string;
+  last_settlement_date?: string;
+  reconciliation_status: 'CURRENT' | 'ATTENTION_REQUIRED';
+  recent_settlements: Settlement[];
+  recent_revenues: RevenueRecord[];
+}
+
+export interface StakeholderEarnings {
+  wallet_address: string;
+  stakeholder_name: string;
+  role: string;
+  current_allocation_bps: number;
+  total_allocated: number;
+  total_settled: number;
+  pending_amount: number;
+  settlements: Array<{
+    settlement_id: string;
+    property_id: string;
+    date: string;
+    amount: number;
+    tx_hash: string;
+    status: string;
+  }>;
+}
+

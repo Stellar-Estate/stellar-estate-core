@@ -4,6 +4,7 @@ import { db } from '../database/db.js';
 import { revenueService } from '../services/revenueService.js';
 import { reconciliationService } from '../reconciliation/reconciliationService.js';
 import { agreementService } from '../services/agreementService.js';
+import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
 
 export const apiRouter = Router();
@@ -74,6 +75,18 @@ const lockVersionSchema = z.object({
 
 const previewSettlementSchema = z.object({
   sampleRevenue: z.number().positive(),
+});
+
+const settlementPreviewRequestSchema = z.object({
+  propertyId: z.string().min(1),
+  revenueIds: z.array(z.string().min(1)).min(1),
+});
+
+const executeSettlementRequestSchema = z.object({
+  propertyId: z.string().min(1),
+  revenueIds: z.array(z.string().min(1)).min(1),
+  executorAddress: z.string().min(1),
+  transactionHashes: z.array(z.string()).optional(),
 });
 
 // ==============================================================================
@@ -358,3 +371,89 @@ apiRouter.get('/audit/events', (req: Request, res: Response) => {
   const events = db.getAuditEvents(50);
   res.json({ success: true, data: events });
 });
+
+// ==============================================================================
+// LEVEL 3: SETTLEMENT, PASSPORT & STAKEHOLDER EARNINGS ENDPOINTS
+// ==============================================================================
+
+apiRouter.get('/properties/:id/revenue-pool', (req: Request, res: Response) => {
+  const prop = db.getPropertyById(req.params.id);
+  if (!prop) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+  const pool = db.getRevenuePool(req.params.id);
+  res.json({ success: true, data: pool });
+});
+
+apiRouter.get('/properties/:id/passport', (req: Request, res: Response) => {
+  const prop = db.getPropertyById(req.params.id);
+  if (!prop) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+  const passport = db.getPropertyFinancialPassport(req.params.id);
+  res.json({ success: true, data: passport });
+});
+
+apiRouter.get('/properties/:id/settlements', (req: Request, res: Response) => {
+  const settlements = db.getSettlementsByProperty(req.params.id);
+  res.json({ success: true, data: settlements });
+});
+
+apiRouter.post('/settlements/preview', (req: Request, res: Response) => {
+  const parseResult = settlementPreviewRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ success: false, errors: parseResult.error.format() });
+  }
+
+  try {
+    const preview = settlementService.previewSettlement(
+      parseResult.data.propertyId,
+      parseResult.data.revenueIds
+    );
+    res.json({ success: true, data: preview });
+  } catch (err: any) {
+    res.status(422).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/settlements/execute', async (req: Request, res: Response) => {
+  const parseResult = executeSettlementRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ success: false, errors: parseResult.error.format() });
+  }
+
+  try {
+    const settlement = await settlementService.executeSettlement({
+      propertyId: parseResult.data.propertyId,
+      revenueIds: parseResult.data.revenueIds,
+      executorAddress: parseResult.data.executorAddress,
+      transactionHashes: parseResult.data.transactionHashes,
+    });
+    res.json({ success: true, data: settlement });
+  } catch (err: any) {
+    res.status(422).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/settlements/:id', (req: Request, res: Response) => {
+  const settlement = db.getSettlementById(req.params.id);
+  if (!settlement) {
+    return res.status(404).json({ success: false, error: 'Settlement not found' });
+  }
+  res.json({ success: true, data: settlement });
+});
+
+apiRouter.get('/settlements/:id/trace', (req: Request, res: Response) => {
+  try {
+    const trace = settlementService.getSettlementTrace(req.params.id);
+    res.json({ success: true, data: trace });
+  } catch (err: any) {
+    res.status(404).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/stakeholders/:address/earnings', (req: Request, res: Response) => {
+  const earnings = db.getStakeholderEarnings(req.params.address);
+  res.json({ success: true, data: earnings });
+});
+

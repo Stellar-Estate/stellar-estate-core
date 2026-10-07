@@ -12,6 +12,10 @@ import {
   WaterfallRule,
   AgreementStakeholder,
   AgreementApproval,
+  Settlement,
+  RevenuePool,
+  PropertyFinancialPassport,
+  StakeholderEarnings,
 } from './types.js';
 import { agreementHashingService } from '../services/agreementHashingService.js';
 
@@ -28,6 +32,10 @@ class InMemoryDatabase {
   // Level 2: Distribution Agreements
   agreements: Map<string, DistributionAgreement> = new Map();
   agreementVersions: Map<string, DistributionAgreementVersion> = new Map();
+
+  // Level 3: Settlement Records & Consumed Revenues
+  settlements: Map<string, Settlement> = new Map();
+  consumedRevenueIds: Set<string> = new Set();
 
   constructor() {
     this.seedDefaultData();
@@ -144,6 +152,50 @@ class InMemoryDatabase {
     };
     this.participants.set(participantOwner.id, participantOwner);
     this.participants.set(participantOperator.id, participantOperator);
+
+    // Level 3: Seed initial verified Testnet revenue event for The Meridian ($10,000 USDC)
+    const initialTxHash = '6a3f81e8435d648083818e7e163b71f92e079010467b7e211516e877c44e8c1e';
+    const bTx: BlockchainTransaction = {
+      id: 'tx-meridian-rev-001',
+      transaction_hash: initialTxHash,
+      network: 'TESTNET',
+      asset: 'USDC',
+      amount: 10000.0,
+      sender: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      recipient: meridian.vault_stellar_address,
+      operation_type: 'PAYMENT',
+      status: 'SUCCESS',
+      ledger_sequence: 5412984,
+      verification_result: {
+        verified: true,
+        source: 'Horizon Testnet Validator',
+        ledger: 5412984,
+      },
+      confirmed_at: '2026-10-06T11:00:00Z',
+      created_at: '2026-10-06T11:00:00Z',
+    };
+    this.blockchainTransactions.set(bTx.transaction_hash, bTx);
+
+    const initialRevenue: RevenueRecord = {
+      id: 'rev-meridian-001',
+      property_id: meridian.id,
+      source: 'Rental Revenue',
+      amount: 10000.0,
+      asset: 'USDC',
+      transaction_hash: initialTxHash,
+      depositor_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      destination_address: meridian.vault_stellar_address,
+      status: 'CONFIRMED',
+      verified_at: '2026-10-06T11:01:00Z',
+      metadata: {
+        unit: 'Suite 101 - 110 Monthly Consolidated Rent',
+        period: 'October 2026',
+        network: 'TESTNET',
+      },
+      created_at: '2026-10-06T11:00:00Z',
+      updated_at: '2026-10-06T11:01:00Z',
+    };
+    this.revenueRecords.set(initialRevenue.id, initialRevenue);
   }
 
   private seedLevel2Agreements() {
@@ -514,6 +566,187 @@ class InMemoryDatabase {
     }
     return version;
   }
+
+  // ==============================================================================
+  // LEVEL 3: SETTLEMENT QUERIES & MUTATIONS
+  // ==============================================================================
+
+  saveSettlement(settlement: Settlement): Settlement {
+    this.settlements.set(settlement.id, settlement);
+    return settlement;
+  }
+
+  getSettlementById(id: string): Settlement | undefined {
+    return this.settlements.get(id);
+  }
+
+  getSettlementsByProperty(propertyId: string): Settlement[] {
+    return Array.from(this.settlements.values())
+      .filter((s) => s.property_id === propertyId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  getAllSettlements(): Settlement[] {
+    return Array.from(this.settlements.values())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  isRevenueConsumed(revenueId: string): boolean {
+    return this.consumedRevenueIds.has(revenueId);
+  }
+
+  markRevenueConsumed(revenueId: string): void {
+    this.consumedRevenueIds.add(revenueId);
+  }
+
+  getRevenuePool(propertyId: string): RevenuePool {
+    const prop = this.properties.get(propertyId);
+    const revs = this.getRevenueByProperty(propertyId);
+    const settlements = this.getSettlementsByProperty(propertyId);
+
+    const totalConfirmed = revs
+      .filter((r) => r.status === 'CONFIRMED' || r.status === 'RECONCILED')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    const totalPending = revs
+      .filter((r) => r.status === 'PENDING')
+      .reduce((sum, r) => sum + r.amount, 0);
+
+    const totalSettled = settlements
+      .filter((s) => s.status === 'SETTLED' || s.status === 'RECONCILED')
+      .reduce((sum, s) => sum + s.gross_revenue, 0);
+
+    const available = Math.max(0, totalConfirmed - totalSettled);
+
+    const totalReservesHeld = settlements
+      .filter((s) => s.status === 'SETTLED' || s.status === 'RECONCILED')
+      .reduce((sum, s) => sum + s.reserve, 0);
+
+    const totalFeesPaid = settlements
+      .filter((s) => s.status === 'SETTLED' || s.status === 'RECONCILED')
+      .reduce((sum, s) => sum + s.fees, 0);
+
+    const totalExpensesDeducted = settlements
+      .filter((s) => s.status === 'SETTLED' || s.status === 'RECONCILED')
+      .reduce((sum, s) => sum + s.expenses, 0);
+
+    return {
+      property_id: propertyId,
+      property_name: prop ? prop.name : 'Unknown Property',
+      total_confirmed_revenue: totalConfirmed,
+      total_pending_revenue: totalPending,
+      total_settled_revenue: totalSettled,
+      available_for_settlement: available,
+      total_reserves_held: totalReservesHeld,
+      total_fees_paid: totalFeesPaid,
+      total_expenses_deducted: totalExpensesDeducted,
+      revenue_entries_count: revs.length,
+      settlement_count: settlements.length,
+    };
+  }
+
+  getPropertyFinancialPassport(propertyId: string): PropertyFinancialPassport {
+    const prop = this.properties.get(propertyId);
+    const pool = this.getRevenuePool(propertyId);
+    const settlements = this.getSettlementsByProperty(propertyId);
+    const revenues = this.getRevenueByProperty(propertyId);
+    const agreements = this.getAgreementsByProperty(propertyId);
+    const activeAgr = agreements.find((a) => a.status === 'LOCKED') || agreements[0];
+    const lockedVersion = activeAgr?.versions.find((v) => v.status === 'LOCKED') || activeAgr?.versions[0];
+
+    const totalDistributed = settlements
+      .filter((s) => s.status === 'SETTLED' || s.status === 'RECONCILED')
+      .reduce((sum, s) => sum + s.distributable_amount, 0);
+
+    const lastSettlement = settlements.length > 0 ? settlements[0].executed_at || settlements[0].created_at : undefined;
+    const hasDiscrepancy = settlements.some((s) => s.reconciliation_status === 'DISCREPANCY');
+
+    return {
+      property_id: propertyId,
+      property_name: prop ? prop.name : 'The Meridian',
+      total_lifetime_revenue: pool.total_confirmed_revenue,
+      total_expenses: pool.total_expenses_deducted,
+      total_reserves: pool.total_reserves_held,
+      total_fees: pool.total_fees_paid,
+      total_distributed: totalDistributed,
+      settlement_count: settlements.length,
+      active_agreement_id: activeAgr?.agreement_identifier || 'MERIDIAN-REV-001',
+      active_agreement_version: lockedVersion?.version_number || 1,
+      active_agreement_hash: lockedVersion?.agreement_hash || 'ABC123...',
+      last_settlement_date: lastSettlement,
+      reconciliation_status: hasDiscrepancy ? 'ATTENTION_REQUIRED' : 'CURRENT',
+      recent_settlements: settlements.slice(0, 10),
+      recent_revenues: revenues.slice(0, 10),
+    };
+  }
+
+  getStakeholderEarnings(walletAddress: string): StakeholderEarnings {
+    const allSettlements = this.getAllSettlements();
+    let totalAllocated = 0;
+    let totalSettled = 0;
+    let pendingAmount = 0;
+    let stakeholderName = 'Stakeholder';
+    let role = 'Stakeholder';
+    let bps = 0;
+
+    const matchedSettlements: Array<{
+      settlement_id: string;
+      property_id: string;
+      date: string;
+      amount: number;
+      tx_hash: string;
+      status: string;
+    }> = [];
+
+    // Check agreements for name & role & current bps
+    for (const agr of this.agreements.values()) {
+      const lockedVer = agr.versions.find((v) => v.status === 'LOCKED') || agr.versions[0];
+      if (lockedVer) {
+        const match = lockedVer.stakeholders.find((s) => s.wallet_address.toLowerCase() === walletAddress.toLowerCase());
+        if (match) {
+          stakeholderName = match.name;
+          role = match.role;
+          bps = match.basis_points;
+          break;
+        }
+      }
+    }
+
+    for (const stl of allSettlements) {
+      const payout = stl.payouts.find(
+        (p) => p.recipient_address.toLowerCase() === walletAddress.toLowerCase()
+      );
+      if (payout) {
+        totalAllocated += payout.expected_amount;
+        if (stl.status === 'SETTLED' || stl.status === 'RECONCILED') {
+          totalSettled += payout.actual_amount;
+        } else {
+          pendingAmount += payout.expected_amount;
+        }
+
+        matchedSettlements.push({
+          settlement_id: stl.id,
+          property_id: stl.property_id,
+          date: stl.executed_at || stl.created_at,
+          amount: payout.actual_amount || payout.expected_amount,
+          tx_hash: payout.transaction_hash || (stl.transaction_hashes.length > 0 ? stl.transaction_hashes[0] : ''),
+          status: stl.status,
+        });
+      }
+    }
+
+    return {
+      wallet_address: walletAddress,
+      stakeholder_name: stakeholderName,
+      role,
+      current_allocation_bps: bps,
+      total_allocated: totalAllocated,
+      total_settled: totalSettled,
+      pending_amount: pendingAmount,
+      settlements: matchedSettlements,
+    };
+  }
 }
 
 export const db = new InMemoryDatabase();
+

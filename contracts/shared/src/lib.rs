@@ -26,6 +26,11 @@ pub enum ContractError {
     AlreadyApproved = 17,
     StakeholderNotFound = 18,
     VersionMismatch = 19,
+    AlreadySettled = 20,
+    InvalidSettlementAmount = 21,
+    AgreementNotLocked = 22,
+    InsufficientRevenue = 23,
+    RecipientAllocationMismatch = 24,
 }
 
 /// Status of the property vault
@@ -127,4 +132,44 @@ pub struct AgreementVersionState {
     pub approved_count: u32,
     pub created_at: u64,
     pub locked_at: u64,
+}
+
+/// Level 3: Settlement Status state machine
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum SettlementStatus {
+    Created = 1,
+    Validating = 2,
+    Ready = 3,
+    Settled = 4,
+    Reconciled = 5,
+    Failed = 6,
+}
+
+/// Level 3: Individual recipient payout entry
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RecipientPayout {
+    pub recipient: Address,
+    pub basis_points: u32,
+    pub amount: i128,
+}
+
+/// Level 3: Immutable On-Chain Settlement Record
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SettlementRecord {
+    pub settlement_id: String,
+    pub agreement_id: String,
+    pub agreement_version: u32,
+    pub agreement_hash: String,
+    pub gross_revenue: i128,
+    pub expenses: i128,
+    pub reserve: i128,
+    pub fees: i128,
+    pub distributable_amount: i128,
+    pub recipient_count: u32,
+    pub status: SettlementStatus,
+    pub executed_at: u64,
 }
