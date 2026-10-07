@@ -329,7 +329,7 @@ mod test {
 
         let entry = client.get_revenue_entry(&1);
         assert_eq!(entry.amount, amount);
-        assert_eq!(entry.reconciled, true);
+        assert!(entry.reconciled);
     }
 
     #[test]
