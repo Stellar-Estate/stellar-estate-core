@@ -429,11 +429,12 @@ impl PropertyVaultContract {
 }
 
 #[cfg(test)]
+#[allow(clippy::all)]
 mod test {
     use super::*;
     use soroban_sdk::{testutils::Address as _, vec, Env, String};
 
-    fn setup_test_vault(env: &Env) -> (PropertyVaultContractClient, Address, Address) {
+    fn setup_test_vault(env: &Env) -> (PropertyVaultContractClient<'_>, Address, Address) {
         let contract_id = env.register(PropertyVaultContract, ());
         let client = PropertyVaultContractClient::new(env, &contract_id);
         let admin = Address::generate(env);
