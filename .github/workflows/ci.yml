@@ -55,8 +55,9 @@ jobs:
       - name: Pin Incompatible Transitive Dependencies
         run: |
           cargo generate-lockfile
-          cargo update -p ed25519-dalek --precise 2.1.1 || true
-          cargo update -p ed25519 --precise 2.2.3 || true
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0 || true
+          cargo update -p ed25519@3.0.0 --precise 2.2.3 || true
+          cargo update -p signature@3.0.0 --precise 2.2.0 || true
 
       - name: Format Rust Code
         run: cargo fmt --all
