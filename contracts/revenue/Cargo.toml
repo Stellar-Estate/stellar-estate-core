@@ -1,0 +1,12 @@
+[package]
+name = "stellar-estate-revenue"
+version = "0.1.0"
+edition = "2021"
+description = "Revenue Contract for Stellar Estate - Manages property revenue receipt, routing, and accounting verification"
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-estate-shared = { path = "../shared" }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

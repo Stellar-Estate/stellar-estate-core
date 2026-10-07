@@ -1,0 +1,11 @@
+[package]
+name = "stellar-estate-shared"
+version = "0.1.0"
+edition = "2021"
+description = "Shared types, error definitions, and data structures for Stellar Estate Soroban contracts"
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
