@@ -1,12 +1,12 @@
 # 🏛️ Stellar Estate Core (`stellar-estate-core`)
 
-> **Programmable Real-Estate Financial Infrastructure — Financial Core & Settlement Engine**
+> **Programmable Real-Estate Financial Infrastructure — Financial Core, Distribution Agreements & Soroban Contracts**
 
 Part of the **Stellar Estate** architecture in organization [`Stellar-Estate`](https://github.com/Stellar-Estate).
 
 ```text
 Stellar-Estate/
-├── stellar-estate-frontend   (Web application & user experience)
+├── stellar-estate-frontend   (Web application, Waterfall builder, Multi-party approvals)
 └── stellar-estate-core       (Backend API, Soroban contracts, database, reconciliation)
 ```
 
@@ -14,15 +14,12 @@ Stellar-Estate/
 
 ## 1. Product & Architecture Vision
 
-Stellar Estate makes property revenue transparent, traceable, and ready for programmable settlement on Stellar.
-Level 1 establishes the first two phases of the core thesis:
+Stellar Estate transforms real-estate cash flows into verifiable, programmable financial infrastructure on the Stellar network.
 
-$$\text{Property} \longrightarrow \text{Revenue} \quad [\longrightarrow \text{Financial Rules} \longrightarrow \text{Settlement}]$$
+$$\text{Property} \longrightarrow \text{Revenue} \longrightarrow \text{Distribution Agreement} \longrightarrow [\text{Settlement}]$$
 
-### Architectural Principle
-* **Frontend:** Presents and orchestrates the user and investor experience.
-* **Backend:** Manages off-chain application state, indexing, accounting, independent verification, and reconciliation.
-* **Soroban Contracts:** Enforce the financial rules that must be trusted on-chain.
+* **Level 1 established:** Property discovery, dedicated vaults, Testnet revenue ingestion, and independent Horizon verification.
+* **Level 2 establishes:** Property Distribution Agreements, waterfall rules, multi-party stakeholder reviews and cryptographic approvals, locked agreement immutability, and deterministic settlement previews.
 
 ```text
                     STELLAR ESTATE
@@ -31,15 +28,17 @@ $$\text{Property} \longrightarrow \text{Revenue} \quad [\longrightarrow \text{Fi
              │                         │
         FRONTEND                  CORE REPOSITORY
              │                         │
-             │                 ┌───────┴────────┐
-             │                 │                │
-             │             BACKEND          SOROBAN
-             │                 │                │
-             │                 │          Property Vault
-             │                 │                │
-             │                 └───────┬────────┘
-             │                         │
-             └─────────────────────────┘
+             │                 ┌───────┴────────────────────────┐
+             │                 │                                │
+             │             BACKEND                           SOROBAN
+             │                 │                                │
+             │                 │                    ┌───────────┴───────────┐
+             │                 │                    │                       │
+             │                 │              Property Vault      Distribution Agreement
+             │                 │                    │                       │
+             │                 └────────────┬───────┴───────────────────────┘
+             │                              │
+             └──────────────────────────────┘
                           │
                      STELLAR TESTNET
 ```
@@ -52,99 +51,96 @@ $$\text{Property} \longrightarrow \text{Revenue} \quad [\longrightarrow \text{Fi
 stellar-estate-core/
 ├── backend/
 │   ├── src/
-│   │   ├── api/             # REST endpoints (Properties, Revenue, Blockchain, Reconciliation)
-│   │   ├── services/        # Stellar verification engine, Revenue pipeline
+│   │   ├── api/             # REST endpoints (Properties, Revenue, Agreements, Reconciliation)
+│   │   ├── services/        # Stellar verifier, Agreement hashing & validation, Settlement preview
 │   │   ├── workers/         # Background indexing & asynchronous reconciliation
-│   │   ├── indexer/         # Stellar Horizon Testnet transaction observer
 │   │   ├── reconciliation/  # Cross-ledger financial auditing & discrepancy engine
 │   │   └── database/        # In-memory & PostgreSQL data layer, schemas, seeds
 │   ├── Dockerfile
 │   └── package.json
 ├── contracts/
-│   ├── property_vault/      # Soroban Contract: property metadata, vault state, event publishing
-│   ├── revenue/             # Soroban Contract: revenue intake, receipt routing, caller authentication
+│   ├── property_vault/      # Soroban: property metadata, vault state, active agreement binding
+│   ├── distribution_agreement/ # Soroban: authoritative agreement versions, stakeholder approvals, locked rules
+│   ├── revenue/             # Soroban: revenue intake, receipt routing
 │   └── shared/              # Shared types, error codes, safe integer math
-├── migrations/              # PostgreSQL schema migrations (Level 1 + Future Level 2/3)
-├── docs/                    # Architectural specs, future waterfall & settlement designs
+├── migrations/              # PostgreSQL schema migrations (Level 1 + Level 2/3 tables)
+├── docs/                    # Architecture specs, Level 2 agreement model, Level 3 handoff
 ├── .github/workflows/       # GitHub Actions CI for Backend (Vitest) & Contracts (Cargo)
 └── docker-compose.yml       # Production-ready PostgreSQL & Backend composition
 ```
 
 ---
 
-## 3. Independent Stellar Verification & Anti-Replay
+## 3. Important Financial Principle: Source of Truth
 
-The backend **never trusts client-side assertions** of payment. Every transaction must be verified on Stellar Testnet:
+The backend is **not** the ultimate source of truth for locked financial rules:
+* **Backend:** Manages off-chain orchestration, indexing, and validation.
+* **Soroban Smart Contract:** Authoritative source for agreement hash, versioning, stakeholder approval authorization, and immutable locked state.
 
-1. **Existence & Success:** Validates transaction on Stellar Horizon (`https://horizon-testnet.stellar.org`) and confirms `successful === true`.
-2. **Payment Operation Matching:** Inspects internal transaction operations to confirm the destination is the specific property vault.
-3. **Asset & Amount Verification:** Validates accepted asset (`XLM` or `USDC`) and verifies the settled amount.
-4. **Replay & Idempotency Protection:** The database enforces unique constraints on `transaction_hash`. If a transaction hash has already been associated with a revenue record, subsequent attempts are rejected with `DUPLICATE_TRANSACTION`.
+Once locked:
+* Neither backend nor database can alter percentages or waterfall priorities.
+* Any amendment requires a **new agreement version** (`v1 LOCKED` $\rightarrow$ `v2 CREATED` $\rightarrow$ `v2 APPROVALS` $\rightarrow$ `v2 LOCKED`).
+* The contract strictly rejects post-lock modifications with `AgreementLocked (#13)`.
 
 ---
 
-## 4. Soroban Smart Contract Foundation
+## 4. Integer Financial Arithmetic & Precision
+
+Stellar Estate strictly eliminates floating-point arithmetic from financial rules:
+* **Basis Points:** Allocations are specified in basis points, where $10,000 \text{ bps} = 100.00\%$.
+* **Accounting Invariant:**
+  $$\sum \text{Stakeholder Basis Points} \equiv 10,000 \text{ bps } (100.00\%)$$
+* **Deterministic Rounding:** Remainder cents/stroops (dust) are deterministically assigned to the primary equity stakeholder, guaranteeing:
+  $$\text{Gross Revenue} = \text{Waterfall Deductions} + \sum \text{Stakeholder Allocations}$$
+
+---
+
+## 5. Soroban Smart Contract Architecture
 
 Written in Rust for the Soroban smart contract platform:
 
-* **Safe Integer Arithmetic:** Uses `i128` representations with `.checked_add()` to prevent overflow/underflow. **Zero floating-point arithmetic.**
-* **Explicit Authorization:** Employs `.require_auth()` for all administrative and depositor state modifications.
-* **Event Logging:** Emits structured events (`init_vlt`, `rev_rec`, `stat_chg`, `dep_rout`) for indexer consumption.
-* **Level 2/3 Compatibility:** Prepared with clean contract hooks for distribution agreements without premature or simulated waterfalls.
+1. **`property_vault`**: Manages property financial vault, records verified revenue, and binds active distribution agreement.
+2. **`distribution_agreement`**:
+   * Registers agreement versions with deterministic 64-char SHA-256 canonical hash.
+   * Tracks required stakeholder approvals (`.require_auth()`).
+   * Validates exact agreement hash matching (`HashMismatch (#16)`).
+   * Enforces all approvals collected before locking (`IncompleteApprovals (#14)`).
+   * Permanently locks rule set into immutable on-chain state (`agr_lock` event).
+3. **`revenue`**: Manages property payment routing and receipt logging.
+4. **`shared`**: Defines `AgreementStatus`, `WaterfallRuleType`, and error codes.
 
 ---
 
-## 5. Environment Configuration
-
-Copy `.env.example` in `backend/`:
-
-```env
-PORT=4000
-NODE_ENV=development
-DATABASE_URL=postgres://stellar_user:stellar_password@localhost:5432/stellar_estate
-STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
-STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
-```
-
----
-
-## 6. Local Development & Testing
-
-### Backend
-```bash
-cd backend
-npm install
-npm test           # Runs Vitest automated integration suite
-npm run dev        # Starts server on http://localhost:4000
-```
-
-### Soroban Contracts
-```bash
-cargo test --workspace --verbose
-```
-
-### Docker
-```bash
-docker-compose up -d
-```
-
----
-
-## 7. API Reference Summary
+## 6. API Reference Summary
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/health` | Health & uptime check |
 | `GET` | `/api/properties` | List all properties with financial summaries |
 | `GET` | `/api/properties/:id` | Detailed property profile, units & participations |
-| `GET` | `/api/properties/:id/revenue` | Revenue history and confirmed statistics |
+| `GET` | `/api/properties/:id/agreements` | List all distribution agreements and versions for a property |
+| `GET` | `/api/agreements/:id` | Retrieve agreement by ID with all versions |
+| `GET` | `/api/agreements/versions/:versionId` | Retrieve exact agreement version with rules & stakeholders |
+| `POST` | `/api/agreements` | Create a new Distribution Agreement (Version 1) |
+| `POST` | `/api/agreements/:id/versions` | Propose an amended agreement version (e.g. Version 2) |
+| `POST` | `/api/agreements/versions/:versionId/approve` | Stakeholder approves exact canonical agreement hash |
+| `POST` | `/api/agreements/versions/:versionId/lock` | Lock agreement once all required approvals are collected |
+| `POST` | `/api/agreements/versions/:versionId/preview` | Deterministic integer-based waterfall settlement preview |
+| `GET` | `/api/agreements/:id/compare?vA=1&vB=2` | Compare version terms and allocation diffs |
 | `POST` | `/api/revenue/initiate` | Create deposit intent and fetch destination vault |
 | `POST` | `/api/revenue/verify` | Independently verify Stellar Testnet tx and record revenue |
-| `GET` | `/api/blockchain/network` | Stellar Testnet parameters and Horizon endpoint |
-| `GET` | `/api/blockchain/tx/:hash` | Query transaction record and verification status |
 | `GET` | `/api/reconciliation/report` | Cross-audit blockchain transactions vs revenue records |
-| `POST` | `/api/reconciliation/run` | Execute on-demand financial reconciliation |
-| `GET` | `/api/audit/events` | Immutably logged financial audit events |
+
+---
+
+## 7. Local Development & Testing
+
+```bash
+cd backend
+npm install
+npm test           # Runs Vitest automated integration suite (12/12 passing)
+npm run dev        # Starts server on http://localhost:4000
+```
 
 ---
 

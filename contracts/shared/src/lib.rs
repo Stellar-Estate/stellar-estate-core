@@ -19,6 +19,13 @@ pub enum ContractError {
     InvalidState = 10,
     AgreementNotFound = 11,
     WaterfallNotConfigured = 12,
+    AgreementLocked = 13,
+    IncompleteApprovals = 14,
+    InvalidBasisPoints = 15,
+    HashMismatch = 16,
+    AlreadyApproved = 17,
+    StakeholderNotFound = 18,
+    VersionMismatch = 19,
 }
 
 /// Status of the property vault
@@ -29,6 +36,28 @@ pub enum VaultStatus {
     Active = 1,
     Paused = 2,
     Liquidating = 3,
+}
+
+/// Status of a Distribution Agreement Version
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum AgreementStatus {
+    Draft = 1,
+    PendingApprovals = 2,
+    ReadyToLock = 3,
+    Locked = 4,
+    Superseded = 5,
+}
+
+/// Rule types for Waterfall tranches
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum WaterfallRuleType {
+    FixedAmount = 1,
+    BasisPoints = 2,
+    Residual = 3,
 }
 
 /// Metadata describing a property financial vault
@@ -66,12 +95,36 @@ pub struct RevenueEntry {
     pub reconciled: bool,
 }
 
-/// Level 2/3 Preparation: Stub for Distribution Agreement state
+/// Level 2: On-chain Waterfall Rule specification
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DistributionAgreementStub {
-    pub agreement_id: u32,
+pub struct WaterfallRule {
+    pub rule_id: u32,
+    pub priority: u32,
+    pub rule_type: WaterfallRuleType,
+    pub amount_or_bps: i128,   // Fixed amount in stroops or basis points (e.g. 500 = 5.00%)
+    pub description: String,
+}
+
+/// Level 2: On-chain Stakeholder allocation record
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Stakeholder {
+    pub address: Address,
+    pub basis_points: u32,     // 0 to 10,000 (10,000 = 100.00%)
+    pub role: String,          // e.g., "Majority Equity", "Operator"
+    pub has_approved: bool,
+}
+
+/// Level 2: Authoritative On-chain Distribution Agreement Version State
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AgreementVersionState {
     pub version: u32,
-    pub is_active: bool,
-    pub stakeholder_count: u32,
+    pub agreement_hash: String, // 64 hex character deterministic canonical SHA-256 hash
+    pub status: AgreementStatus,
+    pub total_stakeholders: u32,
+    pub approved_count: u32,
+    pub created_at: u64,
+    pub locked_at: u64,
 }

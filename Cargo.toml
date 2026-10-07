@@ -4,6 +4,7 @@ members = [
     "contracts/property_vault",
     "contracts/revenue",
     "contracts/shared",
+    "contracts/distribution_agreement",
 ]
 
 [profile.release]

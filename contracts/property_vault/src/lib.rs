@@ -17,6 +17,8 @@ enum DataKey {
     FinancialState,
     RevenueNonce,
     RevenueRecord(u32),
+    ActiveAgreementContract,
+    ActiveAgreementHash,
 }
 
 const EVENT_VAULT_INIT: Symbol = symbol_short!("init_vlt");
@@ -203,6 +205,46 @@ impl PropertyVaultContract {
     pub fn check_waterfall_readiness(env: Env) -> Result<bool, ContractError> {
         let financials = Self::get_financials(env.clone())?;
         Ok(financials.total_revenue_recorded > 0)
+    }
+
+    /// Link an authoritative locked distribution agreement to this property vault
+    pub fn set_distribution_agreement(
+        env: Env,
+        caller: Address,
+        agreement_contract: Address,
+        agreement_hash: String,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+
+        if caller != admin {
+            return Err(ContractError::Unauthorized);
+        }
+
+        env.storage().instance().set(&DataKey::ActiveAgreementContract, &agreement_contract);
+        env.storage().instance().set(&DataKey::ActiveAgreementHash, &agreement_hash);
+
+        Ok(())
+    }
+
+    /// Retrieve the currently bound distribution agreement contract & hash
+    pub fn get_active_agreement(env: Env) -> Result<(Address, String), ContractError> {
+        let contract: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::ActiveAgreementContract)
+            .ok_or(ContractError::AgreementNotFound)?;
+        let hash: String = env
+            .storage()
+            .instance()
+            .get(&DataKey::ActiveAgreementHash)
+            .ok_or(ContractError::AgreementNotFound)?;
+        Ok((contract, hash))
     }
 }
 

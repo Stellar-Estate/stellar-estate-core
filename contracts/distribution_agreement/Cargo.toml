@@ -1,0 +1,12 @@
+[package]
+name = "stellar-estate-distribution-agreement"
+version = "0.1.0"
+edition = "2021"
+description = "Soroban Distribution Agreement Contract for Stellar Estate - Authoritative Multi-Party Approval & Locked Financial Rules"
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-estate-shared = { path = "../shared" }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
