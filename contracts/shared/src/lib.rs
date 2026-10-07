@@ -173,3 +173,20 @@ pub struct SettlementRecord {
     pub status: SettlementStatus,
     pub executed_at: u64,
 }
+
+/// Level 3: Settlement Execution Arguments (bundles parameters to obey Soroban <=10 param limit)
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SettlementExecutionArgs {
+    pub settlement_id: String,
+    pub agreement_id: String,
+    pub agreement_version: u32,
+    pub agreement_hash: String,
+    pub revenue_id: u32,
+    pub gross_revenue: i128,
+    pub expenses: i128,
+    pub reserve: i128,
+    pub fees: i128,
+    pub distributable_amount: i128,
+}
+
