@@ -2,6 +2,9 @@
 
 > **Programmable Real-Estate Financial Infrastructure — Financial Core, Distribution Agreements & Soroban Contracts**
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/bc5fc4fd-0dfb-4954-8a2d-f4fabc7e3402/deploy-status)](https://stellar-estate-app.netlify.app)
+**🌐 Live Frontend Deployment:** [https://stellar-estate-app.netlify.app](https://stellar-estate-app.netlify.app)
+
 Part of the **Stellar Estate** architecture in organization [`Stellar-Estate`](https://github.com/Stellar-Estate).
 
 ```text
