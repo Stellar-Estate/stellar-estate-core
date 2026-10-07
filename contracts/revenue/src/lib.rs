@@ -117,6 +117,6 @@ mod test {
 
         let receipt = client.get_receipt(&1);
         assert_eq!(receipt.amount, 150_000_000);
-        assert_eq!(receipt.reconciled, true);
+        assert!(receipt.reconciled);
     }
 }

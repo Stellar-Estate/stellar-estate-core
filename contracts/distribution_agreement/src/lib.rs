@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
@@ -132,7 +133,7 @@ impl DistributionAgreementContract {
             return Err(ContractError::Unauthorized);
         }
 
-        let mut version_state: AgreementVersionState = env
+        let version_state: AgreementVersionState = env
             .storage()
             .persistent()
             .get(&DataKey::VersionState(version))
@@ -336,14 +337,14 @@ mod test {
         // 4. Try locking prematurely -> Fails with IncompleteApprovals (#14)
         // Verified by assert below after Alice approves
         let ready1 = client.approve_agreement(&alice, &1, &hash_v1);
-        assert_eq!(ready1, false);
+        assert!(!ready1);
 
         let ready2 = client.approve_agreement(&bob, &1, &hash_v1);
-        assert_eq!(ready2, false);
+        assert!(!ready2);
 
         // Charlie approves -> ready to lock!
         let ready3 = client.approve_agreement(&charlie, &1, &hash_v1);
-        assert_eq!(ready3, true);
+        assert!(ready3);
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
