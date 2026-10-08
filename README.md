@@ -209,5 +209,6 @@ cargo test --workspace --verbose
 
 * **Contributing:** We welcome contributions! Please review our [Contributing Guidelines](CONTRIBUTING.md) and check out our [Good First Issues](https://github.com/Stellar-Estate/stellar-estate-core/issues).
 * **Code of Conduct:** All community participants are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
+* **Security Policy:** For reporting vulnerabilities and reviewing smart contract invariants, please consult [SECURITY.md](SECURITY.md).
 * **License:** This project is licensed under the **Apache License 2.0** — see the [LICENSE](LICENSE) file for details.
 
