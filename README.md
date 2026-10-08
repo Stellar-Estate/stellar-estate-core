@@ -123,7 +123,7 @@ Implemented in Rust for the Soroban smart contract framework and deployed to Ste
 | Parameter | On-Chain Value |
 | :--- | :--- |
 | **Contract Name** | `property_vault` (Property Revenue Vault & Settlement Engine) |
-| **Contract Address** | [`CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M`](https://stellar.expert/explorer/testnet/contract/CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M) |
+| **Contract Address** | [`CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL`](https://stellar.expert/explorer/testnet/contract/CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL) |
 | **Deployment Tx Hash** | [`9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939`](https://stellar.expert/explorer/testnet/tx/9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939) |
 | **Network** | Stellar Testnet (`Ledger 5080686`) |
 | **Deployer Account** | [`GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ`](https://stellar.expert/explorer/testnet/account/GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ) |
