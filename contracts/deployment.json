@@ -1,0 +1,11 @@
+{
+  "network": "testnet",
+  "contractAddress": "CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M",
+  "deployer": "GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ",
+  "txHash": "9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939",
+  "ledger": 5080686,
+  "wasmHash": "48e83035a07f93569ebe473bb4c0d74ee91830e222b33d3fea1f22a33d4b1db7",
+  "explorerUrl": "https://stellar.expert/explorer/testnet/contract/CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M",
+  "txExplorerUrl": "https://stellar.expert/explorer/testnet/tx/9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939",
+  "deployedAt": "2026-10-08T02:36:57Z"
+}

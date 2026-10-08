@@ -118,7 +118,18 @@ Stellar Estate strictly eliminates floating-point arithmetic from financial calc
 
 ## 4. Soroban Smart Contracts (`contracts/`)
 
-Implemented in Rust for the Soroban smart contract framework:
+Implemented in Rust for the Soroban smart contract framework and deployed to Stellar Testnet:
+
+| Parameter | On-Chain Value |
+| :--- | :--- |
+| **Contract Name** | `property_vault` (Property Revenue Vault & Settlement Engine) |
+| **Contract Address** | [`CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M`](https://stellar.expert/explorer/testnet/contract/CCTFHRIL6UDR5Z3D2YCPRTZD5AA5FBHGXLBVCMYYHC6XIOS3H4UBL57M) |
+| **Deployment Tx Hash** | [`9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939`](https://stellar.expert/explorer/testnet/tx/9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939) |
+| **Network** | Stellar Testnet (`Ledger 5080686`) |
+| **Deployer Account** | [`GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ`](https://stellar.expert/explorer/testnet/account/GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ) |
+| **WASM Code Hash** | `48e83035a07f93569ebe473bb4c0d74ee91830e222b33d3fea1f22a33d4b1db7` |
+
+### Architecture Modules:
 
 1. **`property_vault` (`contracts/property_vault`):**
    * Manages property metadata and financial state.
