@@ -29,17 +29,17 @@ class InMemoryDatabase {
   auditEvents: AuditEvent[] = [];
   reconciliationReports: ReconciliationReport[] = [];
 
-  // Level 2: Distribution Agreements
+  // Distribution Agreements
   agreements: Map<string, DistributionAgreement> = new Map();
   agreementVersions: Map<string, DistributionAgreementVersion> = new Map();
 
-  // Level 3: Settlement Records & Consumed Revenues
+  // Settlement Records & Consumed Revenues
   settlements: Map<string, Settlement> = new Map();
   consumedRevenueIds: Set<string> = new Set();
 
   constructor() {
     this.seedDefaultData();
-    this.seedLevel2Agreements();
+    this.seedDefaultAgreements();
   }
 
   private seedDefaultData() {
@@ -153,7 +153,7 @@ class InMemoryDatabase {
     this.participants.set(participantOwner.id, participantOwner);
     this.participants.set(participantOperator.id, participantOperator);
 
-    // Level 3: Seed initial verified Testnet revenue event for The Meridian ($10,000 USDC)
+    // Seed initial verified Testnet revenue event for The Meridian ($10,000 USDC)
     const initialTxHash = '6a3f81e8435d648083818e7e163b71f92e079010467b7e211516e877c44e8c1e';
     const bTx: BlockchainTransaction = {
       id: 'tx-meridian-rev-001',
@@ -198,7 +198,7 @@ class InMemoryDatabase {
     this.revenueRecords.set(initialRevenue.id, initialRevenue);
   }
 
-  private seedLevel2Agreements() {
+  private seedDefaultAgreements() {
     const propId = 'prop-meridian-abuja';
     const agreementId = 'agr-meridian-001';
 
@@ -530,7 +530,7 @@ class InMemoryDatabase {
   }
 
   // ==============================================================================
-  // LEVEL 2: DISTRIBUTION AGREEMENT QUERIES & MUTATIONS
+  // DISTRIBUTION AGREEMENT QUERIES & MUTATIONS
   // ==============================================================================
 
   getAgreementsByProperty(propertyId: string): DistributionAgreement[] {
@@ -568,7 +568,7 @@ class InMemoryDatabase {
   }
 
   // ==============================================================================
-  // LEVEL 3: SETTLEMENT QUERIES & MUTATIONS
+  // SETTLEMENT QUERIES & MUTATIONS
   // ==============================================================================
 
   saveSettlement(settlement: Settlement): Settlement {

@@ -156,7 +156,7 @@ apiRouter.get('/properties/:id/revenue', (req: Request, res: Response) => {
 });
 
 // ==============================================================================
-// LEVEL 2: DISTRIBUTION AGREEMENT ENDPOINTS
+// DISTRIBUTION AGREEMENT ENDPOINTS
 // ==============================================================================
 
 apiRouter.get('/properties/:id/agreements', (req: Request, res: Response) => {
@@ -373,7 +373,7 @@ apiRouter.get('/audit/events', (req: Request, res: Response) => {
 });
 
 // ==============================================================================
-// LEVEL 3: SETTLEMENT, PASSPORT & STAKEHOLDER EARNINGS ENDPOINTS
+// SETTLEMENT, PASSPORT & STAKEHOLDER EARNINGS ENDPOINTS
 // ==============================================================================
 
 apiRouter.get('/properties/:id/revenue-pool', (req: Request, res: Response) => {

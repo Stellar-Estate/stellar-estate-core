@@ -98,7 +98,7 @@ export interface ReconciliationReport {
 }
 
 // ==============================================================================
-// LEVEL 2: PROPERTY DISTRIBUTION AGREEMENT MODELS
+// PROPERTY DISTRIBUTION AGREEMENT MODELS
 // ==============================================================================
 
 export type AgreementStatus =
@@ -212,7 +212,7 @@ export interface SettlementPreviewResult {
 }
 
 // ==============================================================================
-// LEVEL 3: PROGRAMMABLE PROPERTY-REVENUE SETTLEMENT MODELS
+// PROGRAMMABLE PROPERTY-REVENUE SETTLEMENT MODELS
 // ==============================================================================
 
 export type SettlementExecutionStatus =

@@ -5,9 +5,9 @@ import { reconciliationService } from './reconciliation/reconciliationService.js
 import { agreementService } from './services/agreementService.js';
 import { agreementHashingService } from './services/agreementHashingService.js';
 
-describe('Stellar Estate Core Backend — Level 1 & Level 2 Test Suite', () => {
+describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
-  // LEVEL 1 REGRESSION TESTS
+  // CORE PROPERTY & REVENUE TESTS
   // ============================================================================
 
   it('GET /api/health should return healthy status', async () => {
@@ -55,7 +55,7 @@ describe('Stellar Estate Core Backend — Level 1 & Level 2 Test Suite', () => {
   });
 
   // ============================================================================
-  // LEVEL 2 DISTRIBUTION AGREEMENT & WATERFALL TESTS
+  // DISTRIBUTION AGREEMENT & WATERFALL TESTS
   // ============================================================================
 
   it('GET /api/properties/:id/agreements should return pre-seeded agreement with versions', async () => {
@@ -236,7 +236,7 @@ describe('Stellar Estate Core Backend — Level 1 & Level 2 Test Suite', () => {
   });
 
   // ============================================================================
-  // LEVEL 3 PROGRAMMABLE SETTLEMENT & RECONCILIATION TESTS
+  // PROGRAMMABLE SETTLEMENT & RECONCILIATION TESTS
   // ============================================================================
 
   it('GET /api/properties/:id/revenue-pool should return accurate accounting state', async () => {
@@ -251,7 +251,7 @@ describe('Stellar Estate Core Backend — Level 1 & Level 2 Test Suite', () => {
     expect(pool.revenue_entries_count).toBeGreaterThanOrEqual(1);
   });
 
-  it('POST /api/settlements/preview should generate deterministic $10,000 waterfall matching Level 2 rules', async () => {
+  it('POST /api/settlements/preview should generate deterministic $10,000 waterfall matching agreement rules', async () => {
     const res = await request(app)
       .post('/api/settlements/preview')
       .send({

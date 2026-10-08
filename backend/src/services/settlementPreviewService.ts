@@ -100,7 +100,7 @@ export class SettlementPreviewService {
       accounting_balanced: isBalanced,
       precision_model: 'Safe Integer (Basis Points / Cents Arithmetic)',
       disclaimer:
-        'Settlement Preview only. Illustrates deterministic allocation rules established in Level 2. Final automated multi-recipient settlement executes in Level 3.',
+        'Settlement Preview only. Illustrates deterministic allocation rules. Final automated multi-recipient settlement executes on Stellar network.',
     };
   }
 }

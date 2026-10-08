@@ -100,7 +100,7 @@ pub struct RevenueEntry {
     pub reconciled: bool,
 }
 
-/// Level 2: On-chain Waterfall Rule specification
+/// On-chain Waterfall Rule specification
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct WaterfallRule {
@@ -111,7 +111,7 @@ pub struct WaterfallRule {
     pub description: String,
 }
 
-/// Level 2: On-chain Stakeholder allocation record
+/// On-chain Stakeholder allocation record
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Stakeholder {
@@ -121,7 +121,7 @@ pub struct Stakeholder {
     pub has_approved: bool,
 }
 
-/// Level 2: Authoritative On-chain Distribution Agreement Version State
+/// Authoritative On-chain Distribution Agreement Version State
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AgreementVersionState {
@@ -134,7 +134,7 @@ pub struct AgreementVersionState {
     pub locked_at: u64,
 }
 
-/// Level 3: Settlement Status state machine
+/// Settlement Status state machine
 #[contracttype]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -147,7 +147,7 @@ pub enum SettlementStatus {
     Failed = 6,
 }
 
-/// Level 3: Individual recipient payout entry
+/// Individual recipient payout entry
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RecipientPayout {
@@ -156,7 +156,7 @@ pub struct RecipientPayout {
     pub amount: i128,
 }
 
-/// Level 3: Immutable On-Chain Settlement Record
+/// Immutable On-Chain Settlement Record
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SettlementRecord {
@@ -174,7 +174,7 @@ pub struct SettlementRecord {
     pub executed_at: u64,
 }
 
-/// Level 3: Settlement Execution Arguments (bundles parameters to obey Soroban <=10 param limit)
+/// Settlement Execution Arguments (bundles parameters to obey Soroban <=10 param limit)
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SettlementExecutionArgs {

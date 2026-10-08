@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- Stellar Estate Financial Core Schema
--- Level 1: Property -> Revenue Foundation with Level 2/3 Future Architecture
+-- Production Schema: Property, Revenue, Agreement, Waterfall & Settlement Tables
 -- ==============================================================================
 
 -- 1. Properties
@@ -122,11 +122,10 @@ CREATE TABLE IF NOT EXISTS reconciliation_records (
 );
 
 -- ==============================================================================
--- LEVEL 2 & 3 FUTURE-READY ARCHITECTURAL MODELS
--- (Prepared for clean progression without table drops)
+-- DISTRIBUTION AGREEMENT & SETTLEMENT ENGINE MODELS
 -- ==============================================================================
 
--- 9. Distribution Agreements (Level 2)
+-- 9. Distribution Agreements
 CREATE TABLE IF NOT EXISTS distribution_agreements (
     id VARCHAR(64) PRIMARY KEY,
     property_id VARCHAR(64) NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
@@ -135,7 +134,7 @@ CREATE TABLE IF NOT EXISTS distribution_agreements (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 10. Distribution Agreement Versions (Level 2)
+-- 10. Distribution Agreement Versions
 CREATE TABLE IF NOT EXISTS distribution_agreement_versions (
     id VARCHAR(64) PRIMARY KEY,
     agreement_id VARCHAR(64) NOT NULL REFERENCES distribution_agreements(id) ON DELETE CASCADE,
@@ -146,7 +145,7 @@ CREATE TABLE IF NOT EXISTS distribution_agreement_versions (
     status VARCHAR(32) NOT NULL DEFAULT 'PENDING'
 );
 
--- 11. Waterfall Rules (Level 2)
+-- 11. Waterfall Rules
 CREATE TABLE IF NOT EXISTS waterfall_rules (
     id VARCHAR(64) PRIMARY KEY,
     agreement_version_id VARCHAR(64) NOT NULL REFERENCES distribution_agreement_versions(id) ON DELETE CASCADE,
@@ -157,7 +156,7 @@ CREATE TABLE IF NOT EXISTS waterfall_rules (
     recipient_type VARCHAR(64) NOT NULL
 );
 
--- 12. Settlement Runs (Level 3)
+-- 12. Settlement Runs
 CREATE TABLE IF NOT EXISTS settlement_runs (
     id VARCHAR(64) PRIMARY KEY,
     property_id VARCHAR(64) NOT NULL REFERENCES properties(id) ON DELETE RESTRICT,
@@ -169,7 +168,7 @@ CREATE TABLE IF NOT EXISTS settlement_runs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 13. Settlement Recipients (Level 3)
+-- 13. Settlement Recipients
 CREATE TABLE IF NOT EXISTS settlement_recipients (
     id VARCHAR(64) PRIMARY KEY,
     settlement_run_id VARCHAR(64) NOT NULL REFERENCES settlement_runs(id) ON DELETE CASCADE,

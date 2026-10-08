@@ -36,7 +36,7 @@ Soroban contracts enforce the financial rules that must be trusted.
 
 ---
 
-## Financial Pipeline (Level 1: Property → Revenue)
+## Financial Pipeline (Property → Revenue → Settlement)
 
 1. **Property Discovery**: Properties have unique identifiers, physical characteristics, verified valuation, unit configurations, and a dedicated Stellar vault address.
 2. **Revenue Intent**: A payer initiates a revenue deposit (e.g. rental income, commercial lease).

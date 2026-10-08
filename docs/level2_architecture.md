@@ -1,7 +1,7 @@
-# Stellar Estate — Level 2 Architecture: Distribution Agreements & Waterfall Rules
+# Stellar Estate — Distribution Agreements & Waterfall Rules Architecture
 
 ## Overview
-Level 2 transforms Stellar Estate from a property revenue tracking platform into a **programmable property-revenue agreement system**.
+Stellar Estate operates as a **programmable property-revenue agreement system**.
 
 The central financial workflow is:
 ```text
@@ -19,7 +19,7 @@ The platform enforces clean boundaries between four distinct concepts:
 | **Property** | Physical asset and metadata representation | Off-chain database & On-chain Vault identity |
 | **Revenue** | Verified income arriving into property vaults | On-chain Horizon & Independent verifier |
 | **Distribution Agreement** | Immutable financial rule set governing revenue treatment | Soroban Contract + Canonical Hash |
-| **Settlement** | Final movement of money to recipients (Level 3) | Future Level 3 execution engine |
+| **Settlement** | Final movement of money to recipients | Automated multi-recipient execution engine |
 
 ---
 
@@ -88,9 +88,9 @@ READY_TO_LOCK (100% of required approvals collected)
 
 ---
 
-## 6. Level 3 Settlement Handoff
+## 6. Settlement Execution Flow
 
-At the end of Level 2, Level 3 can consume a locked agreement deterministically without guessing:
+The settlement engine consumes locked agreements deterministically without ambiguity:
 ```text
 Property
    ↓

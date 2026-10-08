@@ -1,15 +1,15 @@
-# Stellar Estate — Future Architecture: Levels 2 & 3
+# Stellar Estate — Architectural Blueprint: Agreements, Waterfalls & Settlement Engine
 
-Level 1 deliberately implements the first two pillars:
+Stellar Estate implements end-to-end programmable property cash flows:
 ```text
-Property → Revenue
+Property → Real Stellar Revenue → Property Revenue Pool → Locked Distribution Agreement → Deterministic Waterfall → Stakeholder Allocations → Multi-Recipient Stellar Settlement → Reconciliation & Trace
 ```
 
-The data models and Soroban contract foundations in `stellar-estate-core` are engineered to natively support Level 2 and Level 3 without structural redesign.
+The data models and Soroban contract foundations in `stellar-estate-core` natively implement this flow.
 
 ---
 
-## Level 2: Financial Rules & Distribution Agreements
+## 1. Financial Rules & Distribution Agreements
 
 ### Conceptual Model
 ```text
@@ -22,19 +22,18 @@ Waterfall Rules & Seniority Tranches
 Stakeholder Allocations
 ```
 
-### Planned Components
+### Components
 1. **Distribution Agreements**:
    - On-chain Soroban agreement contract linking property vault to approved disbursement policies.
    - Versioning system allowing lease or equity adjustments with cryptographic stakeholder signatures.
 2. **Waterfall Execution Tiers**:
    - **Tier 1 (Capital Reserves & Maintenance)**: Retains percentage or flat reserve provision.
-   - **Tier 2 (Senior Debt Service)**: Prioritized debt repayments.
-   - **Tier 3 (Operating Partner Fee)**: Management and property operator fees.
-   - **Tier 4 (Equity Distribution)**: Remaining net distributable cashflow prorated to equity holders.
+   - **Tier 2 (Operating Partner Fee)**: Management and property operator fees.
+   - **Tier 3 (Equity Distribution)**: Remaining net distributable cashflow prorated to equity holders.
 
 ---
 
-## Level 3: Programmable Settlement Engine
+## 2. Programmable Settlement Engine
 
 ### Conceptual Model
 ```text
@@ -47,12 +46,12 @@ Batch Settlement Run
 Stellar Multi-Recipient Payout
 ```
 
-### Planned Components
+### Components
 1. **Settlement Cycles**:
-   - Periodic (e.g. monthly or quarterly) or real-time streaming settlement runs.
-   - Snapshotting of verified revenue records.
+   - Real-time or periodic settlement runs consuming verified revenue records.
+   - Snapshotting of verified revenue records to guarantee single consumption.
 2. **Multi-Party Stellar Settlement**:
-   - Atomic multi-payment transactions or Soroban contract-orchestrated disbursements.
+   - Atomic multi-payment transactions orchestrated across recipient wallets.
    - Cryptographic proof of receipt for every beneficiary wallet.
 3. **Automated Continuous Reconciliation**:
-   - Bi-directional verification of bank fiat off-ramps and Stellar ledger states.
+   - Continuous verification ensuring ledger sums balance exactly to initial deposits.
