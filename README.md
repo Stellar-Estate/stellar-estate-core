@@ -202,3 +202,12 @@ cargo test --workspace --verbose
 ## 8. Legal & Prototype Boundary
 
 > **System Notice:** Stellar Estate is a prototype programmable real-estate financial infrastructure. It records financial agreements, waterfall allocations, and cash flows on Stellar Testnet. It does **not** transfer legal title to physical property, represent a regulated securities offering, or constitute financial/investment advice. Physical property title remains governed by jurisdiction-specific real-estate registries.
+
+---
+
+## 9. Community, Contributing & License
+
+* **Contributing:** We welcome contributions! Please review our [Contributing Guidelines](CONTRIBUTING.md) and check out our [Good First Issues](https://github.com/Stellar-Estate/stellar-estate-core/issues).
+* **Code of Conduct:** All community participants are expected to adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
+* **License:** This project is licensed under the **Apache License 2.0** — see the [LICENSE](LICENSE) file for details.
+
