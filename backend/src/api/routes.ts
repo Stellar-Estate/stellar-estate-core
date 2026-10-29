@@ -1204,3 +1204,57 @@ apiRouter.get('/webhooks/logs', (req: Request, res: Response) => {
   });
 });
 
+apiRouter.get('/metrics', (req: Request, res: Response) => {
+  const mem = process.memoryUsage();
+  const uptime = process.uptime();
+  const propertiesCount = db.properties.size;
+  const revenueRecords = db.getAllRevenueRecords();
+  const settlements = db.getAllSettlements();
+  const agreements = Array.from(db.agreements.values());
+
+  const totalRevenueAmount = revenueRecords.reduce((sum, r) => sum + r.amount, 0);
+  const totalDistributableAmount = settlements.reduce((sum, s) => sum + s.distributable_amount, 0);
+  const lockedAgreements = agreements.filter((a) => a.status === 'LOCKED').length;
+
+  const lines = [
+    '# HELP stellar_estate_process_uptime_seconds Process uptime in seconds',
+    '# TYPE stellar_estate_process_uptime_seconds gauge',
+    `stellar_estate_process_uptime_seconds ${uptime.toFixed(2)}`,
+    '',
+    '# HELP stellar_estate_process_memory_heap_bytes Process heap memory usage in bytes',
+    '# TYPE stellar_estate_process_memory_heap_bytes gauge',
+    `stellar_estate_process_memory_heap_bytes ${mem.heapUsed}`,
+    '',
+    '# HELP stellar_estate_process_memory_rss_bytes Process RSS memory in bytes',
+    '# TYPE stellar_estate_process_memory_rss_bytes gauge',
+    `stellar_estate_process_memory_rss_bytes ${mem.rss}`,
+    '',
+    '# HELP stellar_estate_properties_total Total real estate properties managed',
+    '# TYPE stellar_estate_properties_total gauge',
+    `stellar_estate_properties_total ${propertiesCount}`,
+    '',
+    '# HELP stellar_estate_revenue_records_total Total recorded revenue deposits',
+    '# TYPE stellar_estate_revenue_records_total counter',
+    `stellar_estate_revenue_records_total ${revenueRecords.length}`,
+    '',
+    '# HELP stellar_estate_revenue_gross_usdc Cumulative recorded gross revenue in USDC',
+    '# TYPE stellar_estate_revenue_gross_usdc counter',
+    `stellar_estate_revenue_gross_usdc ${totalRevenueAmount.toFixed(2)}`,
+    '',
+    '# HELP stellar_estate_settlements_total Total completed waterfall settlements',
+    '# TYPE stellar_estate_settlements_total counter',
+    `stellar_estate_settlements_total ${settlements.length}`,
+    '',
+    '# HELP stellar_estate_settlements_distributed_usdc Cumulative stakeholder payouts distributed in USDC',
+    '# TYPE stellar_estate_settlements_distributed_usdc counter',
+    `stellar_estate_settlements_distributed_usdc ${totalDistributableAmount.toFixed(2)}`,
+    '',
+    '# HELP stellar_estate_agreements_locked Total locked immutable distribution agreements',
+    '# TYPE stellar_estate_agreements_locked gauge',
+    `stellar_estate_agreements_locked ${lockedAgreements}`,
+  ];
+
+  res.setHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+  res.send(lines.join('\n') + '\n');
+});
+

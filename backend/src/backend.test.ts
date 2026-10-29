@@ -878,5 +878,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(typeof res.body.data.audit.ledger_checksum).toBe('string');
     expect(res.body.data.audit.ledger_checksum.length).toBe(64);
   });
+
+  it('GET /api/metrics should export Prometheus metrics format', async () => {
+    const res = await request(app).get('/api/metrics');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/plain');
+    expect(res.text).toContain('stellar_estate_properties_total');
+    expect(res.text).toContain('stellar_estate_revenue_records_total');
+    expect(res.text).toContain('stellar_estate_settlements_total');
+    expect(res.text).toContain('stellar_estate_process_memory_heap_bytes');
+  });
 });
 
