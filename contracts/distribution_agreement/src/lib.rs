@@ -25,7 +25,7 @@ const EVENT_AGR_INIT: Symbol = symbol_short!("agr_init");
 const EVENT_PROPOSED: Symbol = symbol_short!("proposed");
 const EVENT_STK_ADDED: Symbol = symbol_short!("stk_added");
 const EVENT_APPROVED: Symbol = symbol_short!("approved");
-const EVENT_AGR_LOCKED: Symbol = symbol_short!("agr_lock");
+const EVENT_AGR_LOCKED: Symbol = symbol_short!("locked");
 
 #[contract]
 pub struct DistributionAgreementContract;
@@ -287,9 +287,15 @@ impl DistributionAgreementContract {
         // Extend persistent storage TTL for locked version state
         env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
+        let agreement_id: String = env
+            .storage()
+            .instance()
+            .get(&DataKey::AgreementId)
+            .unwrap_or(String::from_str(&env, "AGR"));
+
         env.events().publish(
-            (EVENT_AGR_LOCKED, caller),
-            (version, version_state.agreement_hash),
+            (EVENT_AGR_LOCKED, agreement_id),
+            (version, version_state.agreement_hash, caller, version_state.locked_at),
         );
 
         Ok(())
