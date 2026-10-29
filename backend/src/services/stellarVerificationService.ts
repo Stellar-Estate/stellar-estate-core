@@ -10,6 +10,8 @@ export interface VerificationParameters {
   expectedDestination: string;
   expectedAsset?: string;
   expectedAmount?: number;
+  expectedMemo?: string;
+  requireMemoMatch?: boolean;
 }
 
 export interface VerificationOutcome {
@@ -22,6 +24,7 @@ export interface VerificationOutcome {
   amount: number;
   sender: string;
   recipient: string;
+  memo?: string | null;
   operationType: string;
   ledgerSequence: number;
   confirmedAt: string;
@@ -190,7 +193,30 @@ export class StellarVerificationService {
         };
       }
 
-      // 5. Verification Successful
+      // 5. Validate Memo if required
+      if (params.requireMemoMatch && params.expectedMemo) {
+        const txMemo = tx.memo || '';
+        if (!txMemo.includes(params.expectedMemo)) {
+          return {
+            verified: false,
+            errorCode: 'MEMO_MISMATCH',
+            errorMessage: `Payment memo (${txMemo || 'none'}) does not match expected memo identifier (${params.expectedMemo}).`,
+            transactionHash,
+            network: 'TESTNET',
+            asset: matchedPayment.asset,
+            amount: matchedPayment.amount,
+            sender: matchedPayment.sender,
+            recipient: matchedPayment.recipient,
+            memo: txMemo || null,
+            operationType: matchedPayment.type,
+            ledgerSequence: tx.ledger_attr,
+            confirmedAt: tx.created_at,
+            explorerUrl: `https://stellar.expert/explorer/testnet/tx/${transactionHash}`,
+          };
+        }
+      }
+
+      // 6. Verification Successful
       return {
         verified: true,
         transactionHash,
@@ -199,6 +225,7 @@ export class StellarVerificationService {
         amount: matchedPayment.amount,
         sender: matchedPayment.sender,
         recipient: matchedPayment.recipient,
+        memo: tx.memo || null,
         operationType: matchedPayment.type,
         ledgerSequence: tx.ledger_attr,
         confirmedAt: tx.created_at,
