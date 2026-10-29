@@ -547,19 +547,50 @@ apiRouter.post('/faucet', async (req: Request, res: Response) => {
   }
 });
 
+interface CachedFeeStats {
+  data: any;
+  cachedAt: number;
+}
+let cachedFeeStats: CachedFeeStats | null = null;
+const FEE_STATS_CACHE_TTL_MS = 10000;
+
 apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
+  const now = Date.now();
+  if (cachedFeeStats && now - cachedFeeStats.cachedAt < FEE_STATS_CACHE_TTL_MS) {
+    return res.json({
+      success: true,
+      data: cachedFeeStats.data,
+      network: 'Stellar Testnet',
+      cached: true,
+      cachedAt: new Date(cachedFeeStats.cachedAt).toISOString(),
+    });
+  }
+
   try {
-    const horizonRes = await fetch(`${STELLAR_TESTNET_HORIZON}/fee_stats`);
+    const horizonRes = await fetch(`${STELLAR_TESTNET_HORIZON}/fee_stats`, {
+      signal: AbortSignal.timeout(3000),
+    });
     if (!horizonRes.ok) {
       throw new Error(`Horizon returned ${horizonRes.status}`);
     }
     const feeStats = await horizonRes.json();
+    cachedFeeStats = { data: feeStats, cachedAt: now };
     res.json({
       success: true,
       data: feeStats,
       network: 'Stellar Testnet',
+      cached: false,
     });
   } catch (err: any) {
+    if (cachedFeeStats) {
+      return res.json({
+        success: true,
+        data: cachedFeeStats.data,
+        network: 'Stellar Testnet',
+        cached: true,
+        stale: true,
+      });
+    }
     // Fallback standard fee stats if Horizon is slow
     res.json({
       success: true,
