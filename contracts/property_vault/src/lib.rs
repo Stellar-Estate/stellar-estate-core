@@ -237,6 +237,29 @@ impl PropertyVaultContract {
             .ok_or(ContractError::InvalidState)
     }
 
+    /// Retrieve paginated list of revenue records stored in persistent storage
+    pub fn get_revenue_records_paginated(
+        env: Env,
+        offset: u32,
+        limit: u32,
+    ) -> Vec<RevenueEntry> {
+        let mut results = Vec::new(&env);
+        let count = Self::get_revenue_count(env.clone());
+        if offset >= count || limit == 0 {
+            return results;
+        }
+
+        let start_id = offset.saturating_add(1);
+        let end_id = core::cmp::min(count, offset.saturating_add(limit));
+
+        for id in start_id..=end_id {
+            if let Ok(entry) = Self::get_revenue_entry(env.clone(), id) {
+                results.push_back(entry);
+            }
+        }
+        results
+    }
+
     /// Set vault operational status (Admin only)
     pub fn set_status(env: Env, caller: Address, new_status: VaultStatus) -> Result<(), ContractError> {
         caller.require_auth();
@@ -753,6 +776,12 @@ mod test {
         let fin = client.get_financials();
         assert_eq!(fin.total_revenue_received, 125_000_000);
         assert_eq!(fin.deposit_count, 2);
+
+        let page = client.get_revenue_records_paginated(&0, &10);
+        assert_eq!(page.len(), 2);
+        let page_single = client.get_revenue_records_paginated(&1, &1);
+        assert_eq!(page_single.len(), 1);
+        assert_eq!(page_single.get(0).unwrap().revenue_id, 2);
     }
 
     #[test]
