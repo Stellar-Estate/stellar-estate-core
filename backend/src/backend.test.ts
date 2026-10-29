@@ -1197,5 +1197,20 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data).toHaveProperty('total_settlements');
     expect(res.body.data).toHaveProperty('total_gross_settled');
   });
+
+  it('GET /api/agreements/:id/versions/:ver/superseded should detect supersede status', async () => {
+    const resV1 = await request(app).get('/api/agreements/agr-meridian-001/versions/1/superseded');
+    expect(resV1.status).toBe(200);
+    expect(resV1.body.success).toBe(true);
+    expect(resV1.body.data.version).toBe(1);
+    expect(resV1.body.data.is_superseded).toBe(true);
+
+    const latestVer = resV1.body.data.current_version;
+    const resLatest = await request(app).get(`/api/agreements/agr-meridian-001/versions/${latestVer}/superseded`);
+    expect(resLatest.status).toBe(200);
+    expect(resLatest.body.success).toBe(true);
+    expect(resLatest.body.data.version).toBe(latestVer);
+    expect(resLatest.body.data.is_superseded).toBe(false);
+  });
 });
 

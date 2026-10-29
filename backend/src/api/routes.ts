@@ -2146,3 +2146,32 @@ apiRouter.get('/properties/:id/settlements/count', (req: Request, res: Response)
     },
   });
 });
+
+apiRouter.get('/agreements/:id/versions/:ver/superseded', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const version = (agreement.versions || []).find((v: any) => v.version_number === versionNum || v.version === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Agreement version ${id} v${ver} not found.` });
+  }
+
+  const currentVer = agreement.current_version || 1;
+  const isSuperseded = versionNum < currentVer;
+
+  res.json({
+    success: true,
+    data: {
+      agreement_id: id,
+      version: versionNum,
+      current_version: currentVer,
+      is_superseded: isSuperseded,
+      status: version.status,
+      superseded_by: isSuperseded ? currentVer : null,
+    },
+  });
+});
