@@ -971,5 +971,17 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.network.protocol_version).toBe(22);
     expect(res.body.network.accepted_assets.length).toBeGreaterThan(0);
   });
+
+  it('GET /api/stakeholders/:address/portfolio should aggregate property equity holdings and lifetime payouts', async () => {
+    const aliceAddress = 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD';
+    const res = await request(app).get(`/api/stakeholders/${aliceAddress}/portfolio`);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.stakeholder_address).toBe(aliceAddress);
+    expect(res.body.data.total_properties_invested).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.holdings.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.holdings[0]).toHaveProperty('equity_value_usdc');
+    expect(res.body.data.holdings[0]).toHaveProperty('share_percentage');
+  });
 });
 

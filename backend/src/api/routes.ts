@@ -1438,3 +1438,98 @@ apiRouter.get('/properties/:id/audit-trail', (req: Request, res: Response) => {
   });
 });
 
+apiRouter.get('/stakeholders/:address/portfolio', (req: Request, res: Response) => {
+  const targetAddress = req.params.address.toUpperCase();
+
+  const allAgreements = Array.from(db.agreements.values());
+  const allSettlements = db.getAllSettlements();
+  const allProperties = db.getAllProperties();
+
+  const holdings: Array<{
+    property_id: string;
+    property_name: string;
+    property_type: string;
+    property_image: string;
+    property_valuation: number;
+    share_basis_points: number;
+    share_percentage: number;
+    equity_value_usdc: number;
+    role: string;
+    agreement_id: string;
+    agreement_version: number;
+    total_lifetime_payouts_usdc: number;
+    payout_count: number;
+  }> = [];
+
+  let totalLifetimePayouts = 0;
+  let totalEquityValue = 0;
+
+  for (const property of allProperties) {
+    const propAgreements = allAgreements.filter((a) => a.property_id === property.id);
+    let matchedStakeholder: any = undefined;
+    let matchedAgreementId = '';
+    let matchedVersionNumber = 0;
+
+    for (const agr of propAgreements) {
+      const versions = db.getAgreementVersions(agr.id);
+      for (const v of [...versions].reverse()) {
+        const stk = v.stakeholders.find((s) => s.wallet_address.toUpperCase() === targetAddress);
+        if (stk) {
+          matchedStakeholder = stk;
+          matchedAgreementId = agr.id;
+          matchedVersionNumber = v.version_number;
+          break;
+        }
+      }
+      if (matchedStakeholder) break;
+    }
+
+    if (matchedStakeholder) {
+      const propSettlements = allSettlements.filter((s) => s.property_id === property.id);
+      let propertyPayouts = 0;
+      let payoutCount = 0;
+
+      for (const stl of propSettlements) {
+        for (const p of stl.payouts) {
+          if (p.recipient_address.toUpperCase() === targetAddress) {
+            propertyPayouts += p.actual_amount || p.expected_amount || 0;
+            payoutCount++;
+          }
+        }
+      }
+
+      totalLifetimePayouts += propertyPayouts;
+      const sharePct = matchedStakeholder.basis_points / 100;
+      const equityVal = Math.round(property.valuation * (matchedStakeholder.basis_points / 10000) * 100) / 100;
+      totalEquityValue += equityVal;
+
+      holdings.push({
+        property_id: property.id,
+        property_name: property.name,
+        property_type: property.property_type,
+        property_image: property.image_url,
+        property_valuation: property.valuation,
+        share_basis_points: matchedStakeholder.basis_points,
+        share_percentage: sharePct,
+        equity_value_usdc: equityVal,
+        role: matchedStakeholder.role,
+        agreement_id: matchedAgreementId,
+        agreement_version: matchedVersionNumber,
+        total_lifetime_payouts_usdc: Math.round(propertyPayouts * 100) / 100,
+        payout_count: payoutCount,
+      });
+    }
+  }
+
+  res.json({
+    success: true,
+    data: {
+      stakeholder_address: req.params.address,
+      total_properties_invested: holdings.length,
+      total_portfolio_equity_value_usdc: Math.round(totalEquityValue * 100) / 100,
+      total_lifetime_payouts_usdc: Math.round(totalLifetimePayouts * 100) / 100,
+      holdings,
+    },
+  });
+});
+
