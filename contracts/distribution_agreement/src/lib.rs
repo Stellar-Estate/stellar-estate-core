@@ -401,6 +401,16 @@ impl DistributionAgreementContract {
         }
     }
 
+    /// Retrieve specific stakeholder equity basis points for an agreement version
+    pub fn get_stakeholder_basis_points(
+        env: Env,
+        version: u32,
+        stakeholder: Address,
+    ) -> Result<u32, ContractError> {
+        let st = Self::get_stakeholder(env, version, stakeholder)?;
+        Ok(st.basis_points)
+    }
+
     /// Retrieve core property ID and administrative authority address
     pub fn get_agreement_meta(env: Env) -> Result<(String, Address), ContractError> {
         let property_id: String = env
@@ -738,6 +748,7 @@ mod test {
         );
         client.create_version(&admin, &1, &hash, &1);
         client.add_stakeholder(&admin, &1, &alice, &10000, &String::from_str(&env, "Alice"));
+        assert_eq!(client.get_stakeholder_basis_points(&1, &alice), 10000);
 
         assert_eq!(client.get_version_status(&1), AgreementStatus::PendingApprovals);
 
