@@ -267,6 +267,15 @@ impl PropertyVaultContract {
         Ok(())
     }
 
+    /// Check whether the property vault is in liquidating dissolution state
+    pub fn is_liquidating(env: Env) -> bool {
+        if let Ok(status) = Self::get_vault_status(env) {
+            status == VaultStatus::Liquidating
+        } else {
+            false
+        }
+    }
+
     /// Validates eligibility for distribution agreements
     pub fn check_waterfall_readiness(env: Env) -> Result<bool, ContractError> {
         let financials = Self::get_financials(env)?;
@@ -355,7 +364,7 @@ impl PropertyVaultContract {
             .get(&DataKey::VaultStatusKey)
             .ok_or(ContractError::NotInitialized)?;
 
-        if status != VaultStatus::Active {
+        if status == VaultStatus::Paused {
             return Err(ContractError::VaultPaused);
         }
 
@@ -744,6 +753,19 @@ mod test {
         let fin = client.get_financials();
         assert_eq!(fin.total_revenue_received, 125_000_000);
         assert_eq!(fin.deposit_count, 2);
+    }
+
+    #[test]
+    fn test_vault_liquidating_state_flow() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        assert!(!client.is_liquidating());
+
+        client.set_status(&admin, &VaultStatus::Liquidating);
+        assert!(client.is_liquidating());
+        assert_eq!(client.get_vault_status(), VaultStatus::Liquidating);
     }
 
     #[test]
