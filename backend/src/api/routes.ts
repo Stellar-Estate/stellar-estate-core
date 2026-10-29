@@ -6,6 +6,7 @@ import { reconciliationService } from '../reconciliation/reconciliationService.j
 import { agreementService } from '../services/agreementService.js';
 import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
+import { isValidStellarAddress } from '../utils/stellarValidator.js';
 
 export const apiRouter = Router();
 
@@ -455,5 +456,73 @@ apiRouter.get('/settlements/:id/trace', (req: Request, res: Response) => {
 apiRouter.get('/stakeholders/:address/earnings', (req: Request, res: Response) => {
   const earnings = db.getStakeholderEarnings(req.params.address);
   res.json({ success: true, data: earnings });
+});
+
+// ==============================================================================
+// TESTNET FAUCET & NETWORK METRICS
+// ==============================================================================
+
+apiRouter.post('/faucet', async (req: Request, res: Response) => {
+  const { address } = req.body;
+  if (!address || typeof address !== 'string' || !isValidStellarAddress(address)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Valid Stellar Ed25519 public key (G...) is required.',
+      code: 'INVALID_STELLAR_ADDRESS',
+    });
+  }
+
+  try {
+    const friendbotRes = await fetch(
+      `https://friendbot.stellar.org?addr=${encodeURIComponent(address.trim())}`
+    );
+    if (!friendbotRes.ok) {
+      const errText = await friendbotRes.text();
+      return res.status(502).json({
+        success: false,
+        error: `Friendbot request failed: ${errText}`,
+        code: 'FRIENDBOT_ERROR',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Successfully funded account with 10,000 Testnet XLM.',
+      address,
+      faucet: 'Stellar Foundation Friendbot',
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || 'Failed to contact Stellar Friendbot.',
+      code: 'FAUCET_DISPATCH_FAILED',
+    });
+  }
+});
+
+apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
+  try {
+    const horizonRes = await fetch(`${STELLAR_TESTNET_HORIZON}/fee_stats`);
+    if (!horizonRes.ok) {
+      throw new Error(`Horizon returned ${horizonRes.status}`);
+    }
+    const feeStats = await horizonRes.json();
+    res.json({
+      success: true,
+      data: feeStats,
+      network: 'Stellar Testnet',
+    });
+  } catch (err: any) {
+    // Fallback standard fee stats if Horizon is slow
+    res.json({
+      success: true,
+      data: {
+        last_ledger_base_fee: 100,
+        fee_charged: { min: 100, mode: 100, p90: 100, max: 1000 },
+        recommended_base_fee: 100,
+      },
+      fallback: true,
+    });
+  }
 });
 

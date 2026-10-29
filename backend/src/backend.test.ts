@@ -368,5 +368,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(earnings.total_settled).toBe(3420.0);
     expect(earnings.settlements.length).toBe(1);
   });
+
+  it('POST /api/faucet should reject invalid Stellar public key', async () => {
+    const res = await request(app)
+      .post('/api/faucet')
+      .send({ address: 'INVALID_NOT_ED25519' });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.code).toBe('INVALID_STELLAR_ADDRESS');
+  });
+
+  it('GET /api/blockchain/fee-stats should return base fee stats', async () => {
+    const res = await request(app).get('/api/blockchain/fee-stats');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('fee_charged');
+  });
 });
 
