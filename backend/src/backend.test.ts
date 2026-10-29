@@ -799,5 +799,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(Array.isArray(getRes.body.data)).toBe(true);
     expect(getRes.body.data.some((s: any) => s.url === 'https://myservice.io/hooks/stellar')).toBe(true);
   });
+
+  it('POST /api/blockchain/simulate-settlement should return waterfall disbursement preview without state mutation', async () => {
+    const res = await request(app)
+      .post('/api/blockchain/simulate-settlement')
+      .send({
+        property_id: 'prop-meridian-abuja',
+        simulated_gross: 25000,
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.simulation.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.simulation.simulated_gross).toBe(25000);
+    expect(res.body.simulation.distributable_amount).toBeGreaterThan(0);
+    expect(res.body.simulation.stakeholder_allocations.length).toBeGreaterThan(0);
+    expect(res.body.simulation.accounting_balanced).toBe(true);
+  });
 });
 

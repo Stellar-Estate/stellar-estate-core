@@ -728,6 +728,54 @@ apiRouter.post('/settlements/preview', (req: Request, res: Response) => {
   }
 });
 
+apiRouter.post('/blockchain/simulate-settlement', (req: Request, res: Response) => {
+  const { property_id, revenue_ids, simulated_gross } = req.body;
+  if (!property_id) {
+    return res.status(400).json({ success: false, error: 'property_id is required' });
+  }
+
+  try {
+    const lockedVersion = settlementService.resolveActiveLockedAgreement(property_id);
+    let gross = simulated_gross;
+    let revIds: string[] = [];
+
+    if (!gross && Array.isArray(revenue_ids) && revenue_ids.length > 0) {
+      const eligibility = settlementService.validateRevenueEligibility(property_id, revenue_ids);
+      gross = eligibility.totalGross;
+      revIds = revenue_ids;
+    } else if (!gross) {
+      gross = 10000;
+    }
+
+    const calc = settlementService.calculateWaterfall(
+      lockedVersion,
+      Math.round(gross * 100),
+      revIds,
+      [gross]
+    );
+
+    res.json({
+      success: true,
+      simulation: {
+        property_id,
+        agreement_id: lockedVersion.agreement_id,
+        agreement_version: lockedVersion.version_number,
+        agreement_hash: lockedVersion.agreement_hash,
+        simulated_gross: gross,
+        expenses: calc.expenses,
+        reserve: calc.reserve,
+        fees: calc.fees,
+        distributable_amount: calc.distributableAmount,
+        breakdown: calc.breakdown,
+        stakeholder_allocations: calc.allocations,
+        accounting_balanced: true,
+      },
+    });
+  } catch (err: any) {
+    res.status(422).json({ success: false, error: err.message });
+  }
+});
+
 apiRouter.post('/settlements/execute', async (req: Request, res: Response) => {
   const parseResult = executeSettlementRequestSchema.safeParse(req.body);
   if (!parseResult.success) {
