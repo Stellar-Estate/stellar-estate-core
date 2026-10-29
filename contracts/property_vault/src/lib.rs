@@ -530,6 +530,15 @@ impl PropertyVaultContract {
             .ok_or(ContractError::InvalidState)
     }
 
+    /// Retrieve settlement distributable ratio tuple: (distributable_amount, gross_revenue)
+    pub fn get_settlement_distrib_ratio(
+        env: Env,
+        settlement_id: String,
+    ) -> Result<(i128, i128), ContractError> {
+        let record = Self::get_settlement(env, settlement_id)?;
+        Ok((record.distributable_amount, record.gross_revenue))
+    }
+
     /// Retrieve paginated list of settlement records executed by the vault
     pub fn get_settlements_paginated(
         env: Env,
@@ -949,6 +958,10 @@ mod test {
         assert!(!client.is_settlement_executed(&String::from_str(&env, "STL-UNEXECUTED")));
         assert_eq!(client.get_settlement_count(), 1);
         assert_eq!(client.get_total_settled_revenue(), 1_000_000_000);
+
+        let (distributable, gross) = client.get_settlement_distrib_ratio(&settlement_id);
+        assert_eq!(distributable, 760_000_000);
+        assert_eq!(gross, 1_000_000_000);
 
         let record = client.get_settlement(&settlement_id);
         assert_eq!(record.settlement_id, settlement_id);
