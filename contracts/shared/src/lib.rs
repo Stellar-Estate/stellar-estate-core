@@ -33,6 +33,12 @@ pub enum ContractError {
     RecipientAllocationMismatch = 24,
 }
 
+/// Ledger TTL bump parameters to prevent contract state archival on Stellar Testnet and Mainnet
+pub const INSTANCE_BUMP_THRESHOLD: u32 = 100_000;   // ~7 days of ledgers threshold
+pub const INSTANCE_BUMP_AMOUNT: u32 = 500_000;      // ~35 days bump
+pub const PERSISTENT_BUMP_THRESHOLD: u32 = 100_000;
+pub const PERSISTENT_BUMP_AMOUNT: u32 = 500_000;
+
 /// Status of the property vault
 #[contracttype]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -189,4 +195,3 @@ pub struct SettlementExecutionArgs {
     pub fees: i128,
     pub distributable_amount: i128,
 }
-
