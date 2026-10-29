@@ -586,5 +586,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const aliceDelta = res.body.data.stakeholder_deltas.find((d: any) => d.name.includes('Alice'));
     expect(aliceDelta).toBeDefined();
   });
+
+  it('GET /api/stakeholders/:address/export.csv should export stakeholder statement CSV attachment', async () => {
+    const res = await request(app).get('/api/stakeholders/GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD/export.csv');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.headers['content-disposition']).toContain('attachment');
+    expect(res.text).toContain('Stakeholder Financial Earnings Statement');
+    expect(res.text).toContain('Alice');
+  });
 });
 

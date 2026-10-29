@@ -646,6 +646,40 @@ apiRouter.get('/stakeholders/:address/earnings', (req: Request, res: Response) =
   res.json({ success: true, data: earnings });
 });
 
+apiRouter.get('/stakeholders/:address/export.csv', (req: Request, res: Response) => {
+  const earnings = db.getStakeholderEarnings(req.params.address);
+  const rows = [
+    ['Stellar Estate - Stakeholder Financial Earnings Statement'],
+    ['Generated At', new Date().toISOString()],
+    ['Stakeholder Name', earnings.stakeholder_name],
+    ['Wallet Address', earnings.wallet_address],
+    ['Role', earnings.role],
+    ['Current Allocation Basis Points', String(earnings.current_allocation_bps)],
+    ['Total Allocated (USDC)', String(earnings.total_allocated)],
+    ['Total Settled (USDC)', String(earnings.total_settled)],
+    ['Pending Settlement (USDC)', String(earnings.pending_amount)],
+    [],
+    ['Settlement ID', 'Property ID', 'Date', 'Amount', 'Status', 'Transaction Hash'],
+    ...earnings.settlements.map((s) => [
+      s.settlement_id,
+      s.property_id,
+      s.date,
+      String(s.amount),
+      s.status,
+      s.tx_hash || '',
+    ]),
+  ];
+
+  const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="stakeholder_${earnings.wallet_address.substring(0, 8)}_earnings.csv"`
+  );
+  res.send(csv);
+});
+
 // ==============================================================================
 // TESTNET FAUCET & NETWORK METRICS
 // ==============================================================================
