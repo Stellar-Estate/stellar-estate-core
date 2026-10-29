@@ -1934,3 +1934,27 @@ apiRouter.post('/properties/:id/reserves/calculate-replenishment', (req: Request
     },
   });
 });
+
+
+apiRouter.get('/properties/:id/vault/accepted-asset', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const assetCode = property.accepted_asset || 'USDC';
+  const contractId = property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH';
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      accepted_asset_code: assetCode,
+      contract_id: contractId,
+      decimals: 7,
+      network: 'TESTNET',
+      explorer_url: `https://stellar.expert/explorer/testnet/contract/${contractId}`,
+    },
+  });
+});

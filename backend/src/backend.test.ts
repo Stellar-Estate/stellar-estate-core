@@ -1129,5 +1129,13 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data).toHaveProperty('replenishment_needed');
     expect(res.body.data).toHaveProperty('is_reserve_healthy');
   });
+
+  it('GET /api/properties/:id/vault/accepted-asset should return asset address and explorer url', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/vault/accepted-asset');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.accepted_asset_code).toBe('USDC');
+    expect(res.body.data.explorer_url).toContain('stellar.expert');
+  });
 });
 
