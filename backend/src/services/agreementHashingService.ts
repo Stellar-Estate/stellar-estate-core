@@ -109,7 +109,7 @@ export class AgreementHashingService {
       stakeholders: sortedStakeholders,
     };
 
-    return JSON.stringify(canonicalObject);
+    return canonicalizeJson(canonicalObject);
   }
 
   /**
@@ -118,6 +118,38 @@ export class AgreementHashingService {
   computeAgreementHash(canonicalJson: string): string {
     return crypto.createHash('sha256').update(canonicalJson, 'utf8').digest('hex');
   }
+}
+
+/**
+ * Canonicalize a JavaScript value according to RFC 8785 (JSON Canonicalization Scheme - JCS)
+ * https://datatracker.ietf.org/doc/html/rfc8785
+ */
+export function canonicalizeJson(value: any): string {
+  if (value === null || typeof value !== 'object') {
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) {
+        throw new TypeError('Cannot canonicalize non-finite number');
+      }
+      return Object.is(value, -0) ? '0' : String(value);
+    }
+    return JSON.stringify(value);
+  }
+
+  if (Array.isArray(value)) {
+    const elements = value.map((elem) => (elem === undefined || typeof elem === 'symbol' ? 'null' : canonicalizeJson(elem)));
+    return `[${elements.join(',')}]`;
+  }
+
+  // Object: sort keys lexicographically by UTF-16 code units
+  const keys = Object.keys(value).sort();
+  const pairs: string[] = [];
+  for (const k of keys) {
+    const val = value[k];
+    if (val !== undefined && typeof val !== 'symbol' && typeof val !== 'function') {
+      pairs.push(`${JSON.stringify(k)}:${canonicalizeJson(val)}`);
+    }
+  }
+  return `{${pairs.join(',')}}`;
 }
 
 export const agreementHashingService = new AgreementHashingService();

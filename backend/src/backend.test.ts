@@ -3,7 +3,7 @@ import request from 'supertest';
 import { app } from './index.js';
 import { reconciliationService } from './reconciliation/reconciliationService.js';
 import { agreementService } from './services/agreementService.js';
-import { agreementHashingService } from './services/agreementHashingService.js';
+import { agreementHashingService, canonicalizeJson } from './services/agreementHashingService.js';
 import { stellarUriService } from './services/stellarUriService.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
@@ -422,6 +422,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const parsedTx = stellarUriService.parseUri(txUri);
     expect(parsedTx.operation).toBe('tx');
     expect(parsedTx.params.xdr).toBe('AAAAAGX8...test');
+  });
+
+  it('canonicalizeJson should adhere to RFC 8785 lexicographical key ordering', () => {
+    const objA = { z: 100, a: 'test', m: { b: 2, a: 1 } };
+    const objB = { a: 'test', m: { a: 1, b: 2 }, z: 100 };
+
+    const canonA = canonicalizeJson(objA);
+    const canonB = canonicalizeJson(objB);
+
+    expect(canonA).toBe('{"a":"test","m":{"a":1,"b":2},"z":100}');
+    expect(canonA).toBe(canonB);
+
+    const hashA = agreementHashingService.computeAgreementHash(canonA);
+    const hashB = agreementHashingService.computeAgreementHash(canonB);
+    expect(hashA).toBe(hashB);
   });
 });
 
