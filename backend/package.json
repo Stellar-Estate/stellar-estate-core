@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
     "migrate": "tsx src/database/migrate.ts",
-    "seed": "tsx src/database/seed.ts"
+    "seed": "tsx src/database/seed.ts",
+    "verify:types": "node ../scripts/verify-type-sync.mjs"
   },
   "keywords": [
     "stellar",
