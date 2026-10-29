@@ -1099,5 +1099,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       expect(res.body.data.ratios_bps).toBeDefined();
     }
   });
+
+  it('GET /api/agreements/:id/versions/:ver/rules-summary should return human-readable waterfall tiers', async () => {
+    const res = await request(app).get('/api/agreements/agr-meridian-001/versions/2/rules-summary');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.agreement_id).toBe('agr-meridian-001');
+    expect(res.body.data.version).toBe(2);
+    expect(Array.isArray(res.body.data.rules_summary)).toBe(true);
+    expect(Array.isArray(res.body.data.equity_allocation)).toBe(true);
+  });
 });
 

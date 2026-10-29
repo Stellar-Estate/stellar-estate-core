@@ -1831,3 +1831,52 @@ apiRouter.get('/settlements/:id/breakdown', (req: Request, res: Response) => {
     },
   });
 });
+
+
+apiRouter.get('/agreements/:id/versions/:ver/rules-summary', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const version = (agreement.versions || []).find((v: any) => v.version_number === versionNum || v.version === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Agreement version ${id} v${ver} not found.` });
+  }
+
+  const rules = version.waterfall_rules || version.waterfallRules || [];
+  const stakeholders = version.stakeholders || [];
+  const rulesSummary = rules.map((r: any, idx: number) => ({
+    tier: idx + 1,
+    priority: r.priority,
+    name: r.name,
+    type: r.rule_type,
+    amount_or_bps: r.amount_or_bps,
+    formatted: r.rule_type === 'PERCENTAGE_BASIS_POINTS' ? `${(r.amount_or_bps / 100).toFixed(2)}%` : `$${r.amount_or_bps}`,
+    description: r.description,
+  }));
+
+  const equityAllocation = stakeholders.map((s: any) => ({
+    name: s.name,
+    role: s.role,
+    wallet_address: s.wallet_address,
+    basis_points: s.basis_points,
+    equity_percentage: `${(s.basis_points / 100).toFixed(2)}%`,
+    has_approved: !!s.has_approved,
+  }));
+
+  res.json({
+    success: true,
+    data: {
+      agreement_id: id,
+      version: versionNum,
+      status: version.status,
+      hash: version.agreement_hash,
+      total_rules: rules.length,
+      rules_summary: rulesSummary,
+      equity_allocation: equityAllocation,
+    },
+  });
+});
