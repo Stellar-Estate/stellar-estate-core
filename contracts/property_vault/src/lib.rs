@@ -220,9 +220,19 @@ impl PropertyVaultContract {
             return Err(ContractError::Unauthorized);
         }
 
+        let old_status: VaultStatus = env
+            .storage()
+            .instance()
+            .get(&DataKey::VaultStatusKey)
+            .unwrap_or(VaultStatus::Active);
+
         env.storage().instance().set(&DataKey::VaultStatusKey, &new_status);
 
-        env.events().publish((EVENT_STATUS_CHG, caller), new_status as u32);
+        let meta = Self::get_property_metadata(env.clone())?;
+        env.events().publish(
+            (EVENT_STATUS_CHG, meta.property_id),
+            (old_status as u32, new_status as u32, caller),
+        );
         Ok(())
     }
 
