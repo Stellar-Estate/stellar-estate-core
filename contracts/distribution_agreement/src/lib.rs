@@ -2,7 +2,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol,
+    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec,
 };
 use stellar_estate_shared::{
     AgreementStatus, AgreementVersionState, ContractError, Stakeholder,
@@ -402,6 +402,23 @@ impl DistributionAgreementContract {
         Ok((state.approved_count, state.total_stakeholders, is_ready))
     }
 
+    /// Retrieve list of all registered version numbers for this agreement contract
+    pub fn get_all_versions(env: Env) -> Vec<u32> {
+        let mut versions = Vec::new(&env);
+        let max_ver: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ActiveVersion)
+            .unwrap_or(0);
+
+        for ver in 1..=max_ver {
+            if env.storage().persistent().has(&DataKey::VersionState(ver)) {
+                versions.push_back(ver);
+            }
+        }
+        versions
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -485,6 +502,8 @@ mod test {
         client.create_version(&admin, &1, &hash_v1, &3);
         assert_eq!(client.get_active_version_number(), 1);
         assert_eq!(client.get_version_status(&1), AgreementStatus::PendingApprovals);
+        assert_eq!(client.get_all_versions().len(), 1);
+        assert_eq!(client.get_all_versions().get(0).unwrap(), 1);
 
         // 3. Add stakeholders (Alice 4000 bps, Bob 3500 bps, Charlie 2500 bps = 10,000 bps / 100%)
         client.add_stakeholder(&admin, &1, &alice, &4000, &String::from_str(&env, "Alice"));
