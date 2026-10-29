@@ -152,7 +152,44 @@ apiRouter.get('/properties/:id', (req: Request, res: Response) => {
 apiRouter.get('/properties/:id/revenue', (req: Request, res: Response) => {
   try {
     const data = revenueService.getPropertyRevenueHistory(req.params.id);
-    res.json({ success: true, data });
+    const page = parseInt(req.query.page as string, 10);
+    const limit = parseInt(req.query.limit as string, 10);
+
+    if (!isNaN(page) && !isNaN(limit) && page > 0 && limit > 0) {
+      const total = data.records.length;
+      const totalPages = Math.ceil(total / limit) || 1;
+      const offset = (page - 1) * limit;
+      const paginatedRecords = data.records.slice(offset, offset + limit);
+
+      return res.json({
+        success: true,
+        data: {
+          ...data,
+          records: paginatedRecords,
+        },
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      });
+    }
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: 1,
+        limit: data.records.length,
+        total: data.records.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false,
+      },
+    });
   } catch (err: any) {
     res.status(404).json({ success: false, error: err.message });
   }
