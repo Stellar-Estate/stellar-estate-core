@@ -706,6 +706,18 @@ impl PropertyVaultContract {
         Ok(bps as u32)
     }
 
+    /// Compute current net distributable ratio in basis points (total_settled * 10000 / total_revenue_recorded)
+    pub fn get_net_distributable_ratio_bps(env: Env) -> Result<u32, ContractError> {
+        let financials = Self::get_financials(env.clone())?;
+        if financials.total_revenue_recorded <= 0 {
+            return Ok(0);
+        }
+        let total_settled = Self::get_total_settled_revenue(env);
+        let bps = (total_settled.checked_mul(10_000).unwrap_or(0))
+            / financials.total_revenue_recorded;
+        Ok(bps as u32)
+    }
+
     /// Check whether a revenue record exists on-chain for the given nonce
     pub fn has_revenue_record(env: Env, nonce: u32) -> bool {
         env.storage().persistent().has(&DataKey::RevenueRecord(nonce))
@@ -1008,6 +1020,7 @@ mod test {
         assert_eq!(client.get_settlement_count(), 1);
         assert_eq!(client.get_total_settled_revenue(), 1_000_000_000);
         assert_eq!(client.get_vault_reserve_ratio_bps(), 1000);
+        assert_eq!(client.get_net_distributable_ratio_bps(), 10000);
 
         let (distributable, gross) = client.get_settlement_distrib_ratio(&settlement_id);
         assert_eq!(distributable, 760_000_000);
