@@ -816,4 +816,63 @@ mod test {
 
         client.execute_settlement(&admin, &args, &payouts);
     }
+
+    #[test]
+    fn test_pause_and_unpause_vault_lifecycle() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        // Pause vault
+        client.set_status(&admin, &VaultStatus::Paused);
+        let (_, status, _, _) = client.get_financial_summary();
+        assert_eq!(status, VaultStatus::Paused);
+
+        // Unpause vault
+        client.set_status(&admin, &VaultStatus::Active);
+        let (_, status_active, _, _) = client.get_financial_summary();
+        assert_eq!(status_active, VaultStatus::Active);
+
+        // Recording revenue now succeeds
+        let rev_id = client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &500_000_000,
+        );
+        assert_eq!(rev_id, 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #8)")] // VaultPaused
+    fn test_revenue_rejected_when_vault_paused() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        // Put vault into emergency pause
+        client.set_status(&admin, &VaultStatus::Paused);
+
+        // Must reject revenue ingestion
+        client.record_revenue(
+            &depositor,
+            &String::from_str(&env, "rental_revenue"),
+            &100_000_000,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #3)")] // Unauthorized
+    fn test_non_admin_cannot_change_vault_status() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, _admin, _asset) = setup_test_vault(&env);
+        let hacker = Address::generate(&env);
+
+        client.set_status(&hacker, &VaultStatus::Paused);
+    }
 }
