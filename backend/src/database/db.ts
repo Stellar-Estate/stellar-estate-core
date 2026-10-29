@@ -544,6 +544,14 @@ class InMemoryDatabase {
     return this.agreements.get(id);
   }
 
+  getAgreementVersions(agreementId: string): DistributionAgreementVersion[] {
+    const agr = this.agreements.get(agreementId);
+    if (agr && agr.versions && agr.versions.length > 0) {
+      return agr.versions;
+    }
+    return Array.from(this.agreementVersions.values()).filter((v) => v.agreement_id === agreementId);
+  }
+
   getAgreementVersionById(versionId: string): DistributionAgreementVersion | undefined {
     return this.agreementVersions.get(versionId);
   }

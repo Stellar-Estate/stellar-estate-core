@@ -277,6 +277,22 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.versionB.version_number).toBe(2);
   });
 
+  it('POST /api/agreements/:id/fork should duplicate locked version terms into an editable proposal', async () => {
+    const res = await request(app)
+      .post('/api/agreements/agr-meridian-001/fork')
+      .send({
+        proposerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        sourceVersionNumber: 2,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.status).toBe('PENDING_APPROVALS');
+    expect(res.body.data.version_number).toBeGreaterThan(2);
+    expect(res.body.data.stakeholders.length).toBe(3);
+    expect(res.body.data.stakeholders.every((s: any) => !s.has_approved)).toBe(true);
+  });
+
   // ============================================================================
   // PROGRAMMABLE SETTLEMENT & RECONCILIATION TESTS
   // ============================================================================

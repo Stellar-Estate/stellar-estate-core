@@ -441,6 +441,27 @@ apiRouter.post('/agreements/versions/:versionId/revoke', (req: Request, res: Res
   }
 });
 
+apiRouter.post('/agreements/:id/fork', (req: Request, res: Response) => {
+  const { proposerAddress, sourceVersionNumber } = req.body;
+  if (!proposerAddress) {
+    return res.status(400).json({ success: false, error: 'proposerAddress is required' });
+  }
+
+  try {
+    const forked = agreementService.forkVersion(req.params.id, {
+      proposerAddress,
+      sourceVersionNumber: sourceVersionNumber !== undefined ? parseInt(sourceVersionNumber, 10) : undefined,
+    });
+    res.json({
+      success: true,
+      message: 'Agreement version successfully forked into a new draft proposal.',
+      data: forked,
+    });
+  } catch (err: any) {
+    res.status(422).json({ success: false, error: err.message });
+  }
+});
+
 apiRouter.post('/agreements/versions/:versionId/preview', (req: Request, res: Response) => {
   const parseResult = previewSettlementSchema.safeParse(req.body);
   if (!parseResult.success) {

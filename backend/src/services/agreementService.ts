@@ -217,6 +217,106 @@ export class AgreementService {
   }
 
   /**
+   * Fork an existing version into an editable draft proposal with auto-incremented version number
+   */
+  forkVersion(
+    agreementId: string,
+    req: { sourceVersionNumber?: number; proposerAddress: string }
+  ): DistributionAgreementVersion {
+    const agreement = db.getAgreementById(agreementId);
+    if (!agreement) {
+      throw new Error(`Agreement ${agreementId} not found.`);
+    }
+
+    const versions = db.getAgreementVersions(agreementId);
+    if (!versions || versions.length === 0) {
+      throw new Error(`No versions found for agreement ${agreementId}.`);
+    }
+
+    const sourceVersion = req.sourceVersionNumber
+      ? versions.find((v) => v.version_number === req.sourceVersionNumber)
+      : versions[versions.length - 1];
+
+    if (!sourceVersion) {
+      throw new Error(`Source version not found for agreement ${agreementId}.`);
+    }
+
+    const nextVersionNumber = agreement.current_version + 1;
+    const versionId = `ver-${agreementId}-v${nextVersionNumber}`;
+
+    const canonical = agreementHashingService.generateCanonicalRepresentation({
+      property_id: agreement.property_id,
+      agreement_identifier: agreement.agreement_identifier,
+      version_number: nextVersionNumber,
+      revenue_source: sourceVersion.revenue_source,
+      accepted_asset: sourceVersion.accepted_asset,
+      effective_date: new Date().toISOString().split('T')[0],
+      waterfall_rules: sourceVersion.waterfall_rules.map((r) => ({
+        priority: r.priority,
+        rule_type: r.rule_type,
+        name: r.name,
+        amount_or_bps: r.amount_or_bps,
+        description: r.description,
+      })),
+      stakeholders: sourceVersion.stakeholders.map((s) => ({
+        wallet_address: s.wallet_address,
+        name: s.name,
+        role: s.role,
+        basis_points: s.basis_points,
+      })),
+    });
+    const hash = agreementHashingService.computeAgreementHash(canonical);
+
+    const versionRules: WaterfallRule[] = sourceVersion.waterfall_rules.map((r, i) => ({
+      ...r,
+      id: `rule-${versionId}-${i + 1}`,
+      agreement_version_id: versionId,
+    }));
+
+    const versionStakeholders: AgreementStakeholder[] = sourceVersion.stakeholders.map((s, i) => ({
+      wallet_address: s.wallet_address,
+      name: s.name,
+      role: s.role,
+      basis_points: s.basis_points,
+      id: `stk-${versionId}-${i + 1}`,
+      agreement_version_id: versionId,
+      has_approved: false,
+    }));
+
+    const forkedVersion: DistributionAgreementVersion = {
+      id: versionId,
+      agreement_id: agreementId,
+      version_number: nextVersionNumber,
+      revenue_source: sourceVersion.revenue_source,
+      accepted_asset: sourceVersion.accepted_asset,
+      effective_date: new Date().toISOString().split('T')[0],
+      canonical_representation: canonical,
+      agreement_hash: hash,
+      status: 'PENDING_APPROVALS',
+      created_at: new Date().toISOString(),
+      waterfall_rules: versionRules,
+      stakeholders: versionStakeholders,
+      approvals: [],
+    };
+
+    db.saveAgreementVersion(forkedVersion);
+
+    db.recordAuditEvent({
+      event_type: 'VERSION_FORKED',
+      entity_type: 'DISTRIBUTION_AGREEMENT',
+      entity_id: agreementId,
+      actor_address: req.proposerAddress,
+      payload: {
+        sourceVersion: sourceVersion.version_number,
+        newVersion: nextVersionNumber,
+        agreementHash: hash,
+      },
+    });
+
+    return forkedVersion;
+  }
+
+  /**
    * Stakeholder reviews and approves the EXACT agreement version and hash
    */
   approveVersion(versionId: string, req: ApproveVersionRequest): DistributionAgreementVersion {
