@@ -17,7 +17,8 @@
     "check:env": "node ../scripts/check-env.mjs",
     "test:contracts": "cargo test --manifest-path ../Cargo.toml --offline",
     "verify:all": "node ../scripts/run-all-checks.mjs",
-    "audit:bundle": "node ../scripts/generate-audit-bundle.mjs"
+    "audit:bundle": "node ../scripts/generate-audit-bundle.mjs",
+    "verify:submission": "node ../scripts/pre-submission-check.mjs"
   },
   "keywords": [
     "stellar",
