@@ -455,6 +455,14 @@ impl PropertyVaultContract {
         String::from_str(&env, "1.0.0-stellar-estate")
     }
 
+    /// Retrieve the current operational status of the property vault
+    pub fn get_vault_status(env: Env) -> Result<VaultStatus, ContractError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::VaultStatusKey)
+            .ok_or(ContractError::NotInitialized)
+    }
+
     /// Retrieve full combined financial summary (financials, status, settlement count, total settled)
     pub fn get_financial_summary(
         env: Env,
@@ -516,6 +524,7 @@ mod test {
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
         assert_eq!(client.has_active_agreement(), false);
+        assert_eq!(client.get_vault_status(), VaultStatus::Active);
 
         let (summary_fin, summary_status, summary_count, summary_settled) = client.get_financial_summary();
         assert_eq!(summary_fin.total_revenue_received, 0);
