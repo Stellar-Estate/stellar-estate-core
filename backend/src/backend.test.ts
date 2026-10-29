@@ -514,5 +514,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.text).toContain('swagger-ui');
     expect(res.text).toContain('Stellar Estate Core API');
   });
+
+  it('GET /api/properties/:id/passport.json should export attachment with financial passport JSON', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/passport.json');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-disposition']).toContain('attachment');
+    expect(res.headers['content-disposition']).toContain('property_prop-meridian-abuja_financial_passport.json');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_name).toBe('The Meridian');
+    expect(res.body).toHaveProperty('exportedAt');
+  });
 });
 

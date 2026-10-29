@@ -408,6 +408,17 @@ apiRouter.get('/properties/:id/passport', (req: Request, res: Response) => {
   res.json({ success: true, data: passport });
 });
 
+apiRouter.get('/properties/:id/passport.json', (req: Request, res: Response) => {
+  const prop = db.getPropertyById(req.params.id);
+  if (!prop) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+  const passport = db.getPropertyFinancialPassport(req.params.id);
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="property_${req.params.id}_financial_passport.json"`);
+  res.send(JSON.stringify({ success: true, data: passport, exportedAt: new Date().toISOString() }, null, 2));
+});
+
 apiRouter.get('/properties/:id/settlements', (req: Request, res: Response) => {
   const settlements = db.getSettlementsByProperty(req.params.id);
   res.json({ success: true, data: settlements });
