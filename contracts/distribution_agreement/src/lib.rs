@@ -22,7 +22,7 @@ enum DataKey {
 }
 
 const EVENT_AGR_INIT: Symbol = symbol_short!("agr_init");
-const EVENT_VER_CREATED: Symbol = symbol_short!("ver_creat");
+const EVENT_PROPOSED: Symbol = symbol_short!("proposed");
 const EVENT_STK_ADDED: Symbol = symbol_short!("stk_added");
 const EVENT_STK_APPR: Symbol = symbol_short!("stk_appr");
 const EVENT_AGR_LOCKED: Symbol = symbol_short!("agr_lock");
@@ -115,7 +115,13 @@ impl DistributionAgreementContract {
         env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
         env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
-        env.events().publish((EVENT_VER_CREATED, caller), (version, agreement_hash));
+        let agreement_id: String = env
+            .storage()
+            .instance()
+            .get(&DataKey::AgreementId)
+            .unwrap_or(String::from_str(&env, "AGR"));
+
+        env.events().publish((EVENT_PROPOSED, agreement_id), (version, agreement_hash, caller));
 
         Ok(())
     }
