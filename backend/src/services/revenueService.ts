@@ -92,11 +92,15 @@ export class RevenueService {
     }
 
     // Call Stellar Horizon Testnet verifier
+    const acceptedAssets = property.metadata?.accepted_revenue_assets && property.metadata.accepted_revenue_assets.length > 0
+      ? property.metadata.accepted_revenue_assets
+      : ['XLM', 'USDC'];
+
     const verification = await stellarVerificationService.verifyTransaction({
       transactionHash: req.transactionHash,
       expectedPropertyId: property.id,
       expectedDestination: property.vault_stellar_address,
-      expectedAsset: 'XLM',
+      expectedAssets: acceptedAssets,
     });
 
     if (!verification.verified) {

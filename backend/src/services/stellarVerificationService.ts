@@ -9,6 +9,7 @@ export interface VerificationParameters {
   expectedPropertyId: string;
   expectedDestination: string;
   expectedAsset?: string;
+  expectedAssets?: string[];
   expectedAmount?: number;
   expectedMemo?: string;
   requireMemoMatch?: boolean;
@@ -174,18 +175,25 @@ export class StellarVerificationService {
         };
       }
 
-      // 4. Validate Asset
-      if (expectedAsset && matchedPayment.asset !== expectedAsset) {
+      // 4. Validate Asset against accepted property asset specification
+      const allowedAssets = params.expectedAssets && params.expectedAssets.length > 0
+        ? params.expectedAssets
+        : params.expectedAsset
+        ? [params.expectedAsset]
+        : ['XLM'];
+
+      if (!allowedAssets.includes(matchedPayment.asset)) {
         return {
           verified: false,
           errorCode: 'ASSET_MISMATCH',
-          errorMessage: `Payment asset (${matchedPayment.asset}) does not match expected asset (${expectedAsset}).`,
+          errorMessage: `Payment asset (${matchedPayment.asset}) does not match accepted assets (${allowedAssets.join(', ')}).`,
           transactionHash,
           network: 'TESTNET',
           asset: matchedPayment.asset,
           amount: matchedPayment.amount,
           sender: matchedPayment.sender,
           recipient: matchedPayment.recipient,
+          memo: tx.memo || null,
           operationType: matchedPayment.type,
           ledgerSequence: tx.ledger_attr,
           confirmedAt: tx.created_at,
