@@ -65,6 +65,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.success).toBe(false);
   });
 
+  it('POST /api/revenue/verify should handle idempotent replays for already recorded hashes', async () => {
+    const existingHash = '6a3f81e8435d648083818e7e163b71f92e079010467b7e211516e877c44e8c1e';
+    const res = await request(app)
+      .post('/api/revenue/verify')
+      .send({
+        propertyId: 'prop-meridian-abuja',
+        transactionHash: existingHash,
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.message).toContain('idempotent');
+    expect(res.body.data.verification.verified).toBe(true);
+  });
+
   // ============================================================================
   // DISTRIBUTION AGREEMENT & WATERFALL TESTS
   // ============================================================================

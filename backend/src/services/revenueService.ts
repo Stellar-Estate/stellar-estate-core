@@ -91,6 +91,29 @@ export class RevenueService {
       throw new Error(`Property not found with id: ${req.propertyId}`);
     }
 
+    // 0. Idempotency Check: if already verified and recorded, return existing record
+    const existing = db.getRevenueByTxHash(req.transactionHash);
+    if (existing) {
+      return {
+        success: true,
+        verification: {
+          verified: true,
+          transactionHash: req.transactionHash,
+          network: 'TESTNET',
+          asset: existing.asset,
+          amount: existing.amount,
+          sender: existing.depositor_address,
+          recipient: existing.destination_address,
+          operationType: 'payment',
+          ledgerSequence: 0,
+          confirmedAt: existing.verified_at,
+          explorerUrl: `https://stellar.expert/explorer/testnet/tx/${req.transactionHash}`,
+        },
+        revenueRecord: existing,
+        message: 'Transaction already verified and recorded previously (idempotent response).',
+      };
+    }
+
     // Call Stellar Horizon Testnet verifier
     const acceptedAssets = property.metadata?.accepted_revenue_assets && property.metadata.accepted_revenue_assets.length > 0
       ? property.metadata.accepted_revenue_assets
