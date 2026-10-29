@@ -856,5 +856,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(pendingRes.body.success).toBe(true);
     expect(pendingRes.body.data.status).toBe('REVOKED');
   });
+
+  it('GET /api/agreements/:id/versions should return version lineage with approval metrics', async () => {
+    const res = await request(app).get('/api/agreements/agr-meridian-001/versions');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.data[0]).toHaveProperty('metrics');
+    expect(res.body.data[0].metrics).toHaveProperty('total_stakeholders');
+    expect(res.body.data[0].metrics).toHaveProperty('approved_stakeholders');
+  });
 });
 

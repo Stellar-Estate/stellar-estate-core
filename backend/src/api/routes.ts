@@ -283,6 +283,34 @@ apiRouter.get('/agreements/:id', (req: Request, res: Response) => {
   res.json({ success: true, data: agreement });
 });
 
+apiRouter.get('/agreements/:id/versions', (req: Request, res: Response) => {
+  const agreement = db.getAgreementById(req.params.id);
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: 'Agreement not found' });
+  }
+
+  const versionsWithMetrics = agreement.versions.map((v) => {
+    const totalStakeholders = v.stakeholders.length;
+    const approvedStakeholders = v.stakeholders.filter((s) => s.has_approved).length;
+    return {
+      ...v,
+      metrics: {
+        total_stakeholders: totalStakeholders,
+        approved_stakeholders: approvedStakeholders,
+        all_approved: totalStakeholders > 0 && approvedStakeholders === totalStakeholders,
+        total_basis_points: v.stakeholders.reduce((sum, s) => sum + s.basis_points, 0),
+      },
+    };
+  });
+
+  res.json({
+    success: true,
+    data: versionsWithMetrics,
+    total_versions: versionsWithMetrics.length,
+    active_version: agreement.current_version,
+  });
+});
+
 apiRouter.get('/agreements/versions/:versionId', (req: Request, res: Response) => {
   const version = db.getAgreementVersionById(req.params.versionId);
   if (!version) {
