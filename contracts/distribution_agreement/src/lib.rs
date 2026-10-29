@@ -323,6 +323,12 @@ impl DistributionAgreementContract {
     pub fn get_version(env: Env) -> String {
         String::from_str(&env, "1.0.0-stellar-estate")
     }
+
+    /// Retrieve total number of registered stakeholders for an agreement version
+    pub fn get_stakeholder_count(env: Env, version: u32) -> Result<u32, ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        Ok(state.total_stakeholders)
+    }
 }
 
 #[cfg(test)]
@@ -379,6 +385,7 @@ mod test {
         assert_eq!(state.status, AgreementStatus::Locked);
         assert_eq!(state.approved_count, 3);
         assert_eq!(state.agreement_hash, hash_v1);
+        assert_eq!(client.get_stakeholder_count(&1), 3);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
     }
 
