@@ -411,6 +411,15 @@ impl DistributionAgreementContract {
         )
     }
 
+    /// Retrieve full contract architecture metadata (contract name, semantic version, standard)
+    pub fn get_contract_metadata(env: Env) -> (String, String, String) {
+        (
+            String::from_str(&env, "StellarEstateDistributionAgreement"),
+            String::from_str(&env, "1.0.0-stellar-estate"),
+            String::from_str(&env, "SEP-0001/SEP-0007/Soroban-v22"),
+        )
+    }
+
     /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
     pub fn upgrade_contract(
         env: Env,
@@ -462,6 +471,11 @@ mod test {
         let (info_name, info_ver, _info_desc) = client.get_contract_info();
         assert_eq!(info_name, String::from_str(&env, "StellarEstateDistributionAgreement"));
         assert_eq!(info_ver, 1);
+
+        let (meta_cname, meta_cver, meta_cstd) = client.get_contract_metadata();
+        assert_eq!(meta_cname, String::from_str(&env, "StellarEstateDistributionAgreement"));
+        assert_eq!(meta_cver, String::from_str(&env, "1.0.0-stellar-estate"));
+        assert_eq!(meta_cstd, String::from_str(&env, "SEP-0001/SEP-0007/Soroban-v22"));
 
         let (meta_prop, meta_admin) = client.get_agreement_meta();
         assert_eq!(meta_prop, prop_id);
