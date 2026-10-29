@@ -14,7 +14,8 @@
     "seed": "tsx src/database/seed.ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "verify:types": "node ../scripts/verify-type-sync.mjs",
-    "check:env": "node ../scripts/check-env.mjs"
+    "check:env": "node ../scripts/check-env.mjs",
+    "test:contracts": "cargo test --manifest-path ../Cargo.toml --offline"
   },
   "keywords": [
     "stellar",
