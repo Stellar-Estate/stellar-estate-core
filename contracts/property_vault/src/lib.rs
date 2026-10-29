@@ -553,6 +553,19 @@ impl PropertyVaultContract {
         ))
     }
 
+    /// Retrieve settlement reserve retention ratio in basis points (reserve * 10_000 / gross_revenue)
+    pub fn get_reserve_retention_ratio(
+        env: Env,
+        settlement_id: String,
+    ) -> Result<u32, ContractError> {
+        let record = Self::get_settlement(env, settlement_id)?;
+        if record.gross_revenue <= 0 {
+            return Ok(0);
+        }
+        let bps = (record.reserve as u64 * 10_000) / (record.gross_revenue as u64);
+        Ok(bps as u32)
+    }
+
     /// Retrieve paginated list of settlement records executed by the vault
     pub fn get_settlements_paginated(
         env: Env,
@@ -1031,6 +1044,7 @@ mod test {
         assert_eq!(b_exp, 100_000_000);
         assert_eq!(b_res, 100_000_000);
         assert_eq!(b_dist, 760_000_000);
+        assert_eq!(client.get_reserve_retention_ratio(&settlement_id), 1000);
 
         let record = client.get_settlement(&settlement_id);
         assert_eq!(record.settlement_id, settlement_id);
