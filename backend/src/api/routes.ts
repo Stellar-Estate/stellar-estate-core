@@ -2089,3 +2089,36 @@ apiRouter.post('/agreements/:id/versions/:ver/check-stakeholder', (req: Request,
     });
   }
 });
+
+apiRouter.get('/agreements/:id/versions/:ver/stakeholders/count', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const version = (agreement.versions || []).find((v: any) => v.version_number === versionNum || v.version === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Agreement version ${id} v${ver} not found.` });
+  }
+
+  const stakeholders = version.stakeholders || [];
+  const approvedCount = stakeholders.filter((s: any) => s.has_approved).length;
+  const totalCount = stakeholders.length;
+  const pendingCount = Math.max(0, totalCount - approvedCount);
+  const ratioBps = totalCount > 0 ? Math.round((approvedCount / totalCount) * 10000) : 0;
+
+  res.json({
+    success: true,
+    data: {
+      agreement_id: id,
+      version: versionNum,
+      total_stakeholders: totalCount,
+      approved_count: approvedCount,
+      pending_count: pendingCount,
+      approval_ratio_bps: ratioBps,
+      is_ready_to_lock: totalCount > 0 && approvedCount >= totalCount,
+    },
+  });
+});
