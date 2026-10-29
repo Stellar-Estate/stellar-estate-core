@@ -2,27 +2,51 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
+import { config } from './config.js';
 import { apiRouter } from './api/routes.js';
-
-dotenv.config();
+import { correlationIdMiddleware, apiRateLimiter } from './middleware/security.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 export const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = config.PORT;
 
 // Security & Utility Middleware
-app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://horizon-testnet.stellar.org', 'https://friendbot.stellar.org'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        scriptSrc: ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+app.use(
+  cors({
+    origin: config.CORS_ORIGIN === '*' ? true : config.CORS_ORIGIN,
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: '1mb' }));
-app.use(morgan('dev'));
+app.use(correlationIdMiddleware);
+
+if (config.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
 
 // Core Root Route & Health
 app.get('/', (req, res) => {
   res.json({
     service: 'Stellar Estate Financial Core Backend',
     version: '1.0.0',
-    network: 'Stellar Testnet',
+    network: `Stellar ${config.STELLAR_NETWORK}`,
     status: 'OPERATIONAL',
+    correlationId: req.correlationId,
     documentation: '/docs',
     endpoints: {
       properties: '/api/properties',
@@ -39,24 +63,23 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    correlationId: req.correlationId,
+    network: config.STELLAR_NETWORK,
   });
 });
+
+// Apply rate limiting to all /api routes
+app.use('/api', apiRateLimiter);
 
 // Mount API routes
 app.use('/api', apiRouter);
 
-// Global Error Handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('[Stellar Estate Core Error]:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    error: err.message || 'Internal Server Error',
-  });
-});
+// Global Standardized Error Handler
+app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
+if (config.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`🚀 Stellar Estate Core Backend running on http://localhost:${PORT}`);
-    console.log(`📡 Connected to Stellar Testnet Horizon (Independent Verification Engine)`);
+    console.log(`📡 Connected to Stellar ${config.STELLAR_NETWORK} Horizon (${config.STELLAR_HORIZON_URL})`);
   });
 }
