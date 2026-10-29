@@ -2122,3 +2122,27 @@ apiRouter.get('/agreements/:id/versions/:ver/stakeholders/count', (req: Request,
     },
   });
 });
+
+apiRouter.get('/properties/:id/settlements/count', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const settlements = db.getSettlementsByProperty(id);
+  const totalDistributed = settlements.reduce((sum, s) => sum + (s.total_gross_amount || s.gross_amount || 0), 0);
+  const totalReserveRetained = settlements.reduce((sum, s) => sum + (s.reserve_deduction || s.reserve_amount || 0), 0);
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      total_settlements: settlements.length,
+      total_gross_settled: totalDistributed,
+      total_reserve_retained: totalReserveRetained,
+      latest_settlement_id: settlements.length > 0 ? (settlements[settlements.length - 1].id || settlements[settlements.length - 1].settlement_id) : null,
+      latest_settled_at: settlements.length > 0 ? settlements[settlements.length - 1].created_at : null,
+    },
+  });
+});

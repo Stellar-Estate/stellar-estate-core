@@ -1188,5 +1188,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data).toHaveProperty('pending_count');
     expect(res.body.data).toHaveProperty('approval_ratio_bps');
   });
+
+  it('GET /api/properties/:id/settlements/count should return settlement counters and cumulative metrics', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/settlements/count');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.data).toHaveProperty('total_settlements');
+    expect(res.body.data).toHaveProperty('total_gross_settled');
+  });
 });
 
