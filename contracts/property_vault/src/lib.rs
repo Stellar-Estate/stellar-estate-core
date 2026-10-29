@@ -265,6 +265,11 @@ impl PropertyVaultContract {
         Ok((contract, hash))
     }
 
+    /// Check whether this vault currently has an active distribution agreement bound
+    pub fn has_active_agreement(env: Env) -> bool {
+        env.storage().instance().has(&DataKey::ActiveAgreementContract)
+    }
+
     /// Execute a deterministic multi-recipient settlement against verified revenue
     pub fn execute_settlement(
         env: Env,
@@ -505,6 +510,7 @@ mod test {
         assert_eq!(client.get_settlement_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
+        assert_eq!(client.has_active_agreement(), false);
 
         let (summary_fin, summary_status, summary_count, summary_settled) = client.get_financial_summary();
         assert_eq!(summary_fin.total_revenue_received, 0);
