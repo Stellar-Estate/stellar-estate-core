@@ -6,6 +6,7 @@ import { agreementService } from './services/agreementService.js';
 import { agreementHashingService, canonicalizeJson } from './services/agreementHashingService.js';
 import { stellarUriService } from './services/stellarUriService.js';
 import { logger, Logger } from './utils/logger.js';
+import { lifecycleService } from './services/lifecycleService.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -484,6 +485,17 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       testLogger.warn('High fee warning');
       testLogger.error('Horizon connection failed', new Error('Network timeout'), { code: 'HORIZON_ERR' });
     }).not.toThrow();
+  });
+
+  it('LifecycleService should register and execute cleanup handlers during shutdown', async () => {
+    let cleanedUp = false;
+    lifecycleService.registerCleanup('test-db', () => {
+      cleanedUp = true;
+    });
+
+    await lifecycleService.executeShutdown('SIGTERM');
+    expect(cleanedUp).toBe(true);
+    lifecycleService.unregisterCleanup('test-db');
   });
 });
 

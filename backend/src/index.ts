@@ -7,6 +7,7 @@ import { apiRouter } from './api/routes.js';
 import { correlationIdMiddleware, apiRateLimiter } from './middleware/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { openApiSpec } from './api/openapi.js';
+import { lifecycleService } from './services/lifecycleService.js';
 
 export const app = express();
 const PORT = config.PORT;
@@ -110,8 +111,9 @@ app.use('/api', apiRouter);
 app.use(errorHandler);
 
 if (config.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Stellar Estate Core Backend running on http://localhost:${PORT}`);
     console.log(`📡 Connected to Stellar ${config.STELLAR_NETWORK} Horizon (${config.STELLAR_HORIZON_URL})`);
   });
+  lifecycleService.setupSignalListeners(server);
 }
