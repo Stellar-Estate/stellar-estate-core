@@ -28,6 +28,7 @@ enum DataKey {
     SettlementCount,
     ConsumedRevenue(u32),
     TotalSettledRevenue,
+    InitTimestamp,
 }
 
 const EVENT_VAULT_INIT: Symbol = symbol_short!("init_vlt");
@@ -87,6 +88,7 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::RevenueNonce, &0u32);
         env.storage().instance().set(&DataKey::SettlementCount, &0u32);
         env.storage().instance().set(&DataKey::TotalSettledRevenue, &0i128);
+        env.storage().instance().set(&DataKey::InitTimestamp, &env.ledger().timestamp());
 
         // Extend instance TTL to protect against state archival on Stellar
         env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
@@ -702,6 +704,13 @@ impl PropertyVaultContract {
         let settlement_count = Self::get_settlement_count(env.clone());
         let total_settled = Self::get_total_settled_revenue(env);
         Ok((financials, status, settlement_count, total_settled))
+    }
+
+    /// Retrieve operating vault age in seconds from initialization timestamp
+    pub fn get_vault_age_seconds(env: Env) -> u64 {
+        let init_time: u64 = env.storage().instance().get(&DataKey::InitTimestamp).unwrap_or(0);
+        let now = env.ledger().timestamp();
+        now.saturating_sub(init_time)
     }
 
     /// Retrieve core financial metrics tuple: (total_revenue, total_settled, reserve_balance, unconsumed_pool)
@@ -1351,5 +1360,14 @@ mod test {
         let (client, _admin, _asset) = setup_test_vault(&env);
         let version = client.get_contract_version_tuple();
         assert_eq!(version, (1, 0, 0));
+    }
+
+    #[test]
+    fn test_get_vault_age_seconds() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _admin, _asset) = setup_test_vault(&env);
+        let age = client.get_vault_age_seconds();
+        assert_eq!(age, 0);
     }
 }
