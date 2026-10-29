@@ -594,6 +594,11 @@ impl PropertyVaultContract {
         env.storage().persistent().has(&DataKey::ConsumedRevenue(revenue_id))
     }
 
+    /// Check whether a revenue record nonce has been settled and consumed
+    pub fn is_nonce_settled(env: Env, nonce: u32) -> bool {
+        Self::is_revenue_consumed(env, nonce)
+    }
+
     /// Check if a settlement ID has already been executed and recorded
     pub fn is_settlement_executed(env: Env, settlement_id: String) -> bool {
         env.storage().persistent().has(&DataKey::Settlement(settlement_id))
@@ -990,6 +995,8 @@ mod test {
 
         // Verify state
         assert!(client.is_revenue_consumed(&rev_id));
+        assert!(client.is_nonce_settled(&rev_id));
+        assert!(!client.is_nonce_settled(&9999));
         assert!(client.is_settlement_executed(&settlement_id));
         assert!(!client.is_settlement_executed(&String::from_str(&env, "STL-UNEXECUTED")));
         assert_eq!(client.get_settlement_count(), 1);
