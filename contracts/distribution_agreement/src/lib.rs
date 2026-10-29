@@ -411,6 +411,11 @@ impl DistributionAgreementContract {
         Ok(st.basis_points)
     }
 
+    /// Check whether an address is registered as an equity stakeholder on a version
+    pub fn is_stakeholder_registered(env: Env, version: u32, stakeholder: Address) -> bool {
+        Self::get_stakeholder(env, version, stakeholder).is_ok()
+    }
+
     /// Retrieve core property ID and administrative authority address
     pub fn get_agreement_meta(env: Env) -> Result<(String, Address), ContractError> {
         let property_id: String = env
@@ -618,6 +623,8 @@ mod test {
         client.add_stakeholder(&admin, &1, &bob, &3500, &String::from_str(&env, "Bob"));
         client.add_stakeholder(&admin, &1, &charlie, &2500, &String::from_str(&env, "Charlie"));
         assert_eq!(client.get_stakeholder_role(&1, &alice), String::from_str(&env, "Alice"));
+        assert!(client.is_stakeholder_registered(&1, &alice));
+        assert!(!client.is_stakeholder_registered(&1, &Address::generate(&env)));
         assert_eq!(client.get_approval_progress(&1), (0, 3, false));
         assert_eq!(client.get_approval_ratio_bps(&1), 0);
 
