@@ -556,5 +556,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.version).toBe(1);
     expect(res.body.propertyId).toBe('prop-meridian-abuja');
   });
+
+  it('GET /api/properties/:id/settlements should support structured pagination parameters', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/settlements?page=1&limit=1');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('pagination');
+    expect(res.body.pagination.page).toBe(1);
+    expect(res.body.pagination.limit).toBe(1);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
 });
 

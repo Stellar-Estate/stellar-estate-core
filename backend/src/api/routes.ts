@@ -460,8 +460,42 @@ apiRouter.get('/properties/:id/passport.json', (req: Request, res: Response) => 
 });
 
 apiRouter.get('/properties/:id/settlements', (req: Request, res: Response) => {
-  const settlements = db.getSettlementsByProperty(req.params.id);
-  res.json({ success: true, data: settlements });
+  const allSettlements = db.getSettlementsByProperty(req.params.id);
+  const page = parseInt(req.query.page as string, 10);
+  const limit = parseInt(req.query.limit as string, 10);
+
+  if (!isNaN(page) && !isNaN(limit) && page > 0 && limit > 0) {
+    const total = allSettlements.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const offset = (page - 1) * limit;
+    const paginated = allSettlements.slice(offset, offset + limit);
+
+    return res.json({
+      success: true,
+      data: paginated,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
+  }
+
+  res.json({
+    success: true,
+    data: allSettlements,
+    pagination: {
+      page: 1,
+      limit: allSettlements.length,
+      total: allSettlements.length,
+      totalPages: 1,
+      hasNext: false,
+      hasPrev: false,
+    },
+  });
 });
 
 apiRouter.post('/settlements/preview', (req: Request, res: Response) => {
