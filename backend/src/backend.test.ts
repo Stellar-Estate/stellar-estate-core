@@ -1075,5 +1075,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const notFoundRes = await request(app).delete(`/api/webhooks/${subId}`);
     expect(notFoundRes.status).toBe(404);
   });
+
+  it('GET /api/contracts/versions should return semantic version tuples and capabilities for deployed contracts', async () => {
+    const res = await request(app).get('/api/contracts/versions');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_vault.version).toBe('1.0.0');
+    expect(res.body.data.property_vault.version_tuple).toEqual([1, 0, 0]);
+    expect(res.body.data.distribution_agreement.version).toBe('1.0.0-stellar-estate');
+    expect(res.body.data.distribution_agreement.version_tuple).toEqual([1, 0, 0]);
+  });
 });
 
