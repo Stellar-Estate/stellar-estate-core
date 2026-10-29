@@ -1118,5 +1118,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.protocol_version).toBe(22);
     expect(res.body.data.healthy).toBe(true);
   });
+
+  it('POST /api/properties/:id/reserves/calculate-replenishment should compute reserve target gap', async () => {
+    const res = await request(app)
+      .post('/api/properties/prop-meridian-abuja/reserves/calculate-replenishment')
+      .send({ target_ratio_bps: 1500 });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.target_ratio_bps).toBe(1500);
+    expect(res.body.data).toHaveProperty('replenishment_needed');
+    expect(res.body.data).toHaveProperty('is_reserve_healthy');
+  });
 });
 

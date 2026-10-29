@@ -1904,3 +1904,33 @@ apiRouter.get('/metrics/stellar', async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+apiRouter.post('/properties/:id/reserves/calculate-replenishment', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { target_ratio_bps } = req.body;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const targetBps = typeof target_ratio_bps === 'number' && target_ratio_bps > 0 ? target_ratio_bps : 1000; // default 10%
+  const targetReserve = (property.total_revenue_pool * targetBps) / 10000;
+  const currentReserve = property.reserve_balance || 0;
+  const gap = Math.max(0, targetReserve - currentReserve);
+  const isSufficient = currentReserve >= targetReserve;
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      total_revenue_pool: property.total_revenue_pool,
+      current_reserve: currentReserve,
+      target_ratio_bps: targetBps,
+      target_reserve: targetReserve,
+      replenishment_needed: gap,
+      is_reserve_healthy: isSufficient,
+      status: isSufficient ? 'OPTIMAL' : 'REPLENISHMENT_RECOMMENDED',
+    },
+  });
+});
