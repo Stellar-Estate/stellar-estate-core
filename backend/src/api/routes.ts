@@ -489,6 +489,23 @@ apiRouter.post('/revenue/verify', async (req: Request, res: Response) => {
   }
 });
 
+apiRouter.post('/revenue/batch', (req: Request, res: Response) => {
+  const { property_id, deposits } = req.body;
+  if (!property_id || !Array.isArray(deposits) || deposits.length === 0) {
+    return res.status(400).json({
+      success: false,
+      error: 'property_id and a non-empty deposits array are required.',
+    });
+  }
+
+  try {
+    const result = revenueService.recordBatchRevenue(property_id, deposits);
+    res.status(201).json(result);
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // ==============================================================================
 // BLOCKCHAIN & TESTNET ENDPOINTS
 // ==============================================================================

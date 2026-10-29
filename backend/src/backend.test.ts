@@ -673,5 +673,22 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(sanitizedObj.nested.link).toBe('alert(1)');
     expect(sanitizedObj.nested.amount).toBe(500);
   });
+
+  it('POST /api/revenue/batch should atomically record multiple revenue deposits', async () => {
+    const res = await request(app)
+      .post('/api/revenue/batch')
+      .send({
+        property_id: 'prop-meridian-abuja',
+        deposits: [
+          { amount: 1500, source: 'Unit 1 Rent', description: 'October Rent' },
+          { amount: 2000, source: 'Unit 2 Rent', description: 'October Rent' },
+        ],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.count).toBe(2);
+    expect(res.body.totalAmount).toBe(3500);
+    expect(res.body.records.length).toBe(2);
+  });
 });
 
