@@ -533,5 +533,18 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.snapshot.stats.propertyCount).toBeGreaterThan(0);
     expect(res.body.snapshot.data.properties.length).toBeGreaterThan(0);
   });
+
+  it('GET /api/blockchain/verify-key/:key should classify valid and invalid Stellar keys', async () => {
+    const validKeyRes = await request(app).get('/api/blockchain/verify-key/GDQE5Q3OFUE2VKP4H2ORTBNSCAOEEVRPK2UB4C2SHRL3FF2L5GIRRCSM');
+    expect(validKeyRes.status).toBe(200);
+    expect(validKeyRes.body.success).toBe(true);
+    expect(validKeyRes.body.data.type).toBe('ED25519_PUBLIC_KEY');
+    expect(validKeyRes.body.data.isAccount).toBe(true);
+
+    const invalidKeyRes = await request(app).get('/api/blockchain/verify-key/not-a-valid-stellar-key');
+    expect(invalidKeyRes.status).toBe(200);
+    expect(invalidKeyRes.body.success).toBe(false);
+    expect(invalidKeyRes.body.data.type).toBe('UNKNOWN');
+  });
 });
 

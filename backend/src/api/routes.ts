@@ -6,7 +6,7 @@ import { reconciliationService } from '../reconciliation/reconciliationService.j
 import { agreementService } from '../services/agreementService.js';
 import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
-import { isValidStellarAddress } from '../utils/stellarValidator.js';
+import { isValidStellarAddress, classifyStellarKey } from '../utils/stellarValidator.js';
 import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
 import { dbBackupService } from '../services/dbBackupService.js';
 
@@ -634,6 +634,19 @@ apiRouter.get('/admin/backup/latest', (req: Request, res: Response) => {
   res.json({
     success: true,
     data: snapshot,
+  });
+});
+
+// ==============================================================================
+// STELLAR KEY CLASSIFICATION & VERIFICATION
+// ==============================================================================
+
+apiRouter.get('/blockchain/verify-key/:key', (req: Request, res: Response) => {
+  const { key } = req.params;
+  const classification = classifyStellarKey(key);
+  res.json({
+    success: classification.valid,
+    data: classification,
   });
 });
 
