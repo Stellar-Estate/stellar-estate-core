@@ -1700,3 +1700,13 @@ apiRouter.get('/admin/db-health', (req: Request, res: Response) => {
     },
   });
 });
+
+
+apiRouter.get('/live', (req: Request, res: Response) => {
+  res.json({
+    status: 'UP',
+    probe: 'liveness',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});

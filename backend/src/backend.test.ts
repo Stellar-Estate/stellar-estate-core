@@ -1019,5 +1019,13 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.collections.properties).toBeGreaterThan(0);
     expect(res.body.collections.revenue_records).toBeGreaterThan(0);
   });
+
+  it('GET /api/live should return 200 OK for Kubernetes liveness probe', async () => {
+    const res = await request(app).get('/api/live');
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('UP');
+    expect(res.body.probe).toBe('liveness');
+    expect(res.body).toHaveProperty('uptime');
+  });
 });
 
