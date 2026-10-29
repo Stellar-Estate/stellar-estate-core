@@ -669,6 +669,22 @@ impl PropertyVaultContract {
         Ok(financials.total_revenue_recorded.saturating_sub(total_settled))
     }
 
+    /// Check whether a proposed settlement gross amount is currently eligible for execution
+    pub fn is_settlement_eligible(env: Env, gross_amount: i128) -> Result<bool, ContractError> {
+        if gross_amount <= 0 {
+            return Ok(false);
+        }
+        let status = Self::get_vault_status(env.clone())?;
+        if status == VaultStatus::Paused {
+            return Ok(false);
+        }
+        if !Self::has_active_agreement(env.clone()) {
+            return Ok(false);
+        }
+        let unconsumed = Self::get_unconsumed_revenue_pool(env)?;
+        Ok(gross_amount <= unconsumed)
+    }
+
     /// Retrieve occupancy metrics: (occupied_units, total_units, occupancy_rate_bps)
     pub fn get_property_occupancy(env: Env) -> Result<(u32, u32, u32), ContractError> {
         let meta = Self::get_property_metadata(env)?;
@@ -878,6 +894,11 @@ mod test {
         let agreement_contract = Address::generate(&env);
         let agreement_hash = String::from_str(&env, "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0");
         client.set_distribution_agreement(&admin, &agreement_contract, &agreement_hash);
+
+        // Verify eligibility before settlement
+        assert!(client.is_settlement_eligible(&1_000_000_000));
+        assert!(!client.is_settlement_eligible(&2_000_000_000));
+        assert!(!client.is_settlement_eligible(&0));
 
         // 3. Prepare payouts for Alice (40%), Bob (35%), Charlie (25%)
         let alice = Address::generate(&env);
