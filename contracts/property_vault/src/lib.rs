@@ -516,6 +516,17 @@ impl PropertyVaultContract {
         Ok((financials, status, settlement_count, total_settled))
     }
 
+    /// Retrieve occupancy metrics: (occupied_units, total_units, occupancy_rate_bps)
+    pub fn get_property_occupancy(env: Env) -> Result<(u32, u32, u32), ContractError> {
+        let meta = Self::get_property_metadata(env)?;
+        let rate_bps = if meta.total_units > 0 {
+            ((meta.occupied_units as u64 * 10_000) / (meta.total_units as u64)) as u32
+        } else {
+            0
+        };
+        Ok((meta.occupied_units, meta.total_units, rate_bps))
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -567,6 +578,11 @@ mod test {
         assert_eq!(info_ver, 1);
         assert_eq!(meta.total_units, 10);
         assert_eq!(meta.occupied_units, 9);
+
+        let (occ_units, tot_units, occ_rate_bps) = client.get_property_occupancy();
+        assert_eq!(occ_units, 9);
+        assert_eq!(tot_units, 10);
+        assert_eq!(occ_rate_bps, 9000);
 
         let financials = client.get_financials();
         assert_eq!(financials.total_revenue_received, 0);
