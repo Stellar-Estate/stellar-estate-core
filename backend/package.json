@@ -15,7 +15,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "verify:types": "node ../scripts/verify-type-sync.mjs",
     "check:env": "node ../scripts/check-env.mjs",
-    "test:contracts": "cargo test --manifest-path ../Cargo.toml --offline"
+    "test:contracts": "cargo test --manifest-path ../Cargo.toml --offline",
+    "verify:all": "node ../scripts/run-all-checks.mjs"
   },
   "keywords": [
     "stellar",
