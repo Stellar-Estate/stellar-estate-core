@@ -46,6 +46,11 @@ const stakeholderSchema = z.object({
   basis_points: z.number().int().positive().max(10000),
 });
 
+const updateUnitSchema = z.object({
+  occupancy_status: z.enum(['OCCUPIED', 'VACANT', 'MAINTENANCE']),
+  monthly_rent: z.number().positive().optional(),
+});
+
 const createAgreementSchema = z.object({
   propertyId: z.string().min(1),
   agreementIdentifier: z.string().min(1),
@@ -170,6 +175,46 @@ apiRouter.get('/properties/:id/units', (req: Request, res: Response) => {
       monthly_gross_potential_rent: units.reduce((sum, u) => sum + u.monthly_rent, 0),
       monthly_effective_rent: totalRent,
       units,
+    },
+  });
+});
+
+apiRouter.patch('/properties/:id/units/:unitId', (req: Request, res: Response) => {
+  const property = db.getPropertyById(req.params.id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+
+  const unit = db.units.get(req.params.unitId);
+  if (!unit || unit.property_id !== property.id) {
+    return res.status(404).json({ success: false, error: 'Unit not found for this property' });
+  }
+
+  const parseResult = updateUnitSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    return res.status(400).json({ success: false, errors: parseResult.error.format() });
+  }
+
+  unit.occupancy_status = parseResult.data.occupancy_status;
+  if (parseResult.data.monthly_rent !== undefined) {
+    unit.monthly_rent = parseResult.data.monthly_rent;
+  }
+  unit.updated_at = new Date().toISOString();
+
+  // Recalculate property occupancy rate
+  const allUnits = db.getPropertyUnits(property.id);
+  const occupied = allUnits.filter((u) => u.occupancy_status === 'OCCUPIED').length;
+  property.occupancy_percentage = Math.round((occupied / allUnits.length) * 1000) / 10;
+  property.updated_at = new Date().toISOString();
+
+  res.json({
+    success: true,
+    message: 'Unit occupancy status successfully updated and property metrics refreshed',
+    data: {
+      unit,
+      property_occupancy_percentage: property.occupancy_percentage,
+      occupied_units: occupied,
+      total_units: allUnits.length,
     },
   });
 });

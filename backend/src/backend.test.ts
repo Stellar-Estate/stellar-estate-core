@@ -607,5 +607,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.occupancy_rate).toBe(90);
     expect(res.body.data.units.length).toBe(10);
   });
+
+  it('PATCH /api/properties/:id/units/:unitId should update occupancy status and recalculate property metrics', async () => {
+    const res = await request(app)
+      .patch('/api/properties/prop-meridian-abuja/units/unit-meridian-10')
+      .send({ occupancy_status: 'OCCUPIED' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.unit.occupancy_status).toBe('OCCUPIED');
+    expect(res.body.data.occupied_units).toBe(10);
+    expect(res.body.data.property_occupancy_percentage).toBe(100);
+
+    // Revert back to VACANT for test idempotency
+    await request(app)
+      .patch('/api/properties/prop-meridian-abuja/units/unit-meridian-10')
+      .send({ occupancy_status: 'VACANT' });
+  });
 });
 
