@@ -506,5 +506,13 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data).toHaveProperty('syncedAt');
     expect(res.body.data).toHaveProperty('network');
   });
+
+  it('GET /api/docs should serve Swagger UI HTML documentation page', async () => {
+    const res = await request(app).get('/api/docs');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.text).toContain('swagger-ui');
+    expect(res.text).toContain('Stellar Estate Core API');
+  });
 });
 

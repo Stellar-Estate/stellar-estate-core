@@ -7,6 +7,7 @@ import { apiRouter } from './api/routes.js';
 import { correlationIdMiddleware, apiRateLimiter } from './middleware/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { openApiSpec } from './api/openapi.js';
+import { getSwaggerHtml } from './api/swaggerUi.js';
 import { lifecycleService } from './services/lifecycleService.js';
 
 export const app = express();
@@ -20,7 +21,8 @@ app.use(
         defaultSrc: ["'self'"],
         connectSrc: ["'self'", 'https://horizon-testnet.stellar.org', 'https://friendbot.stellar.org'],
         imgSrc: ["'self'", 'data:', 'https:'],
-        scriptSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -97,8 +99,13 @@ app.get('/api/docs/openapi.json', (req, res) => {
   res.json(openApiSpec);
 });
 
+app.get('/api/docs', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(getSwaggerHtml());
+});
+
 app.get('/docs', (req, res) => {
-  res.redirect('/api/docs/openapi.json');
+  res.redirect('/api/docs');
 });
 
 // Apply rate limiting to all /api routes
