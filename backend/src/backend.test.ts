@@ -690,5 +690,24 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.totalAmount).toBe(3500);
     expect(res.body.records.length).toBe(2);
   });
+
+  it('POST /api/contracts/verify-upgrade should validate contract address and 32-byte hex hash', async () => {
+    const validContract = 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM';
+    const validHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+    const res = await request(app)
+      .post('/api/contracts/verify-upgrade')
+      .send({ contract_address: validContract, new_wasm_hash: validHash });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.wasm_bytes_length).toBe(32);
+    expect(res.body.data.ready_for_proposal).toBe(true);
+
+    const badHashRes = await request(app)
+      .post('/api/contracts/verify-upgrade')
+      .send({ contract_address: validContract, new_wasm_hash: 'not-hex' });
+    expect(badHashRes.status).toBe(400);
+    expect(badHashRes.body.code).toBe('INVALID_WASM_HASH');
+  });
 });
 

@@ -6,7 +6,7 @@ import { reconciliationService } from '../reconciliation/reconciliationService.j
 import { agreementService } from '../services/agreementService.js';
 import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
-import { isValidStellarAddress, classifyStellarKey } from '../utils/stellarValidator.js';
+import { isValidStellarAddress, isValidContractAddress, classifyStellarKey } from '../utils/stellarValidator.js';
 import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
 import { dbBackupService } from '../services/dbBackupService.js';
 
@@ -567,6 +567,39 @@ apiRouter.get('/blockchain/contract-addresses', (req: Request, res: Response) =>
         sep0007: 'web+stellar:pay',
         rfc8785: 'Canonical JSON SHA-256 Hashes',
       },
+    },
+  });
+});
+
+apiRouter.post('/contracts/verify-upgrade', (req: Request, res: Response) => {
+  const { contract_address, new_wasm_hash } = req.body;
+
+  if (!contract_address || typeof contract_address !== 'string' || !isValidContractAddress(contract_address)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Valid Stellar contract identifier starting with C... is required.',
+      code: 'INVALID_CONTRACT_ADDRESS',
+    });
+  }
+
+  const hexRegex = /^[0-9a-fA-F]{64}$/;
+  if (!new_wasm_hash || typeof new_wasm_hash !== 'string' || !hexRegex.test(new_wasm_hash.trim())) {
+    return res.status(400).json({
+      success: false,
+      error: 'new_wasm_hash must be a 64-character hexadecimal SHA-256 hash (32 bytes).',
+      code: 'INVALID_WASM_HASH',
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'Contract upgrade parameter validation passed.',
+    data: {
+      contract_address,
+      new_wasm_hash: new_wasm_hash.trim().toLowerCase(),
+      wasm_bytes_length: 32,
+      ready_for_proposal: true,
+      requires_admin_authorization: true,
     },
   });
 });
