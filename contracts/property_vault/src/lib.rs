@@ -99,15 +99,12 @@ impl PropertyVaultContract {
         Ok(())
     }
 
-    /// Record a verified property revenue payment into the vault
-    pub fn record_revenue(
+    fn internal_record_revenue(
         env: Env,
-        caller: Address,
+        depositor: Address,
         source: String,
         amount: i128,
     ) -> Result<u32, ContractError> {
-        caller.require_auth();
-
         let status: VaultStatus = env
             .storage()
             .instance()
@@ -153,7 +150,7 @@ impl PropertyVaultContract {
             revenue_id: nonce,
             source,
             amount,
-            depositor: caller.clone(),
+            depositor: depositor.clone(),
             timestamp: env.ledger().timestamp(),
             reconciled: true,
         };
@@ -171,15 +168,43 @@ impl PropertyVaultContract {
             .storage()
             .instance()
             .get(&DataKey::AcceptedAsset)
-            .unwrap_or(caller.clone());
+            .unwrap_or(depositor.clone());
 
         // Emit revenue recorded event with property ID topic, nonce, amount, and asset
         env.events().publish(
             (EVENT_REV_REC, meta.property_id),
-            (nonce, amount, accepted_asset, caller),
+            (nonce, amount, accepted_asset, depositor),
         );
 
         Ok(nonce)
+    }
+
+    /// Record a verified property revenue payment into the vault
+    pub fn record_revenue(
+        env: Env,
+        caller: Address,
+        source: String,
+        amount: i128,
+    ) -> Result<u32, ContractError> {
+        caller.require_auth();
+        Self::internal_record_revenue(env, caller, source, amount)
+    }
+
+    /// Record multiple verified rental deposits into the vault in a single atomic transaction
+    pub fn record_batch_revenue(
+        env: Env,
+        caller: Address,
+        entries: Vec<(String, i128)>,
+    ) -> Result<Vec<u32>, ContractError> {
+        caller.require_auth();
+
+        let mut ids = Vec::new(&env);
+        for entry in entries.iter() {
+            let (source, amount) = entry;
+            let id = Self::internal_record_revenue(env.clone(), caller.clone(), source, amount)?;
+            ids.push_back(id);
+        }
+        Ok(ids)
     }
 
     /// Retrieve the vault financial state
@@ -696,6 +721,29 @@ mod test {
         assert_eq!(entry.amount, amount);
         assert!(entry.reconciled);
         assert!(!client.is_revenue_consumed(&1));
+    }
+
+    #[test]
+    fn test_record_batch_revenue_success() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, _admin, _asset) = setup_test_vault(&env);
+        let depositor = Address::generate(&env);
+
+        let mut batch = Vec::new(&env);
+        batch.push_back((String::from_str(&env, "unit-1-rent"), 50_000_000i128));
+        batch.push_back((String::from_str(&env, "unit-2-rent"), 75_000_000i128));
+
+        let ids = client.record_batch_revenue(&depositor, &batch);
+        assert_eq!(ids.len(), 2);
+        assert_eq!(ids.get(0).unwrap(), 1);
+        assert_eq!(ids.get(1).unwrap(), 2);
+        assert_eq!(client.get_revenue_count(), 2);
+
+        let fin = client.get_financials();
+        assert_eq!(fin.total_revenue_received, 125_000_000);
+        assert_eq!(fin.deposit_count, 2);
     }
 
     #[test]
