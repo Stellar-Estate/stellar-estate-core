@@ -867,5 +867,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data[0].metrics).toHaveProperty('total_stakeholders');
     expect(res.body.data[0].metrics).toHaveProperty('approved_stakeholders');
   });
+
+  it('GET /api/properties/:id/reconciliation should return property-level accounting and checksum audit', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/reconciliation');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.data.metrics.total_revenue_records).toBeGreaterThan(0);
+    expect(res.body.data.audit.status).toBe('RECONCILED');
+    expect(typeof res.body.data.audit.ledger_checksum).toBe('string');
+    expect(res.body.data.audit.ledger_checksum.length).toBe(64);
+  });
 });
 
