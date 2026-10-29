@@ -25,9 +25,17 @@ app.use(
   })
 );
 
+const corsWhitelist = config.CORS_ORIGIN.split(',').map((o) => o.trim());
 app.use(
   cors({
-    origin: config.CORS_ORIGIN === '*' ? true : config.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      // Allow non-browser requests (mobile wallets, curls, automated tests)
+      if (!origin) return callback(null, true);
+      if (config.CORS_ORIGIN === '*' || corsWhitelist.includes(origin) || corsWhitelist.includes('*')) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not permitted by Stellar Estate CORS policy`));
+    },
     credentials: true,
   })
 );

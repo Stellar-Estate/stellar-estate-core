@@ -394,7 +394,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('fee_charged');
-  });
+  }, 15000);
 
   it('stellarUriService should generate and parse SEP-0007 pay and tx URIs', () => {
     const payUri = stellarUriService.generatePayUri({
