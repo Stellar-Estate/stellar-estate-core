@@ -641,6 +641,11 @@ impl PropertyVaultContract {
             .ok_or(ContractError::NotInitialized)
     }
 
+    /// Retrieve the authorized payment asset contract address (canonical method)
+    pub fn get_vault_accepted_asset(env: Env) -> Result<Address, ContractError> {
+        Self::get_accepted_asset(env)
+    }
+
     /// Retrieve the administrative authority address of the property vault
     pub fn get_admin(env: Env) -> Result<Address, ContractError> {
         env.storage()
@@ -830,6 +835,7 @@ mod test {
         assert_eq!(client.get_revenue_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_accepted_asset(), _asset);
+        assert_eq!(client.get_vault_accepted_asset(), _asset);
         assert_eq!(client.get_admin(), admin);
         assert_eq!(client.get_reserve_balance(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
