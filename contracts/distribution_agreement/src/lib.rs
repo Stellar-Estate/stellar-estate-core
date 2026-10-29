@@ -480,6 +480,12 @@ impl DistributionAgreementContract {
         Ok(bps as u32)
     }
 
+    /// Retrieve creation and lock timestamps tuple: (created_at, locked_at)
+    pub fn get_lifecycle_timestamps(env: Env, version: u32) -> Result<(u64, u64), ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        Ok((state.created_at, state.locked_at))
+    }
+
     /// Retrieve the canonical cryptographic hash of an agreement version
     pub fn get_version_agreement_hash(env: Env, version: u32) -> Result<String, ContractError> {
         let state = Self::get_agreement_version(env, version)?;
@@ -671,6 +677,9 @@ mod test {
         assert_eq!(state.status, AgreementStatus::Locked);
         assert_eq!(state.approved_count, 3);
         assert_eq!(state.agreement_hash, hash_v1);
+        let (ts_created, ts_locked) = client.get_lifecycle_timestamps(&1);
+        assert_eq!(ts_created, state.created_at);
+        assert_eq!(ts_locked, state.locked_at);
         assert_eq!(client.get_stakeholder_count(&1), 3);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
     }
