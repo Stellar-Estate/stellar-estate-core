@@ -68,6 +68,10 @@ export class LedgerTrackerService {
     };
   }
 
+  getLatestSequence(): number {
+    return this.currentSequence;
+  }
+
   setMockSequence(seq: number): void {
     this.currentSequence = seq;
     this.lastSyncedAt = new Date().toISOString();

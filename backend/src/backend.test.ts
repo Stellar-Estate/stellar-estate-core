@@ -19,8 +19,10 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.status).toBe('healthy');
     expect(res.body).toHaveProperty('memory');
     expect(res.body.memory).toHaveProperty('heapUsedMb');
+    expect(res.body.memory).toHaveProperty('heapUsagePercentage');
     expect(res.body).toHaveProperty('horizon');
     expect(res.body.horizon.status).toBe('CONNECTED');
+    expect(res.body.horizon).toHaveProperty('trackedLedgerSequence');
     expect(res.body).toHaveProperty('process');
     expect(res.body.process).toHaveProperty('nodeVersion');
   });

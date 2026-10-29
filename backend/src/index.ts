@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { openApiSpec } from './api/openapi.js';
 import { getSwaggerHtml } from './api/swaggerUi.js';
 import { lifecycleService } from './services/lifecycleService.js';
+import { ledgerTrackerService } from './services/ledgerTrackerService.js';
 
 export const app = express();
 const PORT = config.PORT;
@@ -82,11 +83,14 @@ app.get('/api/health', (req, res) => {
       rssMb: Math.round(mem.rss / 1024 / 1024),
       heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
       heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+      heapUsagePercentage: Math.round((mem.heapUsed / mem.heapTotal) * 100),
     },
     horizon: {
       url: config.STELLAR_HORIZON_URL,
       network: config.STELLAR_NETWORK,
       status: 'CONNECTED',
+      trackedLedgerSequence: ledgerTrackerService.getLatestSequence(),
+      archivalRisk: 'LOW',
     },
     process: {
       pid: process.pid,
