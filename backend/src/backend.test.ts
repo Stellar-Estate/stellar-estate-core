@@ -5,6 +5,7 @@ import { reconciliationService } from './reconciliation/reconciliationService.js
 import { agreementService } from './services/agreementService.js';
 import { agreementHashingService, canonicalizeJson } from './services/agreementHashingService.js';
 import { stellarUriService } from './services/stellarUriService.js';
+import { logger, Logger } from './utils/logger.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -437,6 +438,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const hashA = agreementHashingService.computeAgreementHash(canonA);
     const hashB = agreementHashingService.computeAgreementHash(canonB);
     expect(hashA).toBe(hashB);
+  });
+
+  it('Logger utility should handle info, warn, debug, and error with correlation tracking', () => {
+    const testLogger = new Logger('test-service', 'debug');
+    expect(() => {
+      testLogger.debug('Debug trace message', { correlationId: 'req-123' });
+      testLogger.info('Informational audit log', { propertyId: 'prop-1' });
+      testLogger.warn('High fee warning');
+      testLogger.error('Horizon connection failed', new Error('Network timeout'), { code: 'HORIZON_ERR' });
+    }).not.toThrow();
   });
 });
 
