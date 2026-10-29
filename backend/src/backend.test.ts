@@ -901,5 +901,29 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.stellar.network).toBe('TESTNET');
     expect(res.body.database.properties).toBeGreaterThan(0);
   }, 10000);
+
+  it('db.cachedQuery should cache query results and invalidate on mutating operations', () => {
+    let callCount = 0;
+    const fetcher = () => {
+      callCount++;
+      return { val: 'test-data', count: callCount };
+    };
+
+    // First call executes fetcher
+    const res1 = db.cachedQuery('test:cache:1', 5000, fetcher);
+    expect(res1.count).toBe(1);
+    expect(callCount).toBe(1);
+
+    // Second call within TTL returns cached result
+    const res2 = db.cachedQuery('test:cache:1', 5000, fetcher);
+    expect(res2.count).toBe(1);
+    expect(callCount).toBe(1);
+
+    // Invalidation clears cache
+    db.invalidateCache('test:cache');
+    const res3 = db.cachedQuery('test:cache:1', 5000, fetcher);
+    expect(res3.count).toBe(2);
+    expect(callCount).toBe(2);
+  });
 });
 

@@ -36,6 +36,7 @@ class InMemoryDatabase {
   // Settlement Records & Consumed Revenues
   settlements: Map<string, Settlement> = new Map();
   consumedRevenueIds: Set<string> = new Set();
+  private queryCache: Map<string, { data: any; expiresAt: number }> = new Map();
 
   constructor() {
     this.seedDefaultData();
@@ -497,6 +498,8 @@ class InMemoryDatabase {
 
   saveRevenueRecord(record: RevenueRecord): RevenueRecord {
     this.revenueRecords.set(record.id, record);
+    this.invalidateCache('revenue');
+    this.invalidateCache('property');
     return record;
   }
 
@@ -547,11 +550,13 @@ class InMemoryDatabase {
 
   saveAgreement(agreement: DistributionAgreement): DistributionAgreement {
     this.agreements.set(agreement.id, agreement);
+    this.invalidateCache('agreement');
     return agreement;
   }
 
   saveAgreementVersion(version: DistributionAgreementVersion): DistributionAgreementVersion {
     this.agreementVersions.set(version.id, version);
+    this.invalidateCache('agreement');
     const agr = this.agreements.get(version.agreement_id);
     if (agr) {
       const idx = agr.versions.findIndex((v) => v.id === version.id);
@@ -573,6 +578,8 @@ class InMemoryDatabase {
 
   saveSettlement(settlement: Settlement): Settlement {
     this.settlements.set(settlement.id, settlement);
+    this.invalidateCache('settlement');
+    this.invalidateCache('property');
     return settlement;
   }
 
@@ -783,6 +790,35 @@ class InMemoryDatabase {
       this.settlements = checkpoint.settlements;
       this.consumedRevenueIds = checkpoint.consumedRevenueIds;
       throw err;
+    }
+  }
+
+  /**
+   * Cached query evaluation with TTL (time to live in ms)
+   */
+  cachedQuery<T>(key: string, ttlMs: number, fetcher: () => T): T {
+    const cached = this.queryCache.get(key);
+    const now = Date.now();
+    if (cached && cached.expiresAt > now) {
+      return cached.data as T;
+    }
+    const freshData = fetcher();
+    this.queryCache.set(key, { data: freshData, expiresAt: now + ttlMs });
+    return freshData;
+  }
+
+  /**
+   * Invalidate query cache entries matching prefix or all
+   */
+  invalidateCache(prefix?: string): void {
+    if (!prefix) {
+      this.queryCache.clear();
+      return;
+    }
+    for (const k of this.queryCache.keys()) {
+      if (k.startsWith(prefix)) {
+        this.queryCache.delete(k);
+      }
     }
   }
 }
