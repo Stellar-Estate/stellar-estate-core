@@ -781,5 +781,23 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const deliveredCount = await webhookService.dispatch('revenue.recorded', { amount: 5000 });
     expect(deliveredCount).toBeGreaterThan(0);
   });
+
+  it('GET /api/webhooks and POST /api/webhooks/subscribe should register and list active webhooks', async () => {
+    const postRes = await request(app)
+      .post('/api/webhooks/subscribe')
+      .send({
+        url: 'https://myservice.io/hooks/stellar',
+        events: ['settlement.executed'],
+      });
+    expect(postRes.status).toBe(201);
+    expect(postRes.body.success).toBe(true);
+    expect(postRes.body.subscription.url).toBe('https://myservice.io/hooks/stellar');
+
+    const getRes = await request(app).get('/api/webhooks');
+    expect(getRes.status).toBe(200);
+    expect(getRes.body.success).toBe(true);
+    expect(Array.isArray(getRes.body.data)).toBe(true);
+    expect(getRes.body.data.some((s: any) => s.url === 'https://myservice.io/hooks/stellar')).toBe(true);
+  });
 });
 

@@ -9,6 +9,7 @@ import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services
 import { isValidStellarAddress, isValidContractAddress, classifyStellarKey } from '../utils/stellarValidator.js';
 import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
 import { dbBackupService } from '../services/dbBackupService.js';
+import { webhookService } from '../services/webhookService.js';
 
 export const apiRouter = Router();
 
@@ -1016,6 +1017,45 @@ apiRouter.get('/blockchain/verify-key/:key', (req: Request, res: Response) => {
   res.json({
     success: classification.valid,
     data: classification,
+  });
+});
+
+// ==============================================================================
+// REAL-TIME EVENT WEBHOOKS
+// ==============================================================================
+
+apiRouter.get('/webhooks', (req: Request, res: Response) => {
+  const subs = webhookService.getSubscriptions().map((s) => ({
+    ...s,
+    secret: s.secret.substring(0, 8) + '...' + s.secret.slice(-4),
+  }));
+  res.json({
+    success: true,
+    total: subs.length,
+    data: subs,
+  });
+});
+
+apiRouter.post('/webhooks/subscribe', (req: Request, res: Response) => {
+  const { url, events, secret } = req.body;
+  try {
+    const sub = webhookService.subscribe(url, events, secret);
+    res.status(201).json({
+      success: true,
+      message: 'Webhook subscription created successfully.',
+      subscription: sub,
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/webhooks/logs', (req: Request, res: Response) => {
+  const logs = webhookService.getDeliveryLogs();
+  res.json({
+    success: true,
+    total: logs.length,
+    data: logs,
   });
 });
 
