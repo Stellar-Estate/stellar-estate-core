@@ -644,6 +644,24 @@ impl PropertyVaultContract {
         Ok((financials, status, settlement_count, total_settled))
     }
 
+    /// Retrieve core financial metrics tuple: (total_revenue, total_settled, reserve_balance, unconsumed_pool)
+    pub fn get_vault_financial_metrics(env: Env) -> Result<(i128, i128, i128, i128), ContractError> {
+        let financials = Self::get_financials(env.clone())?;
+        let total_settled = Self::get_total_settled_revenue(env.clone());
+        let unconsumed = financials.total_revenue_recorded.saturating_sub(total_settled);
+        Ok((
+            financials.total_revenue_recorded,
+            total_settled,
+            financials.reserve_balance,
+            unconsumed,
+        ))
+    }
+
+    /// Check whether a revenue record exists on-chain for the given nonce
+    pub fn has_revenue_record(env: Env, nonce: u32) -> bool {
+        env.storage().persistent().has(&DataKey::RevenueRecord(nonce))
+    }
+
     /// Retrieve occupancy metrics: (occupied_units, total_units, occupancy_rate_bps)
     pub fn get_property_occupancy(env: Env) -> Result<(u32, u32, u32), ContractError> {
         let meta = Self::get_property_metadata(env)?;
@@ -780,6 +798,15 @@ mod test {
         assert_eq!(entry.amount, amount);
         assert!(entry.reconciled);
         assert!(!client.is_revenue_consumed(&1));
+
+        assert!(client.has_revenue_record(&1));
+        assert!(!client.has_revenue_record(&999));
+
+        let (tot_rev, tot_set, reserve, unconsumed) = client.get_vault_financial_metrics();
+        assert_eq!(tot_rev, 1_000_000_000);
+        assert_eq!(tot_set, 0);
+        assert_eq!(reserve, 0);
+        assert_eq!(unconsumed, 1_000_000_000);
     }
 
     #[test]
