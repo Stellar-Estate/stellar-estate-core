@@ -440,6 +440,15 @@ impl DistributionAgreementContract {
         Ok((property_id, admin))
     }
 
+    /// Check whether a property identifier matches this distribution agreement contract
+    pub fn is_property_agreement_valid(env: Env, property_id: String) -> bool {
+        if let Ok((stored_prop, _admin)) = Self::get_agreement_meta(env) {
+            stored_prop == property_id
+        } else {
+            false
+        }
+    }
+
     /// Retrieve the current active version number of this distribution agreement
     pub fn get_active_version_number(env: Env) -> Result<u32, ContractError> {
         env.storage()
@@ -876,5 +885,24 @@ mod test {
         );
 
         assert_eq!(client.get_agreement_version_count(), 0);
+    }
+
+    #[test]
+    fn test_is_property_agreement_valid() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+
+        assert!(client.is_property_agreement_valid(&String::from_str(&env, "prop-01")));
+        assert!(!client.is_property_agreement_valid(&String::from_str(&env, "prop-OTHER")));
     }
 }
