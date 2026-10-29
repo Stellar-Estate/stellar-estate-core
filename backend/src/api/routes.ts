@@ -8,6 +8,7 @@ import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
 import { isValidStellarAddress } from '../utils/stellarValidator.js';
 import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
+import { dbBackupService } from '../services/dbBackupService.js';
 
 export const apiRouter = Router();
 
@@ -613,5 +614,26 @@ apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
       fallback: true,
     });
   }
+});
+
+// ==============================================================================
+// DATABASE BACKUP & RESTORATION
+// ==============================================================================
+
+apiRouter.post('/admin/backup', (req: Request, res: Response) => {
+  const snapshot = dbBackupService.createBackup();
+  res.status(201).json({
+    success: true,
+    message: 'Database backup snapshot successfully generated',
+    snapshot,
+  });
+});
+
+apiRouter.get('/admin/backup/latest', (req: Request, res: Response) => {
+  const snapshot = dbBackupService.createBackup();
+  res.json({
+    success: true,
+    data: snapshot,
+  });
 });
 

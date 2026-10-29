@@ -524,5 +524,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.property_name).toBe('The Meridian');
     expect(res.body).toHaveProperty('exportedAt');
   });
+
+  it('POST /api/admin/backup should generate database snapshot with stats', async () => {
+    const res = await request(app).post('/api/admin/backup');
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.snapshot).toHaveProperty('version', '1.0.0');
+    expect(res.body.snapshot.stats.propertyCount).toBeGreaterThan(0);
+    expect(res.body.snapshot.data.properties.length).toBeGreaterThan(0);
+  });
 });
 
