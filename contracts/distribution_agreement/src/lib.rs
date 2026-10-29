@@ -552,6 +552,11 @@ impl DistributionAgreementContract {
         versions
     }
 
+    /// Retrieve total count of registered agreement versions
+    pub fn get_agreement_version_count(env: Env) -> u32 {
+        Self::get_all_versions(env).len()
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -853,5 +858,23 @@ mod test {
         client.add_stakeholder(&admin, &1, &alice, &5000, &String::from_str(&env, "Alice"));
 
         assert_eq!(client.get_pending_approvals_count(&1), 2);
+    }
+
+    #[test]
+    fn test_get_agreement_version_count() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+
+        assert_eq!(client.get_agreement_version_count(), 0);
     }
 }
