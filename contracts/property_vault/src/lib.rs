@@ -633,6 +633,20 @@ impl PropertyVaultContract {
         env.storage().instance().get(&DataKey::SettlementCount).unwrap_or(0)
     }
 
+    /// Retrieve total lifetime count of recipient payouts disbursed across all settlements
+    pub fn get_total_recipients_settled(env: Env) -> u32 {
+        let count = Self::get_settlement_count(env.clone());
+        let mut total = 0u32;
+        for idx in 1..=count {
+            if let Some(stl_id) = env.storage().persistent().get::<_, String>(&DataKey::SettlementByIndex(idx)) {
+                if let Ok(rec) = Self::get_settlement(env.clone(), stl_id) {
+                    total = total.saturating_add(rec.recipient_count);
+                }
+            }
+        }
+        total
+    }
+
     /// Retrieve the total number of recorded revenue events (nonce counter)
     pub fn get_revenue_count(env: Env) -> u32 {
         env.storage().instance().get(&DataKey::RevenueNonce).unwrap_or(0)
@@ -1064,6 +1078,7 @@ mod test {
         assert_eq!(b_dist, 760_000_000);
         assert_eq!(client.get_reserve_retention_ratio(&settlement_id), 1000);
         assert_eq!(client.get_settlement_payout_count(&settlement_id), 3);
+        assert_eq!(client.get_total_recipients_settled(), 3);
 
         let record = client.get_settlement(&settlement_id);
         assert_eq!(record.settlement_id, settlement_id);
