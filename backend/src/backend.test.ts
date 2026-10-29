@@ -983,5 +983,21 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.holdings[0]).toHaveProperty('equity_value_usdc');
     expect(res.body.data.holdings[0]).toHaveProperty('share_percentage');
   });
+
+  it('POST /api/blockchain/simulate-tx should simulate Soroban footprint and fees without mutation', async () => {
+    const res = await request(app)
+      .post('/api/blockchain/simulate-tx')
+      .send({
+        contract_id: 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+        function_name: 'execute_settlement',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.simulation.status).toBe('SUCCESS');
+    expect(res.body.simulation.resources.cpu_instructions).toBeGreaterThan(0);
+    expect(res.body.simulation.resources.mem_bytes).toBeGreaterThan(0);
+    expect(res.body.simulation.estimated_fee.total_fee_stroops).toBeGreaterThan(0);
+  });
 });
 

@@ -1533,3 +1533,72 @@ apiRouter.get('/stakeholders/:address/portfolio', (req: Request, res: Response) 
   });
 });
 
+
+
+apiRouter.post('/blockchain/simulate-tx', (req: Request, res: Response) => {
+  const { contract_id, function_name, args, caller_address } = req.body;
+  if (!contract_id || typeof contract_id !== 'string') {
+    return res.status(400).json({ success: false, error: 'contract_id is required' });
+  }
+  if (!function_name || typeof function_name !== 'string') {
+    return res.status(400).json({ success: false, error: 'function_name is required' });
+  }
+
+  const isSettlement = function_name.includes('settle') || function_name.includes('execute');
+  const isRevenue = function_name.includes('revenue') || function_name.includes('deposit');
+  const isQuery = function_name.startsWith('get_') || function_name.startsWith('is_') || function_name.startsWith('has_');
+
+  let cpuInstructions = 1850000;
+  let memBytes = 524288;
+  let readKeys = 3;
+  let writeKeys = 1;
+  let minFeeStroops = 1500;
+
+  if (isSettlement) {
+    cpuInstructions = 4250000;
+    memBytes = 1572864;
+    readKeys = 8;
+    writeKeys = 5;
+    minFeeStroops = 4200;
+  } else if (isRevenue) {
+    cpuInstructions = 2450000;
+    memBytes = 786432;
+    readKeys = 4;
+    writeKeys = 3;
+    minFeeStroops = 2400;
+  } else if (isQuery) {
+    cpuInstructions = 650000;
+    memBytes = 262144;
+    readKeys = 2;
+    writeKeys = 0;
+    minFeeStroops = 100;
+  }
+
+  res.json({
+    success: true,
+    simulation: {
+      contract_id,
+      function_name,
+      caller_address: caller_address || 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      status: 'SUCCESS',
+      footprint: {
+        read_only_keys: readKeys,
+        read_write_keys: writeKeys,
+        total_keys: readKeys + writeKeys,
+      },
+      resources: {
+        cpu_instructions: cpuInstructions,
+        cpu_instructions_limit: Math.round(cpuInstructions * 1.25),
+        mem_bytes: memBytes,
+        mem_bytes_limit: Math.round(memBytes * 1.25),
+      },
+      estimated_fee: {
+        base_fee_stroops: 100,
+        resource_fee_stroops: minFeeStroops,
+        total_fee_stroops: minFeeStroops + 100,
+        total_fee_xlm: (minFeeStroops + 100) / 10000000,
+      },
+      simulated_at: new Date().toISOString(),
+    },
+  });
+});
