@@ -497,5 +497,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(cleanedUp).toBe(true);
     lifecycleService.unregisterCleanup('test-db');
   });
+
+  it('GET /api/blockchain/latest-ledger should return current tracked ledger state', async () => {
+    const res = await request(app).get('/api/blockchain/latest-ledger');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('sequence');
+    expect(res.body.data).toHaveProperty('syncedAt');
+    expect(res.body.data).toHaveProperty('network');
+  });
 });
 

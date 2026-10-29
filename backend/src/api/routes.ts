@@ -7,6 +7,7 @@ import { agreementService } from '../services/agreementService.js';
 import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
 import { isValidStellarAddress } from '../utils/stellarValidator.js';
+import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
 
 export const apiRouter = Router();
 
@@ -336,6 +337,18 @@ apiRouter.get('/blockchain/network', (req: Request, res: Response) => {
       explorer_base_url: 'https://stellar.expert/explorer/testnet',
       friendbot_url: 'https://friendbot.stellar.org',
     },
+  });
+});
+
+apiRouter.get('/blockchain/latest-ledger', async (req: Request, res: Response) => {
+  const refresh = req.query.refresh === 'true';
+  if (refresh) {
+    await ledgerTrackerService.fetchLatestLedger();
+  }
+  const state = ledgerTrackerService.getState();
+  res.json({
+    success: true,
+    data: state,
   });
 });
 
