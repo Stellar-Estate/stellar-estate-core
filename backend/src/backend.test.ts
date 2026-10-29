@@ -1159,5 +1159,24 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.net_yield_bps).toBeGreaterThanOrEqual(0);
     expect(res.body.data.net_yield_percentage).toBeDefined();
   });
+
+  it('POST /api/agreements/:id/versions/:ver/check-stakeholder should verify stakeholder participation', async () => {
+    const resValid = await request(app)
+      .post('/api/agreements/agr-meridian-001/versions/2/check-stakeholder')
+      .send({ address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD' });
+    expect(resValid.status).toBe(200);
+    expect(resValid.body.success).toBe(true);
+    expect(resValid.body.data.is_stakeholder).toBe(true);
+    expect(resValid.body.data.stakeholder.name).toBe('Alice (Meridian Capital)');
+    expect(resValid.body.data.stakeholder.basis_points).toBe(4500);
+
+    const resInvalid = await request(app)
+      .post('/api/agreements/agr-meridian-001/versions/2/check-stakeholder')
+      .send({ address: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHATEVER' });
+    expect(resInvalid.status).toBe(200);
+    expect(resInvalid.body.success).toBe(true);
+    expect(resInvalid.body.data.is_stakeholder).toBe(false);
+    expect(resInvalid.body.data.stakeholder).toBeNull();
+  });
 });
 

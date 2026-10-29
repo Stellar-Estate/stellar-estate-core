@@ -2037,3 +2037,55 @@ apiRouter.get('/properties/:id/financials/ratios', (req: Request, res: Response)
     },
   });
 });
+
+apiRouter.post('/agreements/:id/versions/:ver/check-stakeholder', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  const address = (req.body?.address || req.body?.wallet_address || '').trim().toLowerCase();
+
+  if (!address) {
+    return res.status(400).json({ success: false, error: 'address or wallet_address is required.' });
+  }
+
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const version = (agreement.versions || []).find((v: any) => v.version_number === versionNum || v.version === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Agreement version ${id} v${ver} not found.` });
+  }
+
+  const stakeholders = version.stakeholders || [];
+  const matched = stakeholders.find((s: any) => (s.wallet_address || '').toLowerCase() === address);
+
+  if (matched) {
+    res.json({
+      success: true,
+      data: {
+        agreement_id: id,
+        version: versionNum,
+        is_stakeholder: true,
+        stakeholder: {
+          name: matched.name,
+          role: matched.role,
+          wallet_address: matched.wallet_address,
+          basis_points: matched.basis_points,
+          equity_percentage: `${(matched.basis_points / 100).toFixed(2)}%`,
+          has_approved: !!matched.has_approved,
+        },
+      },
+    });
+  } else {
+    res.json({
+      success: true,
+      data: {
+        agreement_id: id,
+        version: versionNum,
+        is_stakeholder: false,
+        stakeholder: null,
+      },
+    });
+  }
+});
