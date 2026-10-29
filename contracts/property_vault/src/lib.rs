@@ -539,6 +539,20 @@ impl PropertyVaultContract {
         Ok((record.distributable_amount, record.gross_revenue))
     }
 
+    /// Retrieve settlement financial breakdown tuple: (gross_revenue, expenses, reserve, distributable_amount)
+    pub fn get_settlement_breakdown(
+        env: Env,
+        settlement_id: String,
+    ) -> Result<(i128, i128, i128, i128), ContractError> {
+        let record = Self::get_settlement(env, settlement_id)?;
+        Ok((
+            record.gross_revenue,
+            record.expenses,
+            record.reserve,
+            record.distributable_amount,
+        ))
+    }
+
     /// Retrieve paginated list of settlement records executed by the vault
     pub fn get_settlements_paginated(
         env: Env,
@@ -985,6 +999,12 @@ mod test {
         let (distributable, gross) = client.get_settlement_distrib_ratio(&settlement_id);
         assert_eq!(distributable, 760_000_000);
         assert_eq!(gross, 1_000_000_000);
+
+        let (b_gross, b_exp, b_res, b_dist) = client.get_settlement_breakdown(&settlement_id);
+        assert_eq!(b_gross, 1_000_000_000);
+        assert_eq!(b_exp, 100_000_000);
+        assert_eq!(b_res, 100_000_000);
+        assert_eq!(b_dist, 760_000_000);
 
         let record = client.get_settlement(&settlement_id);
         assert_eq!(record.settlement_id, settlement_id);
