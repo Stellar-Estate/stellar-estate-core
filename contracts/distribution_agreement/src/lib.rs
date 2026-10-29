@@ -489,6 +489,16 @@ impl DistributionAgreementContract {
         Ok(bps as u32)
     }
 
+    /// Retrieve count of pending stakeholder approvals for an agreement version
+    pub fn get_pending_approvals_count(env: Env, version: u32) -> Result<u32, ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        if state.approved_count >= state.total_stakeholders {
+            Ok(0)
+        } else {
+            Ok(state.total_stakeholders - state.approved_count)
+        }
+    }
+
     /// Retrieve creation and lock timestamps tuple: (created_at, locked_at)
     pub fn get_lifecycle_timestamps(env: Env, version: u32) -> Result<(u64, u64), ContractError> {
         let state = Self::get_agreement_version(env, version)?;
@@ -820,5 +830,28 @@ mod test {
         );
 
         assert_eq!(client.is_version_superseded(&1), false);
+    }
+
+    #[test]
+    fn test_get_pending_approvals_count() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        let alice = Address::generate(&env);
+        let hash = String::from_str(&env, "HASH_PENDING_01");
+
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+        client.create_version(&admin, &1, &hash, &2);
+        client.add_stakeholder(&admin, &1, &alice, &5000, &String::from_str(&env, "Alice"));
+
+        assert_eq!(client.get_pending_approvals_count(&1), 2);
     }
 }
