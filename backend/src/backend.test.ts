@@ -597,5 +597,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.text).toContain('Stakeholder Financial Earnings Statement');
     expect(res.text).toContain('Alice');
   });
+
+  it('GET /api/properties/:id/units should return unit inventory and occupancy statistics', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/units');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.total_units).toBe(10);
+    expect(res.body.data.occupied_units).toBe(9);
+    expect(res.body.data.occupancy_rate).toBe(90);
+    expect(res.body.data.units.length).toBe(10);
+  });
 });
 

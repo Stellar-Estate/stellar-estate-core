@@ -149,6 +149,31 @@ apiRouter.get('/properties/:id', (req: Request, res: Response) => {
   });
 });
 
+apiRouter.get('/properties/:id/units', (req: Request, res: Response) => {
+  const property = db.getPropertyById(req.params.id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+
+  const units = db.getPropertyUnits(req.params.id);
+  const occupiedCount = units.filter((u) => u.occupancy_status === 'OCCUPIED').length;
+  const totalRent = units.reduce((sum, u) => sum + (u.occupancy_status === 'OCCUPIED' ? u.monthly_rent : 0), 0);
+
+  res.json({
+    success: true,
+    data: {
+      property_id: property.id,
+      property_name: property.name,
+      total_units: units.length,
+      occupied_units: occupiedCount,
+      occupancy_rate: units.length > 0 ? (occupiedCount / units.length) * 100 : 0,
+      monthly_gross_potential_rent: units.reduce((sum, u) => sum + u.monthly_rent, 0),
+      monthly_effective_rent: totalRent,
+      units,
+    },
+  });
+});
+
 apiRouter.get('/properties/:id/revenue', (req: Request, res: Response) => {
   try {
     const data = revenueService.getPropertyRevenueHistory(req.params.id);
