@@ -465,6 +465,16 @@ impl DistributionAgreementContract {
         Ok((state.approved_count, state.total_stakeholders, is_ready))
     }
 
+    /// Retrieve consensus approval ratio in basis points (approved_count * 10_000 / total_stakeholders)
+    pub fn get_approval_ratio_bps(env: Env, version: u32) -> Result<u32, ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        if state.total_stakeholders == 0 {
+            return Ok(0);
+        }
+        let bps = (state.approved_count as u64 * 10_000) / (state.total_stakeholders as u64);
+        Ok(bps as u32)
+    }
+
     /// Retrieve the canonical cryptographic hash of an agreement version
     pub fn get_version_agreement_hash(env: Env, version: u32) -> Result<String, ContractError> {
         let state = Self::get_agreement_version(env, version)?;
@@ -609,6 +619,7 @@ mod test {
         client.add_stakeholder(&admin, &1, &charlie, &2500, &String::from_str(&env, "Charlie"));
         assert_eq!(client.get_stakeholder_role(&1, &alice), String::from_str(&env, "Alice"));
         assert_eq!(client.get_approval_progress(&1), (0, 3, false));
+        assert_eq!(client.get_approval_ratio_bps(&1), 0);
 
         // 4. Try locking prematurely -> Fails with IncompleteApprovals (#14)
         // Verified by assert below after Alice approves
@@ -618,6 +629,7 @@ mod test {
         assert!(client.is_stakeholder_approved(&1, &alice));
         assert!(!client.is_stakeholder_approved(&1, &bob));
         assert_eq!(client.get_approval_progress(&1), (1, 3, false));
+        assert_eq!(client.get_approval_ratio_bps(&1), 3333);
 
         let ready2 = client.approve_agreement(&bob, &1, &hash_v1);
         assert!(!ready2);
@@ -628,6 +640,7 @@ mod test {
         assert!(ready3);
         assert!(client.is_ready_to_lock(&1));
         assert_eq!(client.get_approval_progress(&1), (3, 3, true));
+        assert_eq!(client.get_approval_ratio_bps(&1), 10000);
 
         // Validate hash queries
         assert_eq!(client.get_version_agreement_hash(&1), hash_v1);
