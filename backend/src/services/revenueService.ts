@@ -1,5 +1,6 @@
 import { db } from '../database/db.js';
 import { stellarVerificationService, VerificationOutcome } from './stellarVerificationService.js';
+import { stellarUriService } from './stellarUriService.js';
 import { BlockchainTransaction, RevenueRecord } from '../database/types.js';
 
 export interface DepositIntentRequest {
@@ -19,6 +20,7 @@ export interface DepositIntentResponse {
   suggestedAmount: number;
   network: 'TESTNET';
   instructions: string;
+  sep7Uri?: string;
 }
 
 export interface VerifyDepositRequest {
@@ -53,6 +55,15 @@ export class RevenueService {
       },
     });
 
+    const sep7Uri = stellarUriService.generatePayUri({
+      destination: property.vault_stellar_address,
+      amount: req.amount,
+      assetCode: req.asset || 'XLM',
+      memo: `REV-${property.id.substring(0, 10)}`,
+      memoType: 'MEMO_TEXT',
+      msg: `Revenue deposit for ${property.name}`,
+    });
+
     return {
       intentId,
       propertyId: property.id,
@@ -62,6 +73,7 @@ export class RevenueService {
       suggestedAmount: req.amount,
       network: 'TESTNET',
       instructions: `Submit a payment transaction of ${req.amount} ${req.asset || 'XLM'} on Stellar Testnet to vault ${property.vault_stellar_address}`,
+      sep7Uri,
     };
   }
 

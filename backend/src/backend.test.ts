@@ -4,6 +4,7 @@ import { app } from './index.js';
 import { reconciliationService } from './reconciliation/reconciliationService.js';
 import { agreementService } from './services/agreementService.js';
 import { agreementHashingService } from './services/agreementHashingService.js';
+import { stellarUriService } from './services/stellarUriService.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -46,6 +47,9 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('intentId');
+    expect(res.body.data).toHaveProperty('sep7Uri');
+    expect(res.body.data.sep7Uri).toContain('web+stellar:pay');
+    expect(res.body.data.sep7Uri).toContain('destination=');
   });
 
   it('POST /api/revenue/verify should reject invalid transaction hash lengths', async () => {
@@ -389,6 +393,35 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveProperty('fee_charged');
+  });
+
+  it('stellarUriService should generate and parse SEP-0007 pay and tx URIs', () => {
+    const payUri = stellarUriService.generatePayUri({
+      destination: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      amount: 500,
+      assetCode: 'USDC',
+      assetIssuer: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      memo: 'RENT-01',
+      msg: 'Pay monthly rent',
+    });
+
+    expect(payUri).toContain('web+stellar:pay');
+    expect(payUri).toContain('destination=GBTY42VFL');
+    expect(payUri).toContain('asset_code=USDC');
+
+    const parsedPay = stellarUriService.parseUri(payUri);
+    expect(parsedPay.operation).toBe('pay');
+    expect(parsedPay.params.amount).toBe('500.00');
+    expect(parsedPay.params.memo).toBe('RENT-01');
+
+    const txUri = stellarUriService.generateTxUri({
+      xdr: 'AAAAAGX8...test',
+      msg: 'Execute vault settlement',
+    });
+    expect(txUri).toContain('web+stellar:tx');
+    const parsedTx = stellarUriService.parseUri(txUri);
+    expect(parsedTx.operation).toBe('tx');
+    expect(parsedTx.params.xdr).toBe('AAAAAGX8...test');
   });
 });
 
