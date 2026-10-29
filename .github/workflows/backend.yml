@@ -1,0 +1,50 @@
+name: Backend Services CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'backend/**'
+      - 'shared/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'backend/**'
+      - 'shared/**'
+
+jobs:
+  backend-matrix:
+    name: Node.js ${{ matrix.node-version }} - Backend Test & Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Type Check & Lint
+        run: npm run lint
+
+      - name: Verify Contract Type Parity
+        run: npm run verify:types
+
+      - name: Run Vitest Test Suite
+        run: npm test
+
+      - name: Build TypeScript Output
+        run: npm run build
