@@ -477,6 +477,15 @@ impl PropertyVaultContract {
         let total_settled = Self::get_total_settled_revenue(env);
         Ok((financials, status, settlement_count, total_settled))
     }
+
+    /// Retrieve contract identifier, version number, and specification details
+    pub fn get_contract_info(env: Env) -> (String, u32, String) {
+        (
+            String::from_str(&env, "StellarEstatePropertyVault"),
+            1,
+            String::from_str(&env, "On-chain real estate property revenue vault and settlement distributor"),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -514,6 +523,10 @@ mod test {
 
         let meta = client.get_property_metadata();
         assert_eq!(meta.property_id, String::from_str(&env, "prop-meridian-01"));
+
+        let (info_name, info_ver, _info_desc) = client.get_contract_info();
+        assert_eq!(info_name, String::from_str(&env, "StellarEstatePropertyVault"));
+        assert_eq!(info_ver, 1);
         assert_eq!(meta.total_units, 10);
         assert_eq!(meta.occupied_units, 9);
 
