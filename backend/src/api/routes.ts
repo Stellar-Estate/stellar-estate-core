@@ -1653,3 +1653,50 @@ apiRouter.get('/properties/:id/occupancy-history', (req: Request, res: Response)
     },
   });
 });
+
+
+apiRouter.get('/admin/db-health', (req: Request, res: Response) => {
+  const allProperties = db.getAllProperties();
+  const allAgreements = Array.from(db.agreements.values());
+  const allRevenues = db.getAllRevenueRecords();
+  const allSettlements = db.getAllSettlements();
+  const allUnits = Array.from(db.units.values());
+
+  let integrityPassed = true;
+  const issues: string[] = [];
+
+  for (const r of allRevenues) {
+    if (r.amount < 0) {
+      integrityPassed = false;
+      issues.push(`Negative revenue recorded on record ${r.id}`);
+    }
+  }
+
+  for (const s of allSettlements) {
+    if (s.distributable_amount < 0 || s.gross_revenue < 0) {
+      integrityPassed = false;
+      issues.push(`Invalid settlement amounts on ${s.id}`);
+    }
+  }
+
+  res.json({
+    success: true,
+    status: integrityPassed ? 'UP' : 'DEGRADED',
+    timestamp: new Date().toISOString(),
+    storage_engine: 'In-Memory Transactional Store with JSON Snapshots',
+    integrity_check: {
+      status: integrityPassed ? 'PASSED' : 'FAILED',
+      issues,
+    },
+    collections: {
+      properties: allProperties.length,
+      units: allUnits.length,
+      agreements: allAgreements.length,
+      agreement_versions: db.agreementVersions.size,
+      revenue_records: allRevenues.length,
+      settlements: allSettlements.length,
+      audit_events: db.auditEvents.length,
+      webhooks: webhookService.getSubscriptions().length,
+    },
+  });
+});

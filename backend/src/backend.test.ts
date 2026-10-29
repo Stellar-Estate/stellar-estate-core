@@ -1009,5 +1009,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.history.length).toBe(6);
     expect(Array.isArray(res.body.data.units)).toBe(true);
   });
+
+  it('GET /api/admin/db-health should return collection counts and passed integrity verification', async () => {
+    const res = await request(app).get('/api/admin/db-health');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.status).toBe('UP');
+    expect(res.body.integrity_check.status).toBe('PASSED');
+    expect(res.body.collections.properties).toBeGreaterThan(0);
+    expect(res.body.collections.revenue_records).toBeGreaterThan(0);
+  });
 });
 
