@@ -436,6 +436,21 @@ impl DistributionAgreementContract {
         Ok((state.approved_count, state.total_stakeholders, is_ready))
     }
 
+    /// Retrieve the canonical cryptographic hash of an agreement version
+    pub fn get_version_agreement_hash(env: Env, version: u32) -> Result<String, ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        Ok(state.agreement_hash)
+    }
+
+    /// Check whether a candidate hash matches the stored canonical agreement hash
+    pub fn is_agreement_hash_valid(env: Env, version: u32, candidate_hash: String) -> bool {
+        if let Ok(state) = Self::get_agreement_version(env, version) {
+            state.agreement_hash == candidate_hash
+        } else {
+            false
+        }
+    }
+
     /// Retrieve list of all registered version numbers for this agreement contract
     pub fn get_all_versions(env: Env) -> Vec<u32> {
         let mut versions = Vec::new(&env);
@@ -563,6 +578,12 @@ mod test {
         assert!(ready3);
         assert!(client.is_ready_to_lock(&1));
         assert_eq!(client.get_approval_progress(&1), (3, 3, true));
+
+        // Validate hash queries
+        assert_eq!(client.get_version_agreement_hash(&1), hash_v1);
+        assert!(client.is_agreement_hash_valid(&1, &hash_v1));
+        let fake_hash = String::from_str(&env, "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad");
+        assert!(!client.is_agreement_hash_valid(&1, &fake_hash));
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
