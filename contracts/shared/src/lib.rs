@@ -59,6 +59,7 @@ pub enum AgreementStatus {
     ReadyToLock = 3,
     Locked = 4,
     Superseded = 5,
+    Revoked = 6,
 }
 
 /// Rule types for Waterfall tranches

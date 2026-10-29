@@ -301,6 +301,40 @@ impl DistributionAgreementContract {
         Ok(())
     }
 
+    /// Revoke a pending agreement version proposal before it becomes locked (Admin only)
+    pub fn revoke_agreement_proposal(
+        env: Env,
+        caller: Address,
+        version: u32,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+
+        if caller != admin {
+            return Err(ContractError::Unauthorized);
+        }
+
+        let mut version_state: AgreementVersionState = env
+            .storage()
+            .persistent()
+            .get(&DataKey::VersionState(version))
+            .ok_or(ContractError::AgreementNotFound)?;
+
+        if version_state.status == AgreementStatus::Locked {
+            return Err(ContractError::AgreementLocked);
+        }
+
+        version_state.status = AgreementStatus::Revoked;
+        env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
+
+        Ok(())
+    }
+
     /// Retrieve authoritative on-chain state of an agreement version
     pub fn get_agreement_version(
         env: Env,
@@ -618,5 +652,32 @@ mod test {
         );
 
         client.upgrade_contract(&unauthorized, &dummy_wasm_hash);
+    }
+
+    #[test]
+    fn test_revoke_agreement_proposal_flow() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        let alice = Address::generate(&env);
+        let hash = String::from_str(&env, "HASH_REVOKE_01");
+
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+        client.create_version(&admin, &1, &hash, &1);
+        client.add_stakeholder(&admin, &1, &alice, &10000, &String::from_str(&env, "Alice"));
+
+        assert_eq!(client.get_version_status(&1), AgreementStatus::PendingApprovals);
+
+        // Admin revokes proposal
+        client.revoke_agreement_proposal(&admin, &1);
+        assert_eq!(client.get_version_status(&1), AgreementStatus::Revoked);
     }
 }
