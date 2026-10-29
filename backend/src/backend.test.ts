@@ -925,5 +925,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res3.count).toBe(2);
     expect(callCount).toBe(2);
   });
+
+  it('GET /api/properties/:id/vault-telemetry should return on-chain contract state and financial telemetry', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/vault-telemetry');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.telemetry.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.telemetry.contract_name).toBe('StellarEstatePropertyVault');
+    expect(res.body.telemetry.accepted_asset.code).toBe('USDC');
+    expect(res.body.telemetry.financials).toHaveProperty('unconsumed_pool');
+    expect(res.body.telemetry.explorer_links.vault).toContain('stellar.expert');
+  });
 });
 

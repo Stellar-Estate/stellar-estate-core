@@ -701,8 +701,8 @@ apiRouter.get('/properties/:id/reconciliation', (req: Request, res: Response) =>
     property_id: property.id,
     revenue_count: revenues.length,
     settlement_count: settlements.length,
-    total_gross: pool.total_confirmed,
-    total_settled: pool.total_settled,
+    total_gross: pool.total_confirmed_revenue,
+    total_settled: pool.total_settled_revenue,
   });
   const ledgerChecksum = crypto.createHash('sha256').update(checksumPayload).digest('hex');
 
@@ -714,11 +714,11 @@ apiRouter.get('/properties/:id/reconciliation', (req: Request, res: Response) =>
       vault_stellar_address: property.vault_stellar_address,
       metrics: {
         total_revenue_records: revenues.length,
-        total_gross_revenue: pool.total_confirmed,
+        total_gross_revenue: pool.total_confirmed_revenue,
         total_settlements: settlements.length,
-        total_settled_gross: pool.total_settled,
+        total_settled_gross: pool.total_settled_revenue,
         total_distributable_payouts: totalDistributable,
-        unconsumed_revenue_pool: pool.available_amount,
+        unconsumed_revenue_pool: pool.available_for_settlement,
         reserve_balance: (property.metadata?.reserve_balance as number) || 2000,
       },
       audit: {
@@ -747,6 +747,54 @@ apiRouter.get('/properties/:id/revenue-pool', (req: Request, res: Response) => {
   }
   const pool = db.getRevenuePool(req.params.id);
   res.json({ success: true, data: pool });
+});
+
+apiRouter.get('/properties/:id/vault-telemetry', (req: Request, res: Response) => {
+  const property = db.getPropertyById(req.params.id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+
+  const pool = db.getRevenuePool(property.id);
+  const agreements = db.getAgreementsByProperty(property.id);
+  const activeAgreement = agreements.find((a) => a.status === 'LOCKED');
+  const activeVersion = activeAgreement?.versions.find((v) => v.version_number === activeAgreement.current_version);
+
+  res.json({
+    success: true,
+    telemetry: {
+      property_id: property.id,
+      vault_stellar_address: property.vault_stellar_address,
+      contract_name: 'StellarEstatePropertyVault',
+      contract_version: '1.0.0-stellar-estate',
+      standard: 'SEP-0001/SEP-0007/Soroban-v22',
+      vault_status: property.status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED',
+      accepted_asset: {
+        code: 'USDC',
+        contract_id: 'CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZU25LEJ7W89ABCD1234',
+      },
+      financials: {
+        total_revenue_recorded: pool.total_confirmed_revenue,
+        total_settled: pool.total_settled_revenue,
+        unconsumed_pool: pool.available_for_settlement,
+        reserve_balance: (property.metadata?.reserve_balance as number) || 2000,
+      },
+      agreement: activeVersion
+        ? {
+            agreement_id: activeAgreement.id,
+            version: activeVersion.version_number,
+            agreement_hash: activeVersion.agreement_hash,
+            contract_reference: activeVersion.contract_reference,
+            stakeholder_count: activeVersion.stakeholders.length,
+          }
+        : null,
+      explorer_links: {
+        vault: `https://stellar.expert/explorer/testnet/account/${property.vault_stellar_address}`,
+        asset: 'https://stellar.expert/explorer/testnet/asset/USDC-GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      },
+      timestamp: new Date().toISOString(),
+    },
+  });
 });
 
 apiRouter.get('/properties/:id/passport', (req: Request, res: Response) => {
