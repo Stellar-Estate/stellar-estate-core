@@ -8,6 +8,7 @@ import { stellarUriService } from './services/stellarUriService.js';
 import { logger, Logger } from './utils/logger.js';
 import { lifecycleService } from './services/lifecycleService.js';
 import { shouldBypassRateLimit } from './middleware/security.js';
+import { sanitizeString, sanitizePayload } from './middleware/sanitizer.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -651,6 +652,26 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.length).toBeGreaterThan(0);
     expect(res.body.data[0]).toHaveProperty('last_ledger_base_fee');
     expect(res.body.data[0]).toHaveProperty('timestamp');
+  });
+
+  it('sanitizeString and sanitizePayload should neutralize XSS vectors while preserving legitimate data', () => {
+    const dangerous = 'Hello <script>alert("hack")</script> World <iframe src="evil.com"></iframe>';
+    const sanitized = sanitizeString(dangerous);
+    expect(sanitized).toBe('Hello  World');
+    expect(sanitized).not.toContain('<script>');
+    expect(sanitized).not.toContain('evil.com');
+
+    const obj = {
+      title: 'Nice Property <script>evil()</script>',
+      nested: {
+        link: 'javascript:alert(1)',
+        amount: 500,
+      },
+    };
+    const sanitizedObj = sanitizePayload(obj);
+    expect(sanitizedObj.title).toBe('Nice Property');
+    expect(sanitizedObj.nested.link).toBe('alert(1)');
+    expect(sanitizedObj.nested.amount).toBe(500);
   });
 });
 

@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { config } from './config.js';
 import { apiRouter } from './api/routes.js';
 import { correlationIdMiddleware, apiRateLimiter } from './middleware/security.js';
+import { sanitizerMiddleware } from './middleware/sanitizer.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { openApiSpec } from './api/openapi.js';
 import { getSwaggerHtml } from './api/swaggerUi.js';
@@ -47,6 +48,7 @@ app.use(
 
 app.use(express.json({ limit: '1mb' }));
 app.use(correlationIdMiddleware);
+app.use(sanitizerMiddleware);
 
 if (config.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
