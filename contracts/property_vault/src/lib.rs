@@ -439,6 +439,11 @@ impl PropertyVaultContract {
     pub fn get_total_settled_revenue(env: Env) -> i128 {
         env.storage().instance().get(&DataKey::TotalSettledRevenue).unwrap_or(0)
     }
+
+    /// Retrieve semantic contract version and platform identifier
+    pub fn get_version(env: Env) -> String {
+        String::from_str(&env, "1.0.0-stellar-estate")
+    }
 }
 
 #[cfg(test)]
@@ -484,6 +489,7 @@ mod test {
         assert_eq!(financials.deposit_count, 0);
         assert_eq!(client.get_settlement_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
+        assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
     }
 
     #[test]
