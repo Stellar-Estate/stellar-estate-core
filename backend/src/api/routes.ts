@@ -1258,3 +1258,61 @@ apiRouter.get('/metrics', (req: Request, res: Response) => {
   res.send(lines.join('\n') + '\n');
 });
 
+apiRouter.get('/diagnostics', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  let horizonStatus = 'UNKNOWN';
+  let horizonLatency = 0;
+
+  try {
+    const hStart = Date.now();
+    const hRes = await fetch(`${STELLAR_TESTNET_HORIZON}/fee_stats`, { signal: AbortSignal.timeout(600) });
+    horizonLatency = Date.now() - hStart;
+    if (hRes.ok) {
+      horizonStatus = 'ONLINE';
+    } else {
+      horizonStatus = 'DEGRADED';
+    }
+  } catch {
+    horizonStatus = 'STANDBY';
+  }
+
+  const latestLedger = ledgerTrackerService.getLatestSequence();
+  const mem = process.memoryUsage();
+  const dbHealth = {
+    properties: db.properties.size,
+    agreements: db.agreements.size,
+    revenue_records: db.revenueRecords.size,
+    settlements: db.settlements.size,
+    audit_events: db.auditEvents.length,
+    webhooks: webhookService.getSubscriptions().length,
+  };
+
+  const isHealthy = horizonStatus !== 'OFFLINE';
+
+  res.json({
+    success: true,
+    status: isHealthy ? 'HEALTHY' : 'DEGRADED',
+    timestamp: new Date().toISOString(),
+    execution_time_ms: Date.now() - startTime,
+    environment: {
+      node_version: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      uptime_seconds: Math.floor(process.uptime()),
+    },
+    memory: {
+      heap_used_mb: Math.round((mem.heapUsed / 1024 / 1024) * 100) / 100,
+      heap_total_mb: Math.round((mem.heapTotal / 1024 / 1024) * 100) / 100,
+      rss_mb: Math.round((mem.rss / 1024 / 1024) * 100) / 100,
+    },
+    stellar: {
+      network: 'TESTNET',
+      horizon_url: STELLAR_TESTNET_HORIZON,
+      horizon_status: horizonStatus,
+      horizon_latency_ms: horizonLatency,
+      latest_ledger: latestLedger,
+    },
+    database: dbHealth,
+  });
+});
+

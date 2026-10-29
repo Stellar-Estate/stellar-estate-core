@@ -888,5 +888,18 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.text).toContain('stellar_estate_settlements_total');
     expect(res.text).toContain('stellar_estate_process_memory_heap_bytes');
   });
+
+  it('GET /api/diagnostics should return comprehensive system and network health telemetry', async () => {
+    const res = await request(app).get('/api/diagnostics');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body).toHaveProperty('status');
+    expect(res.body).toHaveProperty('environment');
+    expect(res.body).toHaveProperty('memory');
+    expect(res.body).toHaveProperty('stellar');
+    expect(res.body).toHaveProperty('database');
+    expect(res.body.stellar.network).toBe('TESTNET');
+    expect(res.body.database.properties).toBeGreaterThan(0);
+  }, 10000);
 });
 
