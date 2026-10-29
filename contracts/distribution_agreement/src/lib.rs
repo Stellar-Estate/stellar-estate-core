@@ -6,6 +6,7 @@ use soroban_sdk::{
 };
 use stellar_estate_shared::{
     AgreementStatus, AgreementVersionState, ContractError, Stakeholder,
+    INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
 };
 
 #[contracttype]
@@ -48,6 +49,9 @@ impl DistributionAgreementContract {
         env.storage().instance().set(&DataKey::PropertyId, &property_id);
         env.storage().instance().set(&DataKey::AgreementId, &agreement_id);
         env.storage().instance().set(&DataKey::ActiveVersion, &0u32);
+
+        // Extend instance storage TTL to avoid contract archival on Stellar
+        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
         env.events().publish((EVENT_AGR_INIT, admin), property_id);
 
@@ -106,6 +110,10 @@ impl DistributionAgreementContract {
         env.storage().persistent().set(&DataKey::VersionState(version), &state);
         env.storage().persistent().set(&DataKey::StakeholderCount(version), &0u32);
         env.storage().instance().set(&DataKey::ActiveVersion, &version);
+
+        // Extend instance and persistent TTLs for newly proposed agreement version
+        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
         env.events().publish((EVENT_VER_CREATED, caller), (version, agreement_hash));
 
@@ -167,6 +175,10 @@ impl DistributionAgreementContract {
         count = count.checked_add(1).ok_or(ContractError::Overflow)?;
         env.storage().persistent().set(&DataKey::StakeholderCount(version), &count);
 
+        // Extend persistent storage TTL for stakeholder record and version
+        env.storage().persistent().extend_ttl(&DataKey::StakeholderKey(version, stakeholder_address.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+
         env.events().publish((EVENT_STK_ADDED, stakeholder_address), (version, basis_points));
 
         Ok(())
@@ -224,6 +236,10 @@ impl DistributionAgreementContract {
 
         env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
 
+        // Extend persistent storage TTL for updated version and stakeholder approval
+        env.storage().persistent().extend_ttl(&DataKey::StakeholderKey(version, stakeholder.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+
         env.events().publish(
             (EVENT_STK_APPR, stakeholder),
             (version, version_state.approved_count),
@@ -255,6 +271,9 @@ impl DistributionAgreementContract {
         version_state.locked_at = env.ledger().timestamp();
 
         env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
+
+        // Extend persistent storage TTL for locked version state
+        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
         env.events().publish(
             (EVENT_AGR_LOCKED, caller),
