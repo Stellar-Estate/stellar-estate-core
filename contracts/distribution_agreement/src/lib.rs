@@ -414,6 +414,15 @@ impl DistributionAgreementContract {
             .ok_or(ContractError::AgreementNotFound)
     }
 
+    /// Check whether there is an active, locked distribution agreement version
+    pub fn is_agreement_active(env: Env) -> bool {
+        if let Ok(active_ver) = Self::get_active_version_number(env.clone()) {
+            Self::is_version_locked(env, active_ver)
+        } else {
+            false
+        }
+    }
+
     /// Retrieve operational lifecycle status of an agreement version
     pub fn get_version_status(env: Env, version: u32) -> Result<AgreementStatus, ContractError> {
         let state = Self::get_agreement_version(env, version)?;
@@ -600,10 +609,12 @@ mod test {
         let fake_hash = String::from_str(&env, "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad");
         assert!(!client.is_agreement_hash_valid(&1, &fake_hash));
         assert!(client.is_version_fully_approved(&1));
+        assert!(!client.is_agreement_active());
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
         assert_eq!(client.get_active_agreement_hash(), hash_v1);
+        assert!(client.is_agreement_active());
 
         assert!(client.is_version_locked(&1));
         assert!(!client.is_ready_to_lock(&1));
