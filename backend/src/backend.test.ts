@@ -10,6 +10,7 @@ import { lifecycleService } from './services/lifecycleService.js';
 import { shouldBypassRateLimit } from './middleware/security.js';
 import { sanitizeString, sanitizePayload } from './middleware/sanitizer.js';
 import { db } from './database/db.js';
+import { webhookService } from './services/webhookService.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -758,6 +759,27 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(db.revenueRecords.has('temp-rev-tx-2')).toBe(false);
 
     db.revenueRecords.delete('temp-rev-tx-1');
+  });
+
+  it('webhookService should register subscribers, sign payloads, and verify HMAC signatures', async () => {
+    const sub = webhookService.subscribe('https://example.com/webhook', ['revenue.recorded']);
+    expect(sub.id).toBeDefined();
+    expect(sub.secret).toBeDefined();
+    expect(sub.events).toContain('revenue.recorded');
+
+    const payload = JSON.stringify({ event: 'revenue.recorded', amount: 5000 });
+    const sig = webhookService.generateSignature(payload, sub.secret);
+    expect(typeof sig).toBe('string');
+    expect(sig.length).toBe(64);
+
+    const isValid = webhookService.verifySignature(sig, sub.secret, payload);
+    expect(isValid).toBe(true);
+
+    const isInvalid = webhookService.verifySignature('bad_signature'.padEnd(64, '0'), sub.secret, payload);
+    expect(isInvalid).toBe(false);
+
+    const deliveredCount = await webhookService.dispatch('revenue.recorded', { amount: 5000 });
+    expect(deliveredCount).toBeGreaterThan(0);
   });
 });
 
