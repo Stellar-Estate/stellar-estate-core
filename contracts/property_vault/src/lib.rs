@@ -410,9 +410,16 @@ impl PropertyVaultContract {
         env.storage().persistent().extend_ttl(&DataKey::SettlementPayouts(args.settlement_id.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
         // 10. Emit authoritative settlement event
+        let meta = Self::get_property_metadata(env.clone())?;
         env.events().publish(
-            (EVENT_SETTLE, caller),
-            (args.settlement_id, args.distributable_amount),
+            (EVENT_SETTLE, meta.property_id),
+            (
+                args.settlement_id,
+                args.gross_revenue,
+                args.distributable_amount,
+                args.agreement_version,
+                caller,
+            ),
         );
 
         Ok(())
