@@ -630,6 +630,11 @@ impl PropertyVaultContract {
             .ok_or(ContractError::NotInitialized)
     }
 
+    /// Retrieve the authoritative vault administrator address
+    pub fn get_vault_admin_authority(env: Env) -> Result<Address, ContractError> {
+        Self::get_admin(env)
+    }
+
     /// Retrieve the current operational status of the property vault
     pub fn get_vault_status(env: Env) -> Result<VaultStatus, ContractError> {
         env.storage()
@@ -773,7 +778,7 @@ mod test {
         let env = Env::default();
         env.mock_all_auths();
 
-        let (client, _admin, _asset) = setup_test_vault(&env);
+        let (client, admin, _asset) = setup_test_vault(&env);
 
         let meta = client.get_property_metadata();
         assert_eq!(meta.property_id, String::from_str(&env, "prop-meridian-01"));
@@ -801,7 +806,7 @@ mod test {
         assert_eq!(client.get_revenue_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_accepted_asset(), _asset);
-        assert_eq!(client.get_admin(), _admin);
+        assert_eq!(client.get_admin(), admin);
         assert_eq!(client.get_reserve_balance(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
         let (meta_name, meta_ver, meta_std) = client.get_contract_metadata();
@@ -810,6 +815,7 @@ mod test {
         assert_eq!(meta_std, String::from_str(&env, "SEP-0001/SEP-0007/Soroban-v22"));
         assert_eq!(client.has_active_agreement(), false);
         assert_eq!(client.get_vault_status(), VaultStatus::Active);
+        assert_eq!(client.get_vault_admin_authority(), admin);
 
         let (summary_fin, summary_status, summary_count, summary_settled) = client.get_financial_summary();
         assert_eq!(summary_fin.total_revenue_received, 0);
