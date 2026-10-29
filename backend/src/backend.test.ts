@@ -1222,5 +1222,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.contract_version).toBe('1.0.0');
     expect(res.body.data.is_operational).toBe(true);
   });
+
+  it('GET /api/properties/:id/vault/age should compute operating duration and uptime metrics', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/vault/age');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.data.vault_age_seconds).toBeGreaterThanOrEqual(0);
+    expect(res.body.data).toHaveProperty('vault_age_formatted');
+  });
 });
 

@@ -2206,3 +2206,30 @@ apiRouter.get('/properties/:id/vault/summary', (req: Request, res: Response) => 
     },
   });
 });
+
+apiRouter.get('/properties/:id/vault/age', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const createdAt = property.created_at || '2026-10-01T00:00:00.000Z';
+  const initTimestamp = Math.floor(new Date(createdAt).getTime() / 1000);
+  const now = Math.floor(Date.now() / 1000);
+  const ageSeconds = Math.max(0, now - initTimestamp);
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      property_name: property.name,
+      contract_id: property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+      initialized_at: createdAt,
+      init_timestamp_seconds: initTimestamp,
+      vault_age_seconds: ageSeconds,
+      vault_age_formatted: `${Math.floor(ageSeconds / 86400)} days, ${Math.floor((ageSeconds % 86400) / 3600)} hours`,
+      status: property.status || 'ACTIVE',
+    },
+  });
+});
