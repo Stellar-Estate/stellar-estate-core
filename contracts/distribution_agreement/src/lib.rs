@@ -358,6 +358,16 @@ impl DistributionAgreementContract {
             .ok_or(ContractError::StakeholderNotFound)
     }
 
+    /// Retrieve role assigned to a stakeholder for a specific agreement version
+    pub fn get_stakeholder_role(
+        env: Env,
+        version: u32,
+        stakeholder_address: Address,
+    ) -> Result<String, ContractError> {
+        let st = Self::get_stakeholder(env, version, stakeholder_address)?;
+        Ok(st.role)
+    }
+
     /// Check if a version is locked
     pub fn is_version_locked(env: Env, version: u32) -> bool {
         if let Some(state) = env
@@ -582,6 +592,7 @@ mod test {
         client.add_stakeholder(&admin, &1, &alice, &4000, &String::from_str(&env, "Alice"));
         client.add_stakeholder(&admin, &1, &bob, &3500, &String::from_str(&env, "Bob"));
         client.add_stakeholder(&admin, &1, &charlie, &2500, &String::from_str(&env, "Charlie"));
+        assert_eq!(client.get_stakeholder_role(&1, &alice), String::from_str(&env, "Alice"));
         assert_eq!(client.get_approval_progress(&1), (0, 3, false));
 
         // 4. Try locking prematurely -> Fails with IncompleteApprovals (#14)
