@@ -546,5 +546,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(invalidKeyRes.body.success).toBe(false);
     expect(invalidKeyRes.body.data.type).toBe('UNKNOWN');
   });
+
+  it('GET /api/agreements/:id/version/:ver/export.json should return agreement version export attachment', async () => {
+    const res = await request(app).get('/api/agreements/prop-meridian-abuja/version/1/export.json');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-disposition']).toContain('attachment');
+    expect(res.headers['content-disposition']).toContain('v1.json');
+    expect(res.body.exportType).toBe('DistributionAgreementVersion');
+    expect(res.body.version).toBe(1);
+    expect(res.body.propertyId).toBe('prop-meridian-abuja');
+  });
 });
 

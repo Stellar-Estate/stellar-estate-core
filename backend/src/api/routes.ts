@@ -183,6 +183,45 @@ apiRouter.get('/agreements/versions/:versionId', (req: Request, res: Response) =
   res.json({ success: true, data: version });
 });
 
+apiRouter.get('/agreements/:id/version/:ver/export.json', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  if (isNaN(versionNum)) {
+    return res.status(400).json({ success: false, error: 'Version must be a positive integer' });
+  }
+
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: 'Agreement not found' });
+  }
+
+  const version = agreement.versions.find((v) => v.version_number === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Version ${versionNum} not found for agreement` });
+  }
+
+  const exportPayload = {
+    exportType: 'DistributionAgreementVersion',
+    agreementId: agreement.id,
+    propertyId: agreement.property_id,
+    version: version.version_number,
+    status: version.status,
+    agreementHash: version.agreement_hash,
+    rules: version.waterfall_rules,
+    stakeholders: version.stakeholders,
+    approvals: version.approvals,
+    createdAt: version.created_at,
+    exportedAt: new Date().toISOString(),
+  };
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="agreement-${agreement.id}-v${version.version_number}.json"`
+  );
+  res.json(exportPayload);
+});
+
 apiRouter.post('/agreements', (req: Request, res: Response) => {
   const parseResult = createAgreementSchema.safeParse(req.body);
   if (!parseResult.success) {
