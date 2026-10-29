@@ -190,6 +190,12 @@ impl PropertyVaultContract {
             .ok_or(ContractError::NotInitialized)
     }
 
+    /// Retrieve the current maintenance and operating reserve balance
+    pub fn get_reserve_balance(env: Env) -> Result<i128, ContractError> {
+        let financials = Self::get_financials(env)?;
+        Ok(financials.reserve_balance)
+    }
+
     /// Retrieve the property metadata
     pub fn get_property_metadata(env: Env) -> Result<PropertyMetadata, ContractError> {
         env.storage()
@@ -568,6 +574,7 @@ mod test {
         assert_eq!(client.get_settlement_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_accepted_asset(), _asset);
+        assert_eq!(client.get_reserve_balance(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
         assert_eq!(client.has_active_agreement(), false);
         assert_eq!(client.get_vault_status(), VaultStatus::Active);
