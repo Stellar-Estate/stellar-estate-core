@@ -7,6 +7,7 @@ use soroban_sdk::{
 use stellar_estate_shared::{
     ContractError, PropertyMetadata, RecipientPayout, RevenueEntry, SettlementExecutionArgs,
     SettlementRecord, SettlementStatus, VaultFinancialState, VaultStatus,
+    INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
 };
 
 #[contracttype]
@@ -86,6 +87,9 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::SettlementCount, &0u32);
         env.storage().instance().set(&DataKey::TotalSettledRevenue, &0i128);
 
+        // Extend instance TTL to protect against state archival on Stellar
+        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
         // Emit vault initialization event
         env.events().publish(
             (EVENT_VAULT_INIT, admin),
@@ -157,6 +161,10 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::FinancialState, &financials);
         env.storage().instance().set(&DataKey::RevenueNonce, &nonce);
         env.storage().persistent().set(&DataKey::RevenueRecord(nonce), &entry);
+
+        // Extend storage TTLs for instance financials and new revenue record
+        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::RevenueRecord(nonce), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
         // Emit revenue recorded event
         env.events().publish(
@@ -383,6 +391,11 @@ impl PropertyVaultContract {
 
         env.storage().persistent().set(&DataKey::Settlement(args.settlement_id.clone()), &record);
         env.storage().persistent().set(&DataKey::SettlementPayouts(args.settlement_id.clone()), &payouts);
+
+        // Extend storage TTLs for instance financials, settlement record, and payouts
+        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::Settlement(args.settlement_id.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(&DataKey::SettlementPayouts(args.settlement_id.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
         // 10. Emit authoritative settlement event
         env.events().publish(
