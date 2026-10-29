@@ -1148,5 +1148,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.status).toBe('LOCKED');
     expect(res.body.data.is_locked).toBe(true);
   });
+
+  it('GET /api/properties/:id/financials/ratios should compute operational and distributable ratios', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/financials/ratios');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.data.opex_ratio_bps).toBeGreaterThan(0);
+    expect(res.body.data.distributable_ratio_bps).toBeGreaterThan(0);
+    expect(res.body.data.net_yield_bps).toBeGreaterThanOrEqual(0);
+    expect(res.body.data.net_yield_percentage).toBeDefined();
+  });
 });
 

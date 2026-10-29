@@ -1989,3 +1989,51 @@ apiRouter.get('/agreements/:id/versions/:ver/timestamps', (req: Request, res: Re
     },
   });
 });
+
+apiRouter.get('/properties/:id/financials/ratios', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const revenueHistory = db.getRevenueByProperty(id);
+  const totalRevenue = revenueHistory.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const agreements = db.getAgreementsByProperty(id);
+  const activeAgr = agreements.find(a => a.status === 'ACTIVE' || a.status === 'LOCKED') || agreements[0];
+  const activeVer = activeAgr ? (activeAgr.versions || []).find((v: any) => v.status === 'LOCKED' || v.version_number === activeAgr.current_version) : null;
+
+  let opexBps = 1500;
+  let reserveBps = 1000;
+  if (activeVer && (activeVer.waterfall_rules || activeVer.waterfallRules)) {
+    const rules = activeVer.waterfall_rules || activeVer.waterfallRules;
+    const mgmt = rules.find((r: any) => (r.name || '').toLowerCase().includes('management') || (r.name || '').toLowerCase().includes('opex'));
+    if (mgmt) opexBps = mgmt.amount_or_bps || opexBps;
+    const resRule = rules.find((r: any) => (r.name || '').toLowerCase().includes('reserve'));
+    if (resRule) reserveBps = resRule.amount_or_bps || reserveBps;
+  }
+
+  const distributableBps = Math.max(0, 10000 - opexBps - reserveBps);
+  const valuation = property.valuation || 2500000;
+  const units = db.getPropertyUnits(id);
+  const monthlyProjected = units.length > 0 ? units.reduce((s, u) => s + (u.monthly_rent || 800), 0) : 10000;
+  const annualGross = totalRevenue > 0 ? totalRevenue * 2 : monthlyProjected * 12;
+  const annualNet = Math.round(annualGross * (distributableBps / 10000));
+  const netYieldBps = valuation > 0 ? Math.round((annualNet / valuation) * 10000) : 0;
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      valuation,
+      annual_gross_revenue: annualGross,
+      annual_net_distributable: annualNet,
+      opex_ratio_bps: opexBps,
+      reserve_retention_bps: reserveBps,
+      distributable_ratio_bps: distributableBps,
+      net_yield_bps: netYieldBps,
+      net_yield_percentage: `${(netYieldBps / 100).toFixed(2)}%`,
+      currency: 'USDC',
+    },
+  });
+});
