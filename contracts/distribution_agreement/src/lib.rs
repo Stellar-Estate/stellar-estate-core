@@ -2,7 +2,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
+    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol,
 };
 use stellar_estate_shared::{
     AgreementStatus, AgreementVersionState, ContractError, Stakeholder,
@@ -410,6 +410,28 @@ impl DistributionAgreementContract {
             String::from_str(&env, "Multi-party revenue distribution agreement contract for Stellar Estate"),
         )
     }
+
+    /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
+    pub fn upgrade_contract(
+        env: Env,
+        caller: Address,
+        new_wasm_hash: BytesN<32>,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+
+        if caller != admin {
+            return Err(ContractError::Unauthorized);
+        }
+
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -541,5 +563,27 @@ mod test {
         // Attempt to add stakeholder to LOCKED version
         let eve = Address::generate(&env);
         client.add_stakeholder(&admin, &1, &eve, &500, &String::from_str(&env, "Eve"));
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #3)")] // Unauthorized
+    fn test_non_admin_cannot_upgrade_agreement_contract() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        let unauthorized = Address::generate(&env);
+        let dummy_wasm_hash = BytesN::from_array(&env, &[0u8; 32]);
+
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+
+        client.upgrade_contract(&unauthorized, &dummy_wasm_hash);
     }
 }
