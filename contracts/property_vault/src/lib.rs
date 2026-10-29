@@ -475,6 +475,11 @@ impl PropertyVaultContract {
         env.storage().instance().get(&DataKey::SettlementCount).unwrap_or(0)
     }
 
+    /// Retrieve the total number of recorded revenue events (nonce counter)
+    pub fn get_revenue_count(env: Env) -> u32 {
+        env.storage().instance().get(&DataKey::RevenueNonce).unwrap_or(0)
+    }
+
     /// Retrieve total revenue settled to date
     pub fn get_total_settled_revenue(env: Env) -> i128 {
         env.storage().instance().get(&DataKey::TotalSettledRevenue).unwrap_or(0)
@@ -609,6 +614,7 @@ mod test {
         assert_eq!(financials.total_revenue_received, 0);
         assert_eq!(financials.deposit_count, 0);
         assert_eq!(client.get_settlement_count(), 0);
+        assert_eq!(client.get_revenue_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
         assert_eq!(client.get_accepted_asset(), _asset);
         assert_eq!(client.get_reserve_balance(), 0);
@@ -636,6 +642,7 @@ mod test {
 
         let rev_id_1 = client.record_revenue(&depositor, &source, &amount);
         assert_eq!(rev_id_1, 1);
+        assert_eq!(client.get_revenue_count(), 1);
 
         let financials = client.get_financials();
         assert_eq!(financials.total_revenue_received, 1_000_000_000);
