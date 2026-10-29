@@ -49,6 +49,20 @@ services:
     networks:
       - stellar-estate-net
 
+  frontend:
+    build:
+      context: ../stellar-estate-frontend
+      dockerfile: Dockerfile
+    container_name: stellar-estate-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - stellar-estate-net
+
 networks:
   stellar-estate-net:
     driver: bridge
