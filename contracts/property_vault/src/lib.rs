@@ -512,6 +512,15 @@ impl PropertyVaultContract {
         String::from_str(&env, "1.0.0-stellar-estate")
     }
 
+    /// Retrieve full contract architecture metadata (contract name, semantic version, standard)
+    pub fn get_contract_metadata(env: Env) -> (String, String, String) {
+        (
+            String::from_str(&env, "StellarEstatePropertyVault"),
+            String::from_str(&env, "1.0.0-stellar-estate"),
+            String::from_str(&env, "SEP-0001/SEP-0007/Soroban-v22"),
+        )
+    }
+
     /// Retrieve the authorized payment asset contract address for this vault
     pub fn get_accepted_asset(env: Env) -> Result<Address, ContractError> {
         env.storage()
@@ -650,6 +659,10 @@ mod test {
         assert_eq!(client.get_admin(), _admin);
         assert_eq!(client.get_reserve_balance(), 0);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
+        let (meta_name, meta_ver, meta_std) = client.get_contract_metadata();
+        assert_eq!(meta_name, String::from_str(&env, "StellarEstatePropertyVault"));
+        assert_eq!(meta_ver, String::from_str(&env, "1.0.0-stellar-estate"));
+        assert_eq!(meta_std, String::from_str(&env, "SEP-0001/SEP-0007/Soroban-v22"));
         assert_eq!(client.has_active_agreement(), false);
         assert_eq!(client.get_vault_status(), VaultStatus::Active);
 
