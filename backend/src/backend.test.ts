@@ -1240,5 +1240,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.total_versions).toBeGreaterThan(0);
     expect(res.body.data).toHaveProperty('current_version');
   });
+
+  it('GET /api/properties/:id/payouts/summary should return aggregated stakeholder payouts', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/payouts/summary');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(res.body.data.currency).toBe('USDC');
+    expect(res.body.data).toHaveProperty('total_payout_amount');
+    expect(res.body.data).toHaveProperty('unique_stakeholders_paid');
+  });
 });
 

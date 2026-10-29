@@ -2256,3 +2256,41 @@ apiRouter.get('/agreements/:id/version-count', (req: Request, res: Response) => 
     },
   });
 });
+
+apiRouter.get('/properties/:id/payouts/summary', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const settlements = db.getSettlementsByProperty(id);
+  let totalPayoutAmount = 0;
+  let totalPayoutCount = 0;
+  const uniqueRecipients = new Set<string>();
+
+  for (const stl of settlements) {
+    const payouts = (stl.payouts || stl.recipients || []);
+    for (const p of payouts) {
+      totalPayoutAmount += (p.amount || 0);
+      totalPayoutCount++;
+      if (p.wallet_address || p.recipient) {
+        uniqueRecipients.add((p.wallet_address || p.recipient).toLowerCase());
+      }
+    }
+  }
+
+  const avgPayout = totalPayoutCount > 0 ? Math.round(totalPayoutAmount / totalPayoutCount) : 0;
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      total_payout_amount: totalPayoutAmount,
+      total_payout_transactions: totalPayoutCount,
+      unique_stakeholders_paid: uniqueRecipients.size,
+      average_payout_amount: avgPayout,
+      currency: 'USDC',
+    },
+  });
+});
