@@ -1793,3 +1793,41 @@ apiRouter.get('/contracts/versions', (req: Request, res: Response) => {
     },
   });
 });
+
+
+apiRouter.get('/settlements/:id/breakdown', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const settlement = db.getSettlementById(id);
+  if (!settlement) {
+    return res.status(404).json({ success: false, error: `Settlement ${id} not found.` });
+  }
+
+  const gross = settlement.gross_revenue;
+  const expenses = settlement.expenses;
+  const reserve = settlement.reserve;
+  const distributable = settlement.distributable_amount;
+  const netRatioBps = gross > 0 ? Math.round((distributable / gross) * 10000) : 0;
+  const reserveRatioBps = gross > 0 ? Math.round((reserve / gross) * 10000) : 0;
+  const expenseRatioBps = gross > 0 ? Math.round((expenses / gross) * 10000) : 0;
+
+  res.json({
+    success: true,
+    data: {
+      settlement_id: settlement.settlement_id,
+      property_id: settlement.property_id,
+      breakdown: {
+        gross_revenue: gross,
+        expenses,
+        reserve,
+        distributable_amount: distributable,
+      },
+      ratios_bps: {
+        distributable_bps: netRatioBps,
+        reserve_bps: reserveRatioBps,
+        expense_bps: expenseRatioBps,
+      },
+      payouts_count: settlement.recipient_payouts?.length || 0,
+      timestamp: settlement.executed_at,
+    },
+  });
+});

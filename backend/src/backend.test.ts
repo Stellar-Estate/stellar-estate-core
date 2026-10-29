@@ -1085,5 +1085,19 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.distribution_agreement.version).toBe('1.0.0-stellar-estate');
     expect(res.body.data.distribution_agreement.version_tuple).toEqual([1, 0, 0]);
   });
+
+  it('GET /api/settlements/:id/breakdown should return waterfall distribution ratios', async () => {
+    const listRes = await request(app).get('/api/properties/prop-meridian-abuja/settlements');
+    expect(listRes.status).toBe(200);
+    const settlements = listRes.body.data || [];
+    if (settlements.length > 0) {
+      const stlId = settlements[0].settlement_id || settlements[0].id;
+      const res = await request(app).get(`/api/settlements/${stlId}/breakdown`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.breakdown).toBeDefined();
+      expect(res.body.data.ratios_bps).toBeDefined();
+    }
+  });
 });
 
