@@ -479,6 +479,14 @@ impl PropertyVaultContract {
         String::from_str(&env, "1.0.0-stellar-estate")
     }
 
+    /// Retrieve the authorized payment asset contract address for this vault
+    pub fn get_accepted_asset(env: Env) -> Result<Address, ContractError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::AcceptedAsset)
+            .ok_or(ContractError::NotInitialized)
+    }
+
     /// Retrieve the current operational status of the property vault
     pub fn get_vault_status(env: Env) -> Result<VaultStatus, ContractError> {
         env.storage()
@@ -559,6 +567,7 @@ mod test {
         assert_eq!(financials.deposit_count, 0);
         assert_eq!(client.get_settlement_count(), 0);
         assert_eq!(client.get_total_settled_revenue(), 0);
+        assert_eq!(client.get_accepted_asset(), _asset);
         assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
         assert_eq!(client.has_active_agreement(), false);
         assert_eq!(client.get_vault_status(), VaultStatus::Active);
