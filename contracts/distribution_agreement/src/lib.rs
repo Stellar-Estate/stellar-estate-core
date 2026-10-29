@@ -381,6 +381,15 @@ impl DistributionAgreementContract {
         }
     }
 
+    /// Check whether an agreement version has been superseded by a newer locked version
+    pub fn is_version_superseded(env: Env, version: u32) -> bool {
+        if let Ok(active_ver) = Self::get_active_version_number(env) {
+            version < active_ver
+        } else {
+            false
+        }
+    }
+
     /// Retrieve semantic contract version and platform identifier
     pub fn get_version(env: Env) -> String {
         String::from_str(&env, "1.0.0-stellar-estate")
@@ -793,5 +802,23 @@ mod test {
         let client = DistributionAgreementContractClient::new(&env, &contract_id);
         let version = client.get_contract_version_tuple();
         assert_eq!(version, (1, 0, 0));
+    }
+
+    #[test]
+    fn test_is_version_superseded() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+
+        let admin = Address::generate(&env);
+        client.initialize(
+            &admin,
+            &String::from_str(&env, "prop-01"),
+            &String::from_str(&env, "AGR-01"),
+        );
+
+        assert_eq!(client.is_version_superseded(&1), false);
     }
 }
