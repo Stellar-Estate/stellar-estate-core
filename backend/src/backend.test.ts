@@ -9,6 +9,7 @@ import { logger, Logger } from './utils/logger.js';
 import { lifecycleService } from './services/lifecycleService.js';
 import { shouldBypassRateLimit } from './middleware/security.js';
 import { sanitizeString, sanitizePayload } from './middleware/sanitizer.js';
+import { db } from './database/db.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -708,6 +709,55 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       .send({ contract_address: validContract, new_wasm_hash: 'not-hex' });
     expect(badHashRes.status).toBe(400);
     expect(badHashRes.body.code).toBe('INVALID_WASM_HASH');
+  });
+
+  it('db.runTransaction should commit successful operations and roll back failed operations', () => {
+    const initialCount = db.revenueRecords.size;
+
+    db.runTransaction(() => {
+      db.revenueRecords.set('temp-rev-tx-1', {
+        id: 'temp-rev-tx-1',
+        property_id: 'prop-meridian-abuja',
+        source: 'Tx Test',
+        amount: 100,
+        asset: 'USDC',
+        transaction_hash: 'tx_1',
+        depositor_address: 'G...',
+        destination_address: 'G...',
+        status: 'CONFIRMED',
+        verified_at: new Date().toISOString(),
+        metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    });
+    expect(db.revenueRecords.size).toBe(initialCount + 1);
+
+    expect(() => {
+      db.runTransaction(() => {
+        db.revenueRecords.set('temp-rev-tx-2', {
+          id: 'temp-rev-tx-2',
+          property_id: 'prop-meridian-abuja',
+          source: 'Tx Test 2',
+          amount: 200,
+          asset: 'USDC',
+          transaction_hash: 'tx_2',
+          depositor_address: 'G...',
+          destination_address: 'G...',
+          status: 'CONFIRMED',
+          verified_at: new Date().toISOString(),
+          metadata: {},
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        throw new Error('Simulated database write failure');
+      });
+    }).toThrow('Simulated database write failure');
+
+    expect(db.revenueRecords.size).toBe(initialCount + 1);
+    expect(db.revenueRecords.has('temp-rev-tx-2')).toBe(false);
+
+    db.revenueRecords.delete('temp-rev-tx-1');
   });
 });
 

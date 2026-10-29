@@ -746,6 +746,45 @@ class InMemoryDatabase {
       settlements: matchedSettlements,
     };
   }
+
+  /**
+   * Execute an atomic mutation block. If an error occurs, rolls back all Maps
+   * and Sets to their state prior to the transaction.
+   */
+  runTransaction<T>(action: () => T): T {
+    const checkpoint = {
+      properties: new Map(this.properties),
+      units: new Map(this.units),
+      participants: new Map(this.participants),
+      participations: new Map(this.participations),
+      blockchainTransactions: new Map(this.blockchainTransactions),
+      revenueRecords: new Map(this.revenueRecords),
+      auditEvents: [...this.auditEvents],
+      reconciliationReports: [...this.reconciliationReports],
+      agreements: new Map(this.agreements),
+      agreementVersions: new Map(this.agreementVersions),
+      settlements: new Map(this.settlements),
+      consumedRevenueIds: new Set(this.consumedRevenueIds),
+    };
+
+    try {
+      return action();
+    } catch (err) {
+      this.properties = checkpoint.properties;
+      this.units = checkpoint.units;
+      this.participants = checkpoint.participants;
+      this.participations = checkpoint.participations;
+      this.blockchainTransactions = checkpoint.blockchainTransactions;
+      this.revenueRecords = checkpoint.revenueRecords;
+      this.auditEvents = checkpoint.auditEvents;
+      this.reconciliationReports = checkpoint.reconciliationReports;
+      this.agreements = checkpoint.agreements;
+      this.agreementVersions = checkpoint.agreementVersions;
+      this.settlements = checkpoint.settlements;
+      this.consumedRevenueIds = checkpoint.consumedRevenueIds;
+      throw err;
+    }
+  }
 }
 
 export const db = new InMemoryDatabase();
