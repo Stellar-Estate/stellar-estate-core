@@ -350,6 +350,37 @@ export class AgreementService {
   }
 
   /**
+   * Revoke an unlocked agreement proposal
+   */
+  revokeProposal(versionId: string, callerAddress: string, reason?: string): DistributionAgreementVersion {
+    const version = db.getAgreementVersionById(versionId);
+    if (!version) {
+      throw new Error(`Agreement version ${versionId} not found.`);
+    }
+
+    if (version.status === 'LOCKED' || (version.status as string) === 'SUPERSEDED') {
+      throw new Error(`Cannot revoke an agreement version that is already ${version.status.toLowerCase()}.`);
+    }
+
+    version.status = 'REVOKED' as any;
+    db.saveAgreementVersion(version);
+
+    db.recordAuditEvent({
+      event_type: 'AGREEMENT_REVOKED',
+      entity_type: 'DISTRIBUTION_AGREEMENT_VERSION',
+      entity_id: versionId,
+      actor_address: callerAddress,
+      payload: {
+        agreementId: version.agreement_id,
+        version: version.version_number,
+        reason: reason || 'Proposal revoked by administrative authority',
+      },
+    });
+
+    return version;
+  }
+
+  /**
    * Deterministic settlement preview calculation
    */
   previewSettlement(versionId: string, sampleRevenue: number): SettlementPreviewResult {

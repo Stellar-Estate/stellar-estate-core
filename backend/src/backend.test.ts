@@ -815,5 +815,46 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.simulation.stakeholder_allocations.length).toBeGreaterThan(0);
     expect(res.body.simulation.accounting_balanced).toBe(true);
   });
+
+  it('POST /api/agreements/versions/:versionId/revoke should revoke unlocked proposal and reject locked ones', async () => {
+    // 1. Attempting to revoke locked version v2 should fail
+    const lockedRes = await request(app)
+      .post('/api/agreements/versions/ver-meridian-001-v2/revoke')
+      .send({ callerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD' });
+    expect(lockedRes.status).toBe(422);
+    expect(lockedRes.body.error).toContain('already locked');
+
+    // 2. Create a proposal v3
+    const createRes = await request(app)
+      .post('/api/agreements/agr-meridian-001/versions')
+      .send({
+        proposerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        effectiveDate: '2026-12-01',
+        waterfallRules: [
+          { priority: 1, rule_type: 'PERCENTAGE_BASIS_POINTS', name: 'Reserve', amount_or_bps: 1000, description: 'Safety Reserve' },
+        ],
+        stakeholders: [
+          {
+            wallet_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+            name: 'Alice',
+            role: 'Majority Equity',
+            basis_points: 10000,
+          },
+        ],
+      });
+    expect(createRes.status).toBe(200);
+    const newVerId = createRes.body.data.id;
+
+    // 3. Revoking the pending proposal v3 should succeed
+    const pendingRes = await request(app)
+      .post(`/api/agreements/versions/${newVerId}/revoke`)
+      .send({
+        callerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        reason: 'Term renegotiation',
+      });
+    expect(pendingRes.status).toBe(200);
+    expect(pendingRes.body.success).toBe(true);
+    expect(pendingRes.body.data.status).toBe('REVOKED');
+  });
 });
 

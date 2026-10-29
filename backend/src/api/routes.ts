@@ -394,6 +394,24 @@ apiRouter.post('/agreements/versions/:versionId/lock', (req: Request, res: Respo
   }
 });
 
+apiRouter.post('/agreements/versions/:versionId/revoke', (req: Request, res: Response) => {
+  const { callerAddress, reason } = req.body;
+  if (!callerAddress) {
+    return res.status(400).json({ success: false, error: 'callerAddress is required' });
+  }
+
+  try {
+    const revoked = agreementService.revokeProposal(req.params.versionId, callerAddress, reason);
+    res.json({
+      success: true,
+      message: 'Agreement proposal revoked successfully.',
+      data: revoked,
+    });
+  } catch (err: any) {
+    res.status(422).json({ success: false, error: err.message });
+  }
+});
+
 apiRouter.post('/agreements/versions/:versionId/preview', (req: Request, res: Response) => {
   const parseResult = previewSettlementSchema.safeParse(req.body);
   if (!parseResult.success) {
