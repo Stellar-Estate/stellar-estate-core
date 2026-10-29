@@ -395,6 +395,13 @@ impl DistributionAgreementContract {
         }
     }
 
+    /// Retrieve approval consensus progress: (approved_count, total_required, is_ready)
+    pub fn get_approval_progress(env: Env, version: u32) -> Result<(u32, u32, bool), ContractError> {
+        let state = Self::get_agreement_version(env, version)?;
+        let is_ready = state.status == AgreementStatus::ReadyToLock || state.status == AgreementStatus::Locked;
+        Ok((state.approved_count, state.total_stakeholders, is_ready))
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -447,6 +454,7 @@ mod test {
         client.add_stakeholder(&admin, &1, &alice, &4000, &String::from_str(&env, "Alice"));
         client.add_stakeholder(&admin, &1, &bob, &3500, &String::from_str(&env, "Bob"));
         client.add_stakeholder(&admin, &1, &charlie, &2500, &String::from_str(&env, "Charlie"));
+        assert_eq!(client.get_approval_progress(&1), (0, 3, false));
 
         // 4. Try locking prematurely -> Fails with IncompleteApprovals (#14)
         // Verified by assert below after Alice approves
@@ -455,6 +463,7 @@ mod test {
         assert!(!ready1);
         assert!(client.is_stakeholder_approved(&1, &alice));
         assert!(!client.is_stakeholder_approved(&1, &bob));
+        assert_eq!(client.get_approval_progress(&1), (1, 3, false));
 
         let ready2 = client.approve_agreement(&bob, &1, &hash_v1);
         assert!(!ready2);
@@ -464,6 +473,7 @@ mod test {
         let ready3 = client.approve_agreement(&charlie, &1, &hash_v1);
         assert!(ready3);
         assert!(client.is_ready_to_lock(&1));
+        assert_eq!(client.get_approval_progress(&1), (3, 3, true));
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
@@ -471,6 +481,7 @@ mod test {
         assert!(client.is_version_locked(&1));
         assert!(!client.is_ready_to_lock(&1));
         assert_eq!(client.get_version_status(&1), AgreementStatus::Locked);
+        assert_eq!(client.get_approval_progress(&1), (3, 3, true));
 
         let state = client.get_agreement_version(&1);
         assert_eq!(state.status, AgreementStatus::Locked);
