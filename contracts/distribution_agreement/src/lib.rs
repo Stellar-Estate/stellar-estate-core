@@ -451,6 +451,21 @@ impl DistributionAgreementContract {
         }
     }
 
+    /// Retrieve the canonical hash of the currently active agreement version
+    pub fn get_active_agreement_hash(env: Env) -> Result<String, ContractError> {
+        let active_ver = Self::get_active_version_number(env.clone())?;
+        Self::get_version_agreement_hash(env, active_ver)
+    }
+
+    /// Check whether all registered stakeholders have approved a given version
+    pub fn is_version_fully_approved(env: Env, version: u32) -> bool {
+        if let Ok(state) = Self::get_agreement_version(env, version) {
+            state.total_stakeholders > 0 && state.approved_count == state.total_stakeholders
+        } else {
+            false
+        }
+    }
+
     /// Retrieve list of all registered version numbers for this agreement contract
     pub fn get_all_versions(env: Env) -> Vec<u32> {
         let mut versions = Vec::new(&env);
@@ -584,9 +599,11 @@ mod test {
         assert!(client.is_agreement_hash_valid(&1, &hash_v1));
         let fake_hash = String::from_str(&env, "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad");
         assert!(!client.is_agreement_hash_valid(&1, &fake_hash));
+        assert!(client.is_version_fully_approved(&1));
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
+        assert_eq!(client.get_active_agreement_hash(), hash_v1);
 
         assert!(client.is_version_locked(&1));
         assert!(!client.is_ready_to_lock(&1));
