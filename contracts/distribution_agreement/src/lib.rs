@@ -353,6 +353,15 @@ impl DistributionAgreementContract {
             .ok_or(ContractError::NotInitialized)?;
         Ok((property_id, admin))
     }
+
+    /// Retrieve contract identifier, version number, and specification details
+    pub fn get_contract_info(env: Env) -> (String, u32, String) {
+        (
+            String::from_str(&env, "StellarEstateDistributionAgreement"),
+            1,
+            String::from_str(&env, "Multi-party revenue distribution agreement contract for Stellar Estate"),
+        )
+    }
 }
 
 #[cfg(test)]
@@ -379,6 +388,10 @@ mod test {
 
         // 1. Initialize
         client.initialize(&admin, &prop_id, &agr_id);
+
+        let (info_name, info_ver, _info_desc) = client.get_contract_info();
+        assert_eq!(info_name, String::from_str(&env, "StellarEstateDistributionAgreement"));
+        assert_eq!(info_ver, 1);
 
         let (meta_prop, meta_admin) = client.get_agreement_meta();
         assert_eq!(meta_prop, prop_id);
