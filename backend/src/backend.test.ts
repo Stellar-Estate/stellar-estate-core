@@ -377,6 +377,18 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(trace.recipient_allocations[0]).toHaveProperty('explorer_url');
   });
 
+  it('GET /api/settlements/:id/export.csv should export CSV audit sheet', async () => {
+    const settlementsRes = await request(app).get('/api/properties/prop-meridian-abuja/settlements');
+    const settlementId = settlementsRes.body.data[0].id;
+
+    const res = await request(app).get(`/api/settlements/${settlementId}/export.csv`);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.text).toContain('Settlement ID');
+    expect(res.text).toContain(settlementId);
+    expect(res.text).toContain('Recipient Address');
+  });
+
   it('GET /api/properties/:id/passport should return complete Property Financial Passport', async () => {
     const res = await request(app).get('/api/properties/prop-meridian-abuja/passport');
     expect(res.status).toBe(200);

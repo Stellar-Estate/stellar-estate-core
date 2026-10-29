@@ -453,6 +453,40 @@ apiRouter.get('/settlements/:id/trace', (req: Request, res: Response) => {
   }
 });
 
+apiRouter.get('/settlements/:id/export.csv', (req: Request, res: Response) => {
+  const settlement = db.getSettlementById(req.params.id);
+  if (!settlement) {
+    return res.status(404).json({ success: false, error: 'Settlement not found' });
+  }
+
+  const rows = [
+    ['Settlement ID', 'Property ID', 'Gross Revenue', 'Distributable Amount', 'Status', 'Reconciliation', 'Executed At'],
+    [
+      settlement.id,
+      settlement.property_id,
+      settlement.gross_revenue,
+      settlement.distributable_amount,
+      settlement.status,
+      settlement.reconciliation_status,
+      settlement.executed_at,
+    ],
+    [],
+    ['Recipient Address', 'Basis Points', 'Allocated Amount', 'Transaction Hash'],
+    ...settlement.payouts.map((p) => [
+      p.recipient_address,
+      p.basis_points,
+      p.allocated_amount,
+      p.transaction_hash || '',
+    ]),
+  ];
+
+  const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="settlement-${settlement.id}.csv"`);
+  res.send(csv);
+});
+
 apiRouter.get('/stakeholders/:address/earnings', (req: Request, res: Response) => {
   const earnings = db.getStakeholderEarnings(req.params.address);
   res.json({ success: true, data: earnings });
