@@ -318,6 +318,11 @@ impl DistributionAgreementContract {
             false
         }
     }
+
+    /// Retrieve semantic contract version and platform identifier
+    pub fn get_version(env: Env) -> String {
+        String::from_str(&env, "1.0.0-stellar-estate")
+    }
 }
 
 #[cfg(test)]
@@ -374,6 +379,7 @@ mod test {
         assert_eq!(state.status, AgreementStatus::Locked);
         assert_eq!(state.approved_count, 3);
         assert_eq!(state.agreement_hash, hash_v1);
+        assert_eq!(client.get_version(), String::from_str(&env, "1.0.0-stellar-estate"));
     }
 
     #[test]
