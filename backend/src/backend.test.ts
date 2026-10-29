@@ -576,5 +576,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.pagination.limit).toBe(1);
     expect(res.body.data.records.length).toBeLessThanOrEqual(1);
   });
+
+  it('GET /api/agreements/:id/diff should calculate stakeholder and hash deltas between versions', async () => {
+    const res = await request(app).get('/api/agreements/prop-meridian-abuja/diff?versionA=1&versionB=2');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.hash_changed).toBe(true);
+    expect(res.body.data.stakeholder_deltas.length).toBeGreaterThan(0);
+    const aliceDelta = res.body.data.stakeholder_deltas.find((d: any) => d.name.includes('Alice'));
+    expect(aliceDelta).toBeDefined();
+  });
 });
 

@@ -370,7 +370,7 @@ export class AgreementService {
    * Compare two versions of an agreement (Version diff)
    */
   compareVersions(agreementId: string, versionNumberA: number, versionNumberB: number) {
-    const agreement = db.getAgreementById(agreementId);
+    const agreement = db.getAgreementById(agreementId) || db.getAgreementsByProperty(agreementId)[0];
     if (!agreement) {
       throw new Error(`Agreement ${agreementId} not found.`);
     }
@@ -412,6 +412,43 @@ export class AgreementService {
           percentage: `${(s.basis_points / 100).toFixed(2)}%`,
         })),
       },
+    };
+  }
+
+  computeVersionDiff(agreementId: string, versionNumberA: number, versionNumberB: number) {
+    const baseComparison = this.compareVersions(agreementId, versionNumberA, versionNumberB);
+    const agreement = (db.getAgreementById(agreementId) || db.getAgreementsByProperty(agreementId)[0])!;
+    const vA = agreement.versions.find((v) => v.version_number === versionNumberA)!;
+    const vB = agreement.versions.find((v) => v.version_number === versionNumberB)!;
+
+    const allWallets = Array.from(
+      new Set([
+        ...vA.stakeholders.map((s) => s.wallet_address.toLowerCase()),
+        ...vB.stakeholders.map((s) => s.wallet_address.toLowerCase()),
+      ])
+    );
+
+    const stakeholderDeltas = allWallets.map((wallet) => {
+      const stkA = vA.stakeholders.find((s) => s.wallet_address.toLowerCase() === wallet);
+      const stkB = vB.stakeholders.find((s) => s.wallet_address.toLowerCase() === wallet);
+      const oldBps = stkA ? stkA.basis_points : 0;
+      const newBps = stkB ? stkB.basis_points : 0;
+      return {
+        wallet_address: (stkB || stkA)!.wallet_address,
+        name: (stkB || stkA)!.name,
+        role: (stkB || stkA)!.role,
+        old_basis_points: oldBps,
+        new_basis_points: newBps,
+        delta_basis_points: newBps - oldBps,
+        delta_percentage: `${((newBps - oldBps) / 100).toFixed(2)}%`,
+        change_type: !stkA ? 'ADDED' : !stkB ? 'REMOVED' : newBps !== oldBps ? 'MODIFIED' : 'UNCHANGED',
+      };
+    });
+
+    return {
+      ...baseComparison,
+      hash_changed: vA.agreement_hash !== vB.agreement_hash,
+      stakeholder_deltas: stakeholderDeltas,
     };
   }
 }

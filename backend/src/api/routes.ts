@@ -353,6 +353,25 @@ apiRouter.get('/agreements/:id/compare', (req: Request, res: Response) => {
   }
 });
 
+apiRouter.get('/agreements/:id/diff', (req: Request, res: Response) => {
+  const versionA = parseInt((req.query.versionA || req.query.vA) as string, 10);
+  const versionB = parseInt((req.query.versionB || req.query.vB) as string, 10);
+
+  if (isNaN(versionA) || isNaN(versionB)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Query parameters versionA and versionB (or vA and vB) must be valid version numbers.',
+    });
+  }
+
+  try {
+    const diff = agreementService.computeVersionDiff(req.params.id, versionA, versionB);
+    res.json({ success: true, data: diff });
+  } catch (err: any) {
+    res.status(404).json({ success: false, error: err.message });
+  }
+});
+
 // ==============================================================================
 // REVENUE & DEPOSIT WORKFLOW
 // ==============================================================================
