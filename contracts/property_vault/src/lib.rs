@@ -166,10 +166,17 @@ impl PropertyVaultContract {
         env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
         env.storage().persistent().extend_ttl(&DataKey::RevenueRecord(nonce), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
-        // Emit revenue recorded event
+        let meta = Self::get_property_metadata(env.clone())?;
+        let accepted_asset: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::AcceptedAsset)
+            .unwrap_or(caller.clone());
+
+        // Emit revenue recorded event with property ID topic, nonce, amount, and asset
         env.events().publish(
-            (EVENT_REV_REC, caller),
-            (nonce, amount),
+            (EVENT_REV_REC, meta.property_id),
+            (nonce, amount, accepted_asset, caller),
         );
 
         Ok(nonce)
