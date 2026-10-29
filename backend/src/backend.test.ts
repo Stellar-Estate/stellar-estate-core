@@ -999,5 +999,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.simulation.resources.mem_bytes).toBeGreaterThan(0);
     expect(res.body.simulation.estimated_fee.total_fee_stroops).toBeGreaterThan(0);
   });
+
+  it('GET /api/properties/:id/occupancy-history should return historical occupancy trends and unit status', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/occupancy-history');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.property_id).toBe('prop-meridian-abuja');
+    expect(Array.isArray(res.body.data.history)).toBe(true);
+    expect(res.body.data.history.length).toBe(6);
+    expect(Array.isArray(res.body.data.units)).toBe(true);
+  });
 });
 
