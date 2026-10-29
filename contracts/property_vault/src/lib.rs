@@ -527,6 +527,22 @@ impl PropertyVaultContract {
         Ok((meta.occupied_units, meta.total_units, rate_bps))
     }
 
+    /// Simulate and calculate stakeholder payout share given distributable amount and basis points
+    pub fn calculate_payout_share(_env: Env, distributable_amount: i128, basis_points: u32) -> Result<i128, ContractError> {
+        if basis_points > 10_000 {
+            return Err(ContractError::InvalidBasisPoints);
+        }
+        if distributable_amount < 0 {
+            return Err(ContractError::InvalidAmount);
+        }
+        let share = distributable_amount
+            .checked_mul(basis_points as i128)
+            .ok_or(ContractError::Overflow)?
+            .checked_div(10_000)
+            .ok_or(ContractError::Overflow)?;
+        Ok(share)
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -583,6 +599,11 @@ mod test {
         assert_eq!(occ_units, 9);
         assert_eq!(tot_units, 10);
         assert_eq!(occ_rate_bps, 9000);
+
+        let share_40_pct = client.calculate_payout_share(&10_000, &4000);
+        assert_eq!(share_40_pct, 4000);
+        let share_35_pct = client.calculate_payout_share(&10_000, &3500);
+        assert_eq!(share_35_pct, 3500);
 
         let financials = client.get_financials();
         assert_eq!(financials.total_revenue_received, 0);
