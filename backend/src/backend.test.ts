@@ -1109,5 +1109,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(Array.isArray(res.body.data.rules_summary)).toBe(true);
     expect(Array.isArray(res.body.data.equity_allocation)).toBe(true);
   });
+
+  it('GET /api/metrics/stellar should return network telemetry and protocol parameters', async () => {
+    const res = await request(app).get('/api/metrics/stellar');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.network).toBe('TESTNET');
+    expect(res.body.data.protocol_version).toBe(22);
+    expect(res.body.data.healthy).toBe(true);
+  });
 });
 
