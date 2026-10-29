@@ -602,6 +602,15 @@ impl PropertyVaultContract {
             .ok_or(ContractError::InvalidState)
     }
 
+    /// Retrieve total count of stakeholder payout tranches in a settlement
+    pub fn get_settlement_payout_count(
+        env: Env,
+        settlement_id: String,
+    ) -> Result<u32, ContractError> {
+        let payouts = Self::get_settlement_payouts(env, settlement_id)?;
+        Ok(payouts.len())
+    }
+
     /// Check if a revenue ID has already been consumed by settlement
     pub fn is_revenue_consumed(env: Env, revenue_id: u32) -> bool {
         env.storage().persistent().has(&DataKey::ConsumedRevenue(revenue_id))
@@ -1045,6 +1054,7 @@ mod test {
         assert_eq!(b_res, 100_000_000);
         assert_eq!(b_dist, 760_000_000);
         assert_eq!(client.get_reserve_retention_ratio(&settlement_id), 1000);
+        assert_eq!(client.get_settlement_payout_count(&settlement_id), 3);
 
         let record = client.get_settlement(&settlement_id);
         assert_eq!(record.settlement_id, settlement_id);
