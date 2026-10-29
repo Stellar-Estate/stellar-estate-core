@@ -1231,5 +1231,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.vault_age_seconds).toBeGreaterThanOrEqual(0);
     expect(res.body.data).toHaveProperty('vault_age_formatted');
   });
+
+  it('GET /api/agreements/:id/version-count should return version count and locked status', async () => {
+    const res = await request(app).get('/api/agreements/agr-meridian-001/version-count');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.agreement_id).toBe('agr-meridian-001');
+    expect(res.body.data.total_versions).toBeGreaterThan(0);
+    expect(res.body.data).toHaveProperty('current_version');
+  });
 });
 

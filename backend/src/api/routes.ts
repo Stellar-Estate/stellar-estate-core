@@ -2233,3 +2233,26 @@ apiRouter.get('/properties/:id/vault/age', (req: Request, res: Response) => {
     },
   });
 });
+
+apiRouter.get('/agreements/:id/version-count', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const versions = agreement.versions || [];
+  const lockedVer = versions.find((v: any) => v.status === 'LOCKED');
+
+  res.json({
+    success: true,
+    data: {
+      agreement_id: id,
+      property_id: agreement.property_id,
+      total_versions: versions.length,
+      current_version: agreement.current_version || 1,
+      locked_version: lockedVer ? (lockedVer.version_number || lockedVer.version) : null,
+      has_locked_agreement: !!lockedVer,
+    },
+  });
+});
