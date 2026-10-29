@@ -7,6 +7,7 @@ import { agreementHashingService, canonicalizeJson } from './services/agreementH
 import { stellarUriService } from './services/stellarUriService.js';
 import { logger, Logger } from './utils/logger.js';
 import { lifecycleService } from './services/lifecycleService.js';
+import { shouldBypassRateLimit } from './middleware/security.js';
 
 describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // ============================================================================
@@ -632,6 +633,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.agreement_contracts.length).toBeGreaterThan(0);
     expect(res.body.data.standards).toHaveProperty('sep0001');
     expect(res.body.data.standards).toHaveProperty('sep0007');
+  });
+
+  it('shouldBypassRateLimit should allow internal service and health checks', () => {
+    const healthReq = { path: '/api/health', headers: {} } as any;
+    expect(shouldBypassRateLimit(healthReq)).toBe(true);
+
+    const internalReq = { path: '/api/agreements', headers: { 'x-internal-service': 'stellar-estate-core' } } as any;
+    expect(shouldBypassRateLimit(internalReq)).toBe(true);
   });
 });
 

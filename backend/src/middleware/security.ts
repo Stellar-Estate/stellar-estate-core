@@ -26,6 +26,16 @@ export const correlationIdMiddleware = (req: Request, res: Response, next: NextF
 };
 
 /**
+ * Determines whether a request should bypass standard rate limiting
+ */
+export const shouldBypassRateLimit = (req: Request): boolean => {
+  if (process.env.NODE_ENV === 'test') return true;
+  if (req.path === '/api/health' || req.path.startsWith('/api/docs')) return true;
+  if (req.headers['x-internal-service'] === 'stellar-estate-core') return true;
+  return false;
+};
+
+/**
  * Standard API rate limiter protecting endpoints against flood & abuse
  */
 export const apiRateLimiter = rateLimit({
@@ -33,7 +43,7 @@ export const apiRateLimiter = rateLimit({
   max: 600, // 600 requests per window
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => shouldBypassRateLimit(req),
   message: {
     success: false,
     error: 'Too many requests from this IP. Please try again after 15 minutes.',
@@ -49,7 +59,7 @@ export const mutationRateLimiter = rateLimit({
   max: 60, // 60 requests per window
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => shouldBypassRateLimit(req),
   message: {
     success: false,
     error: 'Rate limit exceeded for state transitions. Please slow down.',
