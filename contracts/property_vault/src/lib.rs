@@ -662,6 +662,13 @@ impl PropertyVaultContract {
         env.storage().persistent().has(&DataKey::RevenueRecord(nonce))
     }
 
+    /// Retrieve unconsumed revenue pool eligible for settlement (total recorded minus total settled)
+    pub fn get_unconsumed_revenue_pool(env: Env) -> Result<i128, ContractError> {
+        let financials = Self::get_financials(env.clone())?;
+        let total_settled = Self::get_total_settled_revenue(env);
+        Ok(financials.total_revenue_recorded.saturating_sub(total_settled))
+    }
+
     /// Retrieve occupancy metrics: (occupied_units, total_units, occupancy_rate_bps)
     pub fn get_property_occupancy(env: Env) -> Result<(u32, u32, u32), ContractError> {
         let meta = Self::get_property_metadata(env)?;
@@ -807,6 +814,7 @@ mod test {
         assert_eq!(tot_set, 0);
         assert_eq!(reserve, 0);
         assert_eq!(unconsumed, 1_000_000_000);
+        assert_eq!(client.get_unconsumed_revenue_pool(), 1_000_000_000);
     }
 
     #[test]
