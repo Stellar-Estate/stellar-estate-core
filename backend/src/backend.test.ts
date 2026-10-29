@@ -1137,5 +1137,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.accepted_asset_code).toBe('USDC');
     expect(res.body.data.explorer_url).toContain('stellar.expert');
   });
+
+  it('GET /api/agreements/:id/versions/:ver/timestamps should return agreement lifecycle timestamps', async () => {
+    const res = await request(app).get('/api/agreements/agr-meridian-001/versions/2/timestamps');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.agreement_id).toBe('agr-meridian-001');
+    expect(res.body.data.version).toBe(2);
+    expect(res.body.data.created_at).toBeDefined();
+    expect(res.body.data.status).toBe('LOCKED');
+    expect(res.body.data.is_locked).toBe(true);
+  });
 });
 

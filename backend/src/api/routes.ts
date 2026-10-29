@@ -1958,3 +1958,34 @@ apiRouter.get('/properties/:id/vault/accepted-asset', (req: Request, res: Respon
     },
   });
 });
+
+
+apiRouter.get('/agreements/:id/versions/:ver/timestamps', (req: Request, res: Response) => {
+  const { id, ver } = req.params;
+  const versionNum = parseInt(ver, 10);
+  const agreement = db.getAgreementById(id) || db.getAgreementsByProperty(id)[0];
+  if (!agreement) {
+    return res.status(404).json({ success: false, error: `Agreement ${id} not found.` });
+  }
+
+  const version = (agreement.versions || []).find((v: any) => v.version_number === versionNum || v.version === versionNum);
+  if (!version) {
+    return res.status(404).json({ success: false, error: `Agreement version ${id} v${ver} not found.` });
+  }
+
+  const createdAt = version.created_at || new Date().toISOString();
+  const lockedAt = version.status === 'LOCKED' ? (version.updated_at || createdAt) : null;
+
+  res.json({
+    success: true,
+    data: {
+      agreement_id: id,
+      version: versionNum,
+      status: version.status,
+      created_at: createdAt,
+      locked_at: lockedAt,
+      effective_date: version.effective_date,
+      is_locked: version.status === 'LOCKED',
+    },
+  });
+});
