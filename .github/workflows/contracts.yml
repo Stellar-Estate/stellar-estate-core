@@ -1,0 +1,48 @@
+name: Soroban Smart Contracts CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'contracts/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/contracts.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'contracts/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+jobs:
+  soroban-contracts:
+    name: Build WASM & Run Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Pin Transitive Dependencies
+        run: |
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.2.0 || true
+          cargo update -p ed25519@3.0.0 --precise 2.2.3 || true
+          cargo update -p signature@3.0.0 --precise 2.2.0 || true
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Contract Tests
+        run: cargo test --workspace --verbose
+
+      - name: Compile Optimized Soroban WASM
+        run: cargo build --target wasm32-unknown-unknown --release
