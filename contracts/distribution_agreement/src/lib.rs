@@ -386,6 +386,15 @@ impl DistributionAgreementContract {
         Ok(state.status)
     }
 
+    /// Check whether an agreement version has met all stakeholder approvals and is ready to lock
+    pub fn is_ready_to_lock(env: Env, version: u32) -> bool {
+        if let Ok(state) = Self::get_agreement_version(env, version) {
+            state.status == AgreementStatus::ReadyToLock
+        } else {
+            false
+        }
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -451,13 +460,16 @@ mod test {
         assert!(!ready2);
 
         // Charlie approves -> ready to lock!
+        assert!(!client.is_ready_to_lock(&1));
         let ready3 = client.approve_agreement(&charlie, &1, &hash_v1);
         assert!(ready3);
+        assert!(client.is_ready_to_lock(&1));
 
         // 5. Lock agreement
         client.lock_agreement(&admin, &1);
 
         assert!(client.is_version_locked(&1));
+        assert!(!client.is_ready_to_lock(&1));
         assert_eq!(client.get_version_status(&1), AgreementStatus::Locked);
 
         let state = client.get_agreement_version(&1);
