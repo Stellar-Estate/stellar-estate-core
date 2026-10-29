@@ -1036,5 +1036,22 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.checks.database).toBe('OK');
     expect(res.body.checks.properties_loaded).toBeGreaterThan(0);
   });
+
+  it('POST /api/webhooks/test-dispatch should trigger simulated webhook dispatch with signed payload', async () => {
+    const res = await request(app)
+      .post('/api/webhooks/test-dispatch')
+      .send({
+        url: 'https://webhook.site/stellar-estate-test',
+        event: 'settlement.executed',
+        payload: { settlementId: 'stl-test-123', amount: 5000 },
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.delivery).toBeDefined();
+    expect(res.body.delivery.url).toBe('https://webhook.site/stellar-estate-test');
+    expect(res.body.delivery.event).toBe('settlement.executed');
+    expect(res.body.delivery.signature).toBeDefined();
+    expect(res.body.delivery.success).toBe(true);
+  });
 });
 

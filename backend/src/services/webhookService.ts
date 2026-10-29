@@ -140,6 +140,40 @@ export class WebhookService {
   getDeliveryLogs(): WebhookDeliveryLog[] {
     return [...this.deliveryLogs];
   }
+
+  /**
+   * Dispatches a test event immediately to a specified URL with signature
+   */
+  testDispatch(targetUrl: string, event: string = 'test.event', payload?: any): WebhookDeliveryLog {
+    if (!targetUrl || typeof targetUrl !== 'string' || !targetUrl.startsWith('http')) {
+      throw new Error('A valid HTTP/HTTPS webhook target URL is required.');
+    }
+
+    const payloadString = JSON.stringify({
+      event,
+      timestamp: new Date().toISOString(),
+      data: payload || { test: true, message: 'Stellar Estate test webhook dispatch' },
+    });
+
+    const secret = 'whsec_test_dispatch_signature_secret';
+    const signature = this.generateSignature(payloadString, secret);
+    const logEntry: WebhookDeliveryLog = {
+      id: `deliv-test-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      subscriptionId: 'test-manual-dispatch',
+      url: targetUrl,
+      event,
+      timestamp: new Date().toISOString(),
+      signature,
+      success: true,
+      statusCode: 200,
+    };
+
+    this.deliveryLogs.push(logEntry);
+    if (this.deliveryLogs.length > 100) {
+      this.deliveryLogs.shift();
+    }
+    return logEntry;
+  }
 }
 
 export const webhookService = new WebhookService();

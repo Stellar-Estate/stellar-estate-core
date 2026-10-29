@@ -1736,3 +1736,22 @@ apiRouter.get('/ready', (req: Request, res: Response) => {
     },
   });
 });
+
+
+apiRouter.post('/webhooks/test-dispatch', (req: Request, res: Response) => {
+  const { url, event, payload } = req.body;
+  if (!url) {
+    return res.status(400).json({ success: false, error: 'Target webhook url is required.' });
+  }
+
+  try {
+    const delivery = webhookService.testDispatch(url, event || 'stellar.test.ping', payload);
+    res.json({
+      success: true,
+      message: 'Test webhook event dispatched successfully.',
+      delivery,
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
