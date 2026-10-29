@@ -2175,3 +2175,34 @@ apiRouter.get('/agreements/:id/versions/:ver/superseded', (req: Request, res: Re
     },
   });
 });
+
+apiRouter.get('/properties/:id/vault/summary', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const property = db.getPropertyById(id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: `Property ${id} not found.` });
+  }
+
+  const settlements = db.getSettlementsByProperty(id);
+  const revenueHistory = db.getRevenueByProperty(id);
+  const totalRevenue = revenueHistory.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalSettled = settlements.reduce((sum, s) => sum + (s.total_gross_amount || s.gross_amount || 0), 0);
+  const currentDistributable = Math.max(0, totalRevenue - totalSettled);
+
+  res.json({
+    success: true,
+    data: {
+      property_id: id,
+      property_name: property.name,
+      contract_id: property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+      status: property.status || 'ACTIVE',
+      accepted_asset: property.accepted_asset || 'USDC',
+      contract_version: '1.0.0',
+      total_revenue_pool: totalRevenue,
+      distributable_balance: currentDistributable,
+      reserve_balance: property.reserve_balance || 25000,
+      settlement_count: settlements.length,
+      is_operational: true,
+    },
+  });
+});
