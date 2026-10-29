@@ -1147,6 +1147,41 @@ apiRouter.get('/blockchain/fee-stats/history', (req: Request, res: Response) => 
   });
 });
 
+apiRouter.get('/blockchain/network-info', (req: Request, res: Response) => {
+  const latestLedger = ledgerTrackerService.getLatestSequence();
+  const networkPassphrase = 'Test SDF Network ; September 2015';
+
+  res.json({
+    success: true,
+    network: {
+      name: 'Stellar Testnet',
+      passphrase: networkPassphrase,
+      horizon_url: STELLAR_TESTNET_HORIZON,
+      rpc_url: 'https://soroban-testnet.stellar.org',
+      friendbot_url: 'https://friendbot.stellar.org',
+      explorer_url: 'https://stellar.expert/explorer/testnet',
+      base_fee_stroops: 100,
+      protocol_version: 22,
+      latest_ledger_sequence: latestLedger,
+      accepted_assets: [
+        {
+          code: 'USDC',
+          issuer: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
+          contract_id: 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+          decimals: 7,
+        },
+        {
+          code: 'XLM',
+          native: true,
+          decimals: 7,
+        },
+      ],
+    },
+    status: 'ONLINE',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
   const now = Date.now();
   if (cachedFeeStats && now - cachedFeeStats.cachedAt < FEE_STATS_CACHE_TTL_MS) {

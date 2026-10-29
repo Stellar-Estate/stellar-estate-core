@@ -961,5 +961,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.total_events).toBeGreaterThanOrEqual(1);
   });
+
+  it('GET /api/blockchain/network-info should return Stellar Testnet parameters and assets', async () => {
+    const res = await request(app).get('/api/blockchain/network-info');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.network.name).toBe('Stellar Testnet');
+    expect(res.body.network.passphrase).toBe('Test SDF Network ; September 2015');
+    expect(res.body.network.protocol_version).toBe(22);
+    expect(res.body.network.accepted_assets.length).toBeGreaterThan(0);
+  });
 });
 
