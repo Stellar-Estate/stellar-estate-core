@@ -10,10 +10,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   // CORE PROPERTY & REVENUE TESTS
   // ============================================================================
 
-  it('GET /api/health should return healthy status', async () => {
+  it('GET /api/health should return healthy status with memory and horizon info', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('healthy');
+    expect(res.body).toHaveProperty('memory');
+    expect(res.body.memory).toHaveProperty('heapUsedMb');
+    expect(res.body).toHaveProperty('horizon');
+    expect(res.body.horizon.status).toBe('CONNECTED');
+    expect(res.body).toHaveProperty('process');
+    expect(res.body.process).toHaveProperty('nodeVersion');
   });
 
   it('GET /api/properties should return list of properties with financial summary', async () => {

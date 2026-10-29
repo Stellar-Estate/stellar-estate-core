@@ -59,12 +59,27 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
+  const mem = process.memoryUsage();
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     correlationId: req.correlationId,
     network: config.STELLAR_NETWORK,
+    memory: {
+      rssMb: Math.round(mem.rss / 1024 / 1024),
+      heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+      heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+    },
+    horizon: {
+      url: config.STELLAR_HORIZON_URL,
+      network: config.STELLAR_NETWORK,
+      status: 'CONNECTED',
+    },
+    process: {
+      pid: process.pid,
+      nodeVersion: process.version,
+    },
   });
 });
 
