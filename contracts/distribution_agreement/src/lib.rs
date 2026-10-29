@@ -520,6 +520,11 @@ impl DistributionAgreementContract {
         )
     }
 
+    /// Retrieve contract semantic version tuple: (major, minor, patch)
+    pub fn get_contract_version_tuple(_env: Env) -> (u32, u32, u32) {
+        (1, 0, 0)
+    }
+
     /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
     pub fn upgrade_contract(
         env: Env,
@@ -739,5 +744,14 @@ mod test {
         // Admin revokes proposal
         client.revoke_agreement_proposal(&admin, &1);
         assert_eq!(client.get_version_status(&1), AgreementStatus::Revoked);
+    }
+
+    #[test]
+    fn test_get_contract_version_tuple() {
+        let env = Env::default();
+        let contract_id = env.register(DistributionAgreementContract, ());
+        let client = DistributionAgreementContractClient::new(&env, &contract_id);
+        let version = client.get_contract_version_tuple();
+        assert_eq!(version, (1, 0, 0));
     }
 }
