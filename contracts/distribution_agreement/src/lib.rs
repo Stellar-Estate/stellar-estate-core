@@ -338,6 +338,21 @@ impl DistributionAgreementContract {
             false
         }
     }
+
+    /// Retrieve core property ID and administrative authority address
+    pub fn get_agreement_meta(env: Env) -> Result<(String, Address), ContractError> {
+        let property_id: String = env
+            .storage()
+            .instance()
+            .get(&DataKey::PropertyId)
+            .ok_or(ContractError::NotInitialized)?;
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+        Ok((property_id, admin))
+    }
 }
 
 #[cfg(test)]
@@ -364,6 +379,10 @@ mod test {
 
         // 1. Initialize
         client.initialize(&admin, &prop_id, &agr_id);
+
+        let (meta_prop, meta_admin) = client.get_agreement_meta();
+        assert_eq!(meta_prop, prop_id);
+        assert_eq!(meta_admin, admin);
 
         // 2. Create version 1 (3 stakeholders required)
         client.create_version(&admin, &1, &hash_v1, &3);
