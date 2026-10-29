@@ -952,5 +952,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.telemetry.financials).toHaveProperty('unconsumed_pool');
     expect(res.body.telemetry.explorer_links.vault).toContain('stellar.expert');
   });
+
+  it('GET /api/properties/:id/audit-trail should return property-level chronological audit records', async () => {
+    const res = await request(app).get('/api/properties/prop-meridian-abuja/audit-trail');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.property_id).toBe('prop-meridian-abuja');
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.total_events).toBeGreaterThanOrEqual(1);
+  });
 });
 

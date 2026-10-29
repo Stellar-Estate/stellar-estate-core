@@ -1385,3 +1385,21 @@ apiRouter.get('/diagnostics', async (req: Request, res: Response) => {
   });
 });
 
+apiRouter.get('/properties/:id/audit-trail', (req: Request, res: Response) => {
+  const property = db.getPropertyById(req.params.id);
+  if (!property) {
+    return res.status(404).json({ success: false, error: 'Property not found' });
+  }
+
+  const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+  const events = db.getPropertyAuditEvents(property.id, isNaN(limit) ? 50 : limit);
+
+  res.json({
+    success: true,
+    property_id: property.id,
+    property_name: property.name,
+    total_events: events.length,
+    data: events,
+  });
+});
+

@@ -522,6 +522,21 @@ class InMemoryDatabase {
     return [...this.auditEvents].reverse().slice(0, limit);
   }
 
+  getPropertyAuditEvents(propertyId: string, limit: number = 50): AuditEvent[] {
+    return this.auditEvents
+      .filter((e) => {
+        if (e.entity_id === propertyId) return true;
+        if (e.payload?.property_id === propertyId || e.payload?.propertyId === propertyId) return true;
+        if (e.entity_type === 'DISTRIBUTION_AGREEMENT' || e.entity_type === 'DISTRIBUTION_AGREEMENT_VERSION') {
+          const agr = this.agreements.get(e.entity_id);
+          if (agr && agr.property_id === propertyId) return true;
+        }
+        return false;
+      })
+      .reverse()
+      .slice(0, limit);
+  }
+
   // Reconciliation
   saveReconciliationReport(report: ReconciliationReport): ReconciliationReport {
     this.reconciliationReports.push(report);
