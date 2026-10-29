@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: stellar-estate-postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: stellar_user
       POSTGRES_PASSWORD: stellar_password
@@ -14,13 +14,21 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stellar_user -d stellar_estate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - stellar-estate-net
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: stellar-estate-backend
-    restart: always
+    restart: unless-stopped
     environment:
       PORT: 4000
       NODE_ENV: production
@@ -30,7 +38,21 @@ services:
     ports:
       - "4000:4000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/api/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - stellar-estate-net
+
+networks:
+  stellar-estate-net:
+    driver: bridge
 
 volumes:
   pgdata:
+    driver: local
