@@ -174,6 +174,13 @@ export class WebhookService {
     }
     return logEntry;
   }
+
+  /**
+   * Unsubscribe / remove a webhook subscription by ID
+   */
+  unsubscribe(id: string): boolean {
+    return this.subscriptions.delete(id);
+  }
 }
 
 export const webhookService = new WebhookService();

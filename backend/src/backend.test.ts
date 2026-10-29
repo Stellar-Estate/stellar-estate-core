@@ -1053,5 +1053,27 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.delivery.signature).toBeDefined();
     expect(res.body.delivery.success).toBe(true);
   });
+
+  it('DELETE /api/webhooks/:id should remove subscription and reject invalid id', async () => {
+    // 1. Create a subscription to delete
+    const subRes = await request(app)
+      .post('/api/webhooks/subscribe')
+      .send({
+        url: 'https://test-delete.com/webhook',
+        events: ['property.created'],
+      });
+    expect(subRes.status).toBe(201);
+    const subId = subRes.body.subscription.id;
+
+    // 2. Delete it
+    const delRes = await request(app).delete(`/api/webhooks/${subId}`);
+    expect(delRes.status).toBe(200);
+    expect(delRes.body.success).toBe(true);
+    expect(delRes.body.subscriptionId).toBe(subId);
+
+    // 3. Attempting to delete again should return 404
+    const notFoundRes = await request(app).delete(`/api/webhooks/${subId}`);
+    expect(notFoundRes.status).toBe(404);
+  });
 });
 

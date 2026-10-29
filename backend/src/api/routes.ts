@@ -1755,3 +1755,18 @@ apiRouter.post('/webhooks/test-dispatch', (req: Request, res: Response) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+
+apiRouter.delete('/webhooks/:id', (req: Request, res: Response) => {
+  const { id } = req.params;
+  const removed = webhookService.unsubscribe(id);
+  if (!removed) {
+    return res.status(404).json({ success: false, error: `Webhook subscription ${id} not found.` });
+  }
+
+  res.json({
+    success: true,
+    message: `Webhook subscription ${id} removed successfully.`,
+    subscriptionId: id,
+  });
+});
