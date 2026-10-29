@@ -24,7 +24,7 @@ enum DataKey {
 const EVENT_AGR_INIT: Symbol = symbol_short!("agr_init");
 const EVENT_PROPOSED: Symbol = symbol_short!("proposed");
 const EVENT_STK_ADDED: Symbol = symbol_short!("stk_added");
-const EVENT_STK_APPR: Symbol = symbol_short!("stk_appr");
+const EVENT_APPROVED: Symbol = symbol_short!("approved");
 const EVENT_AGR_LOCKED: Symbol = symbol_short!("agr_lock");
 
 #[contract]
@@ -246,9 +246,15 @@ impl DistributionAgreementContract {
         env.storage().persistent().extend_ttl(&DataKey::StakeholderKey(version, stakeholder.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
         env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
 
+        let agreement_id: String = env
+            .storage()
+            .instance()
+            .get(&DataKey::AgreementId)
+            .unwrap_or(String::from_str(&env, "AGR"));
+
         env.events().publish(
-            (EVENT_STK_APPR, stakeholder),
-            (version, version_state.approved_count),
+            (EVENT_APPROVED, agreement_id),
+            (version, stakeholder, version_state.approved_count),
         );
 
         Ok(version_state.status == AgreementStatus::ReadyToLock)
