@@ -518,6 +518,42 @@ apiRouter.get('/blockchain/latest-ledger', async (req: Request, res: Response) =
   });
 });
 
+apiRouter.get('/blockchain/contract-addresses', (req: Request, res: Response) => {
+  const properties = db.getAllProperties();
+  const vaultContracts = properties.map((p) => ({
+    property_id: p.id,
+    property_name: p.name,
+    vault_address: p.vault_stellar_address,
+    network: 'TESTNET',
+  }));
+
+  const agreementContracts = Array.from(db.agreements.values()).map((agr) => ({
+    agreement_id: agr.id,
+    property_id: agr.property_id,
+    identifier: agr.agreement_identifier,
+    versions: agr.versions.map((v) => ({
+      version: v.version_number,
+      status: v.status,
+      hash: v.agreement_hash,
+      contract_reference: v.contract_reference || 'CAUTO_DEPLOYED',
+    })),
+  }));
+
+  res.json({
+    success: true,
+    network: 'Stellar Testnet',
+    data: {
+      vault_contracts: vaultContracts,
+      agreement_contracts: agreementContracts,
+      standards: {
+        sep0001: '/.well-known/stellar.toml',
+        sep0007: 'web+stellar:pay',
+        rfc8785: 'Canonical JSON SHA-256 Hashes',
+      },
+    },
+  });
+});
+
 apiRouter.get('/blockchain/tx/:hash', (req: Request, res: Response) => {
   const tx = db.getBlockchainTxByHash(req.params.hash);
   if (!tx) {

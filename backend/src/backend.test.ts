@@ -623,5 +623,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       .patch('/api/properties/prop-meridian-abuja/units/unit-meridian-10')
       .send({ occupancy_status: 'VACANT' });
   });
+
+  it('GET /api/blockchain/contract-addresses should return canonical deployed vault and agreement references', async () => {
+    const res = await request(app).get('/api/blockchain/contract-addresses');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.vault_contracts.length).toBeGreaterThan(0);
+    expect(res.body.data.agreement_contracts.length).toBeGreaterThan(0);
+    expect(res.body.data.standards).toHaveProperty('sep0001');
+    expect(res.body.data.standards).toHaveProperty('sep0007');
+  });
 });
 
