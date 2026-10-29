@@ -11,8 +11,8 @@ yarn-error.log*
 # Rust / Soroban
 target/
 **/*.rs.bk
-Cargo.lock
 
 # OS
 .DS_Store
 Thumbs.db
+test_snapshots/
