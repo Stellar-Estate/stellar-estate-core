@@ -1710,3 +1710,29 @@ apiRouter.get('/live', (req: Request, res: Response) => {
     uptime: process.uptime(),
   });
 });
+
+
+apiRouter.get('/ready', (req: Request, res: Response) => {
+  const propertyCount = db.properties.size;
+  const isReady = propertyCount > 0;
+
+  if (!isReady) {
+    return res.status(503).json({
+      status: 'NOT_READY',
+      probe: 'readiness',
+      error: 'Database properties collection is not initialized',
+    });
+  }
+
+  res.json({
+    status: 'READY',
+    probe: 'readiness',
+    timestamp: new Date().toISOString(),
+    checks: {
+      database: 'OK',
+      properties_loaded: propertyCount,
+      agreements_loaded: db.agreements.size,
+      storage_mode: 'IN_MEMORY_TRANSACTIONAL',
+    },
+  });
+});
