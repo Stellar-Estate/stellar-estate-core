@@ -745,6 +745,11 @@ impl PropertyVaultContract {
             String::from_str(&env, "On-chain real estate property revenue vault and settlement distributor"),
         )
     }
+
+    /// Retrieve contract semantic version tuple: (major, minor, patch)
+    pub fn get_contract_version_tuple(_env: Env) -> (u32, u32, u32) {
+        (1, 0, 0)
+    }
 }
 
 #[cfg(test)]
@@ -1267,5 +1272,14 @@ mod test {
         let dummy_wasm_hash = BytesN::from_array(&env, &[0u8; 32]);
 
         client.upgrade_contract(&unauthorized, &dummy_wasm_hash);
+    }
+
+    #[test]
+    fn test_get_contract_version_tuple() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let (client, _admin, _asset) = setup_test_vault(&env);
+        let version = client.get_contract_version_tuple();
+        assert_eq!(version, (1, 0, 0));
     }
 }
