@@ -2,7 +2,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, Vec,
+    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec,
 };
 use stellar_estate_shared::{
     ContractError, PropertyMetadata, RecipientPayout, RevenueEntry, SettlementExecutionArgs,
@@ -291,6 +291,28 @@ impl PropertyVaultContract {
     /// Check whether this vault currently has an active distribution agreement bound
     pub fn has_active_agreement(env: Env) -> bool {
         env.storage().instance().has(&DataKey::ActiveAgreementContract)
+    }
+
+    /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
+    pub fn upgrade_contract(
+        env: Env,
+        caller: Address,
+        new_wasm_hash: BytesN<32>,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+
+        if caller != admin {
+            return Err(ContractError::Unauthorized);
+        }
+
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+        Ok(())
     }
 
     /// Execute a deterministic multi-recipient settlement against verified revenue
@@ -1002,5 +1024,18 @@ mod test {
         let hacker = Address::generate(&env);
 
         client.set_status(&hacker, &VaultStatus::Paused);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #3)")] // Unauthorized
+    fn test_non_admin_cannot_upgrade_contract() {
+        let env = Env::default();
+        env.mock_all_auths();
+
+        let (client, _admin, _asset) = setup_test_vault(&env);
+        let unauthorized = Address::generate(&env);
+        let dummy_wasm_hash = BytesN::from_array(&env, &[0u8; 32]);
+
+        client.upgrade_contract(&unauthorized, &dummy_wasm_hash);
     }
 }
