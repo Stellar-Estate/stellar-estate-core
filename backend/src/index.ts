@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { apiRouter } from './api/routes.js';
 import { correlationIdMiddleware, apiRateLimiter } from './middleware/security.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { openApiSpec } from './api/openapi.js';
 
 export const app = express();
 const PORT = config.PORT;
@@ -89,6 +90,14 @@ app.get('/api/health', (req, res) => {
       nodeVersion: process.version,
     },
   });
+});
+
+app.get('/api/docs/openapi.json', (req, res) => {
+  res.json(openApiSpec);
+});
+
+app.get('/docs', (req, res) => {
+  res.redirect('/api/docs/openapi.json');
 });
 
 // Apply rate limiting to all /api routes

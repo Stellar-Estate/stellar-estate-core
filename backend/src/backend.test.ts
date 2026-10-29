@@ -24,6 +24,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.process).toHaveProperty('nodeVersion');
   });
 
+  it('GET /api/docs/openapi.json should return OpenAPI 3.0 specification', async () => {
+    const res = await request(app).get('/api/docs/openapi.json');
+    expect(res.status).toBe(200);
+    expect(res.body.openapi).toBe('3.0.3');
+    expect(res.body.info.title).toContain('Stellar Estate');
+    expect(res.body.paths).toHaveProperty('/api/health');
+    expect(res.body.paths).toHaveProperty('/api/revenue/initiate');
+  });
+
   it('GET /api/properties should return list of properties with financial summary', async () => {
     const res = await request(app).get('/api/properties');
     expect(res.status).toBe(200);
