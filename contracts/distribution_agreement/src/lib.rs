@@ -372,6 +372,14 @@ impl DistributionAgreementContract {
         Ok((property_id, admin))
     }
 
+    /// Retrieve the current active version number of this distribution agreement
+    pub fn get_active_version_number(env: Env) -> Result<u32, ContractError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::ActiveVersion)
+            .ok_or(ContractError::AgreementNotFound)
+    }
+
     /// Retrieve contract identifier, version number, and specification details
     pub fn get_contract_info(env: Env) -> (String, u32, String) {
         (
@@ -417,6 +425,7 @@ mod test {
 
         // 2. Create version 1 (3 stakeholders required)
         client.create_version(&admin, &1, &hash_v1, &3);
+        assert_eq!(client.get_active_version_number(), 1);
 
         // 3. Add stakeholders (Alice 4000 bps, Bob 3500 bps, Charlie 2500 bps = 10,000 bps / 100%)
         client.add_stakeholder(&admin, &1, &alice, &4000, &String::from_str(&env, "Alice"));
