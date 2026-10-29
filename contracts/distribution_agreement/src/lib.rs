@@ -329,6 +329,15 @@ impl DistributionAgreementContract {
         let state = Self::get_agreement_version(env, version)?;
         Ok(state.total_stakeholders)
     }
+
+    /// Check whether a specific stakeholder has cryptographically approved the agreement version
+    pub fn is_stakeholder_approved(env: Env, version: u32, stakeholder: Address) -> bool {
+        if let Ok(st) = Self::get_stakeholder(env, version, stakeholder) {
+            st.has_approved
+        } else {
+            false
+        }
+    }
 }
 
 #[cfg(test)]
@@ -366,8 +375,11 @@ mod test {
 
         // 4. Try locking prematurely -> Fails with IncompleteApprovals (#14)
         // Verified by assert below after Alice approves
+        assert!(!client.is_stakeholder_approved(&1, &alice));
         let ready1 = client.approve_agreement(&alice, &1, &hash_v1);
         assert!(!ready1);
+        assert!(client.is_stakeholder_approved(&1, &alice));
+        assert!(!client.is_stakeholder_approved(&1, &bob));
 
         let ready2 = client.approve_agreement(&bob, &1, &hash_v1);
         assert!(!ready2);
