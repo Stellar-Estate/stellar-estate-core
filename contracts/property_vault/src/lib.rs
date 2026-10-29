@@ -23,6 +23,7 @@ enum DataKey {
     ActiveAgreementContract,
     ActiveAgreementHash,
     Settlement(String),
+    SettlementByIndex(u32),
     SettlementPayouts(String),
     SettlementCount,
     ConsumedRevenue(u32),
@@ -497,6 +498,7 @@ impl PropertyVaultContract {
         };
 
         env.storage().persistent().set(&DataKey::Settlement(args.settlement_id.clone()), &record);
+        env.storage().persistent().set(&DataKey::SettlementByIndex(new_settlement_count), &args.settlement_id);
         env.storage().persistent().set(&DataKey::SettlementPayouts(args.settlement_id.clone()), &payouts);
 
         // Extend storage TTLs for instance financials, settlement record, and payouts
@@ -526,6 +528,31 @@ impl PropertyVaultContract {
             .persistent()
             .get(&DataKey::Settlement(settlement_id))
             .ok_or(ContractError::InvalidState)
+    }
+
+    /// Retrieve paginated list of settlement records executed by the vault
+    pub fn get_settlements_paginated(
+        env: Env,
+        offset: u32,
+        limit: u32,
+    ) -> Vec<SettlementRecord> {
+        let mut results = Vec::new(&env);
+        let count = Self::get_settlement_count(env.clone());
+        if offset >= count || limit == 0 {
+            return results;
+        }
+
+        let start_idx = offset.saturating_add(1);
+        let end_idx = core::cmp::min(count, offset.saturating_add(limit));
+
+        for idx in start_idx..=end_idx {
+            if let Some(stl_id) = env.storage().persistent().get::<_, String>(&DataKey::SettlementByIndex(idx)) {
+                if let Ok(rec) = Self::get_settlement(env.clone(), stl_id) {
+                    results.push_back(rec);
+                }
+            }
+        }
+        results
     }
 
     /// Retrieve recipient payouts for a settlement
@@ -880,6 +907,10 @@ mod test {
 
         let financials = client.get_financials();
         assert_eq!(financials.reserve_balance, 100_000_000);
+
+        let stl_page = client.get_settlements_paginated(&0, &10);
+        assert_eq!(stl_page.len(), 1);
+        assert_eq!(stl_page.get(0).unwrap().settlement_id, settlement_id);
     }
 
     #[test]
