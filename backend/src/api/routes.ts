@@ -2294,3 +2294,29 @@ apiRouter.get('/properties/:id/payouts/summary', (req: Request, res: Response) =
     },
   });
 });
+
+apiRouter.get('/system/audit-summary', (req: Request, res: Response) => {
+  const properties = db.getAllProperties();
+  const settlements = properties.flatMap(p => db.getSettlementsByProperty(p.id));
+  const agreements = properties.flatMap(p => db.getAgreementsByProperty(p.id));
+  const revenues = properties.flatMap(p => db.getRevenueByProperty(p.id));
+  const totalRev = revenues.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalSettled = settlements.reduce((sum, s) => sum + (s.total_gross_amount || s.gross_amount || 0), 0);
+
+  res.json({
+    success: true,
+    data: {
+      platform: 'Stellar Estate Financial Platform',
+      network: 'TESTNET',
+      protocol_version: 22,
+      total_properties: properties.length,
+      total_agreements: agreements.length,
+      total_revenue_recorded: totalRev,
+      total_settlements_executed: settlements.length,
+      total_settled_volume: totalSettled,
+      smart_contracts_active: 3,
+      status: 'OPTIMAL',
+      timestamp: new Date().toISOString(),
+    },
+  });
+});

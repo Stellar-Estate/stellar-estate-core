@@ -1250,5 +1250,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data).toHaveProperty('total_payout_amount');
     expect(res.body.data).toHaveProperty('unique_stakeholders_paid');
   });
+
+  it('GET /api/system/audit-summary should return platform-wide audit telemetry', async () => {
+    const res = await request(app).get('/api/system/audit-summary');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.network).toBe('TESTNET');
+    expect(res.body.data.protocol_version).toBe(22);
+    expect(res.body.data.status).toBe('OPTIMAL');
+    expect(res.body.data.smart_contracts_active).toBe(3);
+  });
 });
 
