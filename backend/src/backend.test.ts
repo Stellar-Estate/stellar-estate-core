@@ -642,5 +642,15 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const internalReq = { path: '/api/agreements', headers: { 'x-internal-service': 'stellar-estate-core' } } as any;
     expect(shouldBypassRateLimit(internalReq)).toBe(true);
   });
+
+  it('GET /api/blockchain/fee-stats/history should return rolling fee stats observations', async () => {
+    const res = await request(app).get('/api/blockchain/fee-stats/history?limit=10');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0]).toHaveProperty('last_ledger_base_fee');
+    expect(res.body.data[0]).toHaveProperty('timestamp');
+  });
 });
 

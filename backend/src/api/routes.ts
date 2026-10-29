@@ -835,6 +835,53 @@ interface CachedFeeStats {
 let cachedFeeStats: CachedFeeStats | null = null;
 const FEE_STATS_CACHE_TTL_MS = 10000;
 
+export interface FeeObservation {
+  timestamp: string;
+  last_ledger_base_fee: number;
+  min: number;
+  mode: number;
+  p90: number;
+  max: number;
+}
+
+const feeStatsHistory: FeeObservation[] = [
+  {
+    timestamp: new Date(Date.now() - 60000).toISOString(),
+    last_ledger_base_fee: 100,
+    min: 100,
+    mode: 100,
+    p90: 100,
+    max: 1000,
+  },
+];
+
+function recordFeeObservation(feeData: any) {
+  const charged = feeData.fee_charged || {};
+  feeStatsHistory.push({
+    timestamp: new Date().toISOString(),
+    last_ledger_base_fee: feeData.last_ledger_base_fee || 100,
+    min: charged.min ?? 100,
+    mode: charged.mode ?? 100,
+    p90: charged.p90 ?? 100,
+    max: charged.max ?? 1000,
+  });
+  if (feeStatsHistory.length > 50) {
+    feeStatsHistory.shift();
+  }
+}
+
+apiRouter.get('/blockchain/fee-stats/history', (req: Request, res: Response) => {
+  const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 50);
+  const sliced = feeStatsHistory.slice(-limit);
+  res.json({
+    success: true,
+    total: feeStatsHistory.length,
+    limit,
+    data: sliced,
+    network: 'Stellar Testnet',
+  });
+});
+
 apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
   const now = Date.now();
   if (cachedFeeStats && now - cachedFeeStats.cachedAt < FEE_STATS_CACHE_TTL_MS) {
@@ -856,6 +903,7 @@ apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
     }
     const feeStats = await horizonRes.json();
     cachedFeeStats = { data: feeStats, cachedAt: now };
+    recordFeeObservation(feeStats);
     res.json({
       success: true,
       data: feeStats,
@@ -873,13 +921,15 @@ apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
       });
     }
     // Fallback standard fee stats if Horizon is slow
+    const fallbackStats = {
+      last_ledger_base_fee: 100,
+      fee_charged: { min: 100, mode: 100, p90: 100, max: 1000 },
+      recommended_base_fee: 100,
+    };
+    recordFeeObservation(fallbackStats);
     res.json({
       success: true,
-      data: {
-        last_ledger_base_fee: 100,
-        fee_charged: { min: 100, mode: 100, p90: 100, max: 1000 },
-        recommended_base_fee: 100,
-      },
+      data: fallbackStats,
       fallback: true,
     });
   }
