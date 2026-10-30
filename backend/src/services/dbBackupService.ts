@@ -151,7 +151,7 @@ export class DbBackupService {
     for (const agr of snapshot.data.agreements) {
       db.agreements.set(agr.property_id, agr);
       for (const ver of agr.versions) {
-        db.agreementVersions.set(`${agr.property_id}_v${ver.version}`, ver);
+        db.agreementVersions.set(`${agr.property_id}_v${ver.version_number || ver.version}`, ver);
       }
     }
 

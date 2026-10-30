@@ -1,13 +1,11 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec};
 use stellar_estate_shared::{
-    ContractError, PropertyMetadata, RecipientPayout, RevenueEntry, SettlementExecutionArgs,
-    SettlementRecord, SettlementStatus, VaultFinancialState, VaultStatus,
-    INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
+    ContractError, PropertyMetadata, RecipientPayout, RevenueEntry, SettlementExecutionArgs, SettlementRecord,
+    SettlementStatus, VaultFinancialState, VaultStatus, INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD,
+    PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
 };
 
 #[contracttype]
@@ -83,21 +81,26 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::PropertyMeta, &meta);
         env.storage().instance().set(&DataKey::AcceptedAsset, &accepted_asset);
-        env.storage().instance().set(&DataKey::VaultStatusKey, &VaultStatus::Active);
-        env.storage().instance().set(&DataKey::FinancialState, &initial_financials);
+        env.storage()
+            .instance()
+            .set(&DataKey::VaultStatusKey, &VaultStatus::Active);
+        env.storage()
+            .instance()
+            .set(&DataKey::FinancialState, &initial_financials);
         env.storage().instance().set(&DataKey::RevenueNonce, &0u32);
         env.storage().instance().set(&DataKey::SettlementCount, &0u32);
         env.storage().instance().set(&DataKey::TotalSettledRevenue, &0i128);
-        env.storage().instance().set(&DataKey::InitTimestamp, &env.ledger().timestamp());
+        env.storage()
+            .instance()
+            .set(&DataKey::InitTimestamp, &env.ledger().timestamp());
 
         // Extend instance TTL to protect against state archival on Stellar
-        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
         // Emit vault initialization event
-        env.events().publish(
-            (EVENT_VAULT_INIT, admin),
-            meta.valuation,
-        );
+        env.events().publish((EVENT_VAULT_INIT, admin), meta.valuation);
 
         Ok(())
     }
@@ -128,11 +131,7 @@ impl PropertyVaultContract {
             .get(&DataKey::FinancialState)
             .ok_or(ContractError::NotInitialized)?;
 
-        let mut nonce: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::RevenueNonce)
-            .unwrap_or(0);
+        let mut nonce: u32 = env.storage().instance().get(&DataKey::RevenueNonce).unwrap_or(0);
 
         nonce = nonce.checked_add(1).ok_or(ContractError::Overflow)?;
 
@@ -163,8 +162,14 @@ impl PropertyVaultContract {
         env.storage().persistent().set(&DataKey::RevenueRecord(nonce), &entry);
 
         // Extend storage TTLs for instance financials and new revenue record
-        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::RevenueRecord(nonce), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::RevenueRecord(nonce),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
         let meta = Self::get_property_metadata(env.clone())?;
         let accepted_asset: Address = env
@@ -183,12 +188,7 @@ impl PropertyVaultContract {
     }
 
     /// Record a verified property revenue payment into the vault
-    pub fn record_revenue(
-        env: Env,
-        caller: Address,
-        source: String,
-        amount: i128,
-    ) -> Result<u32, ContractError> {
+    pub fn record_revenue(env: Env, caller: Address, source: String, amount: i128) -> Result<u32, ContractError> {
         caller.require_auth();
         Self::internal_record_revenue(env, caller, source, amount)
     }
@@ -241,11 +241,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve paginated list of revenue records stored in persistent storage
-    pub fn get_revenue_records_paginated(
-        env: Env,
-        offset: u32,
-        limit: u32,
-    ) -> Vec<RevenueEntry> {
+    pub fn get_revenue_records_paginated(env: Env, offset: u32, limit: u32) -> Vec<RevenueEntry> {
         let mut results = Vec::new(&env);
         let count = Self::get_revenue_count(env.clone());
         if offset >= count || limit == 0 {
@@ -327,8 +323,12 @@ impl PropertyVaultContract {
             return Err(ContractError::Unauthorized);
         }
 
-        env.storage().instance().set(&DataKey::ActiveAgreementContract, &agreement_contract);
-        env.storage().instance().set(&DataKey::ActiveAgreementHash, &agreement_hash);
+        env.storage()
+            .instance()
+            .set(&DataKey::ActiveAgreementContract, &agreement_contract);
+        env.storage()
+            .instance()
+            .set(&DataKey::ActiveAgreementHash, &agreement_hash);
 
         Ok(())
     }
@@ -354,11 +354,7 @@ impl PropertyVaultContract {
     }
 
     /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
-    pub fn upgrade_contract(
-        env: Env,
-        caller: Address,
-        new_wasm_hash: BytesN<32>,
-    ) -> Result<(), ContractError> {
+    pub fn upgrade_contract(env: Env, caller: Address, new_wasm_hash: BytesN<32>) -> Result<(), ContractError> {
         caller.require_auth();
 
         let admin: Address = env
@@ -395,13 +391,21 @@ impl PropertyVaultContract {
         }
 
         // 1. Double settlement check: settlement ID must be unique
-        if env.storage().persistent().has(&DataKey::Settlement(args.settlement_id.clone())) {
+        if env
+            .storage()
+            .persistent()
+            .has(&DataKey::Settlement(args.settlement_id.clone()))
+        {
             return Err(ContractError::AlreadySettled);
         }
 
         // 2. Revenue existence & double-spending protection
         let revenue_entry = Self::get_revenue_entry(env.clone(), args.revenue_id)?;
-        if env.storage().persistent().has(&DataKey::ConsumedRevenue(args.revenue_id)) {
+        if env
+            .storage()
+            .persistent()
+            .has(&DataKey::ConsumedRevenue(args.revenue_id))
+        {
             return Err(ContractError::AlreadySettled);
         }
 
@@ -421,10 +425,14 @@ impl PropertyVaultContract {
             return Err(ContractError::InvalidSettlementAmount);
         }
 
-        let calculated_total = args.expenses
-            .checked_add(args.reserve).ok_or(ContractError::Overflow)?
-            .checked_add(args.fees).ok_or(ContractError::Overflow)?
-            .checked_add(args.distributable_amount).ok_or(ContractError::Overflow)?;
+        let calculated_total = args
+            .expenses
+            .checked_add(args.reserve)
+            .ok_or(ContractError::Overflow)?
+            .checked_add(args.fees)
+            .ok_or(ContractError::Overflow)?
+            .checked_add(args.distributable_amount)
+            .ok_or(ContractError::Overflow)?;
 
         if calculated_total != args.gross_revenue {
             return Err(ContractError::InvalidSettlementAmount);
@@ -442,7 +450,9 @@ impl PropertyVaultContract {
                 return Err(ContractError::InvalidAmount);
             }
             sum_payouts = sum_payouts.checked_add(payout.amount).ok_or(ContractError::Overflow)?;
-            sum_bps = sum_bps.checked_add(payout.basis_points).ok_or(ContractError::Overflow)?;
+            sum_bps = sum_bps
+                .checked_add(payout.basis_points)
+                .ok_or(ContractError::Overflow)?;
         }
 
         if sum_payouts != args.distributable_amount || sum_bps > 10_000 {
@@ -450,7 +460,9 @@ impl PropertyVaultContract {
         }
 
         // 6. Mark revenue as consumed (prevent replay & double-settlement)
-        env.storage().persistent().set(&DataKey::ConsumedRevenue(args.revenue_id), &true);
+        env.storage()
+            .persistent()
+            .set(&DataKey::ConsumedRevenue(args.revenue_id), &true);
 
         // 7. Update vault financial reserves
         let mut financials: VaultFinancialState = env
@@ -467,21 +479,19 @@ impl PropertyVaultContract {
         env.storage().instance().set(&DataKey::FinancialState, &financials);
 
         // 8. Track total settled revenue and settlement count
-        let total_settled: i128 = env
-            .storage()
+        let total_settled: i128 = env.storage().instance().get(&DataKey::TotalSettledRevenue).unwrap_or(0);
+        let new_total_settled = total_settled
+            .checked_add(args.gross_revenue)
+            .ok_or(ContractError::Overflow)?;
+        env.storage()
             .instance()
-            .get(&DataKey::TotalSettledRevenue)
-            .unwrap_or(0);
-        let new_total_settled = total_settled.checked_add(args.gross_revenue).ok_or(ContractError::Overflow)?;
-        env.storage().instance().set(&DataKey::TotalSettledRevenue, &new_total_settled);
+            .set(&DataKey::TotalSettledRevenue, &new_total_settled);
 
-        let settlement_count: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::SettlementCount)
-            .unwrap_or(0);
+        let settlement_count: u32 = env.storage().instance().get(&DataKey::SettlementCount).unwrap_or(0);
         let new_settlement_count = settlement_count.checked_add(1).ok_or(ContractError::Overflow)?;
-        env.storage().instance().set(&DataKey::SettlementCount, &new_settlement_count);
+        env.storage()
+            .instance()
+            .set(&DataKey::SettlementCount, &new_settlement_count);
 
         // 9. Persist immutable settlement record and payouts
         let record = SettlementRecord {
@@ -499,14 +509,30 @@ impl PropertyVaultContract {
             executed_at: env.ledger().timestamp(),
         };
 
-        env.storage().persistent().set(&DataKey::Settlement(args.settlement_id.clone()), &record);
-        env.storage().persistent().set(&DataKey::SettlementByIndex(new_settlement_count), &args.settlement_id);
-        env.storage().persistent().set(&DataKey::SettlementPayouts(args.settlement_id.clone()), &payouts);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Settlement(args.settlement_id.clone()), &record);
+        env.storage()
+            .persistent()
+            .set(&DataKey::SettlementByIndex(new_settlement_count), &args.settlement_id);
+        env.storage()
+            .persistent()
+            .set(&DataKey::SettlementPayouts(args.settlement_id.clone()), &payouts);
 
         // Extend storage TTLs for instance financials, settlement record, and payouts
-        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::Settlement(args.settlement_id.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::SettlementPayouts(args.settlement_id.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::Settlement(args.settlement_id.clone()),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
+        env.storage().persistent().extend_ttl(
+            &DataKey::SettlementPayouts(args.settlement_id.clone()),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
         // 10. Emit authoritative settlement event
         let meta = Self::get_property_metadata(env.clone())?;
@@ -533,10 +559,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve settlement distributable ratio tuple: (distributable_amount, gross_revenue)
-    pub fn get_settlement_distrib_ratio(
-        env: Env,
-        settlement_id: String,
-    ) -> Result<(i128, i128), ContractError> {
+    pub fn get_settlement_distrib_ratio(env: Env, settlement_id: String) -> Result<(i128, i128), ContractError> {
         let record = Self::get_settlement(env, settlement_id)?;
         Ok((record.distributable_amount, record.gross_revenue))
     }
@@ -556,10 +579,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve settlement reserve retention ratio in basis points (reserve * 10_000 / gross_revenue)
-    pub fn get_reserve_retention_ratio(
-        env: Env,
-        settlement_id: String,
-    ) -> Result<u32, ContractError> {
+    pub fn get_reserve_retention_ratio(env: Env, settlement_id: String) -> Result<u32, ContractError> {
         let record = Self::get_settlement(env, settlement_id)?;
         if record.gross_revenue <= 0 {
             return Ok(0);
@@ -569,11 +589,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve paginated list of settlement records executed by the vault
-    pub fn get_settlements_paginated(
-        env: Env,
-        offset: u32,
-        limit: u32,
-    ) -> Vec<SettlementRecord> {
+    pub fn get_settlements_paginated(env: Env, offset: u32, limit: u32) -> Vec<SettlementRecord> {
         let mut results = Vec::new(&env);
         let count = Self::get_settlement_count(env.clone());
         if offset >= count || limit == 0 {
@@ -584,7 +600,11 @@ impl PropertyVaultContract {
         let end_idx = core::cmp::min(count, offset.saturating_add(limit));
 
         for idx in start_idx..=end_idx {
-            if let Some(stl_id) = env.storage().persistent().get::<_, String>(&DataKey::SettlementByIndex(idx)) {
+            if let Some(stl_id) = env
+                .storage()
+                .persistent()
+                .get::<_, String>(&DataKey::SettlementByIndex(idx))
+            {
                 if let Ok(rec) = Self::get_settlement(env.clone(), stl_id) {
                     results.push_back(rec);
                 }
@@ -594,10 +614,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve recipient payouts for a settlement
-    pub fn get_settlement_payouts(
-        env: Env,
-        settlement_id: String,
-    ) -> Result<Vec<RecipientPayout>, ContractError> {
+    pub fn get_settlement_payouts(env: Env, settlement_id: String) -> Result<Vec<RecipientPayout>, ContractError> {
         env.storage()
             .persistent()
             .get(&DataKey::SettlementPayouts(settlement_id))
@@ -605,10 +622,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve total count of stakeholder payout tranches in a settlement
-    pub fn get_settlement_payout_count(
-        env: Env,
-        settlement_id: String,
-    ) -> Result<u32, ContractError> {
+    pub fn get_settlement_payout_count(env: Env, settlement_id: String) -> Result<u32, ContractError> {
         let payouts = Self::get_settlement_payouts(env, settlement_id)?;
         Ok(payouts.len())
     }
@@ -638,7 +652,11 @@ impl PropertyVaultContract {
         let count = Self::get_settlement_count(env.clone());
         let mut total = 0u32;
         for idx in 1..=count {
-            if let Some(stl_id) = env.storage().persistent().get::<_, String>(&DataKey::SettlementByIndex(idx)) {
+            if let Some(stl_id) = env
+                .storage()
+                .persistent()
+                .get::<_, String>(&DataKey::SettlementByIndex(idx))
+            {
                 if let Ok(rec) = Self::get_settlement(env.clone(), stl_id) {
                     total = total.saturating_add(rec.recipient_count);
                 }
@@ -706,9 +724,7 @@ impl PropertyVaultContract {
     }
 
     /// Retrieve full combined financial summary (financials, status, settlement count, total settled)
-    pub fn get_financial_summary(
-        env: Env,
-    ) -> Result<(VaultFinancialState, VaultStatus, u32, i128), ContractError> {
+    pub fn get_financial_summary(env: Env) -> Result<(VaultFinancialState, VaultStatus, u32, i128), ContractError> {
         let financials = Self::get_financials(env.clone())?;
         let status: VaultStatus = env
             .storage()
@@ -746,8 +762,7 @@ impl PropertyVaultContract {
         if financials.total_revenue_recorded <= 0 {
             return Ok(0);
         }
-        let bps = (financials.reserve_balance.checked_mul(10_000).unwrap_or(0))
-            / financials.total_revenue_recorded;
+        let bps = (financials.reserve_balance.checked_mul(10_000).unwrap_or(0)) / financials.total_revenue_recorded;
         Ok(bps as u32)
     }
 
@@ -758,8 +773,7 @@ impl PropertyVaultContract {
             return Ok(0);
         }
         let total_settled = Self::get_total_settled_revenue(env);
-        let bps = (total_settled.checked_mul(10_000).unwrap_or(0))
-            / financials.total_revenue_recorded;
+        let bps = (total_settled.checked_mul(10_000).unwrap_or(0)) / financials.total_revenue_recorded;
         Ok(bps as u32)
     }
 
@@ -803,7 +817,11 @@ impl PropertyVaultContract {
     }
 
     /// Simulate and calculate stakeholder payout share given distributable amount and basis points
-    pub fn calculate_payout_share(_env: Env, distributable_amount: i128, basis_points: u32) -> Result<i128, ContractError> {
+    pub fn calculate_payout_share(
+        _env: Env,
+        distributable_amount: i128,
+        basis_points: u32,
+    ) -> Result<i128, ContractError> {
         if basis_points > 10_000 {
             return Err(ContractError::InvalidBasisPoints);
         }
@@ -823,7 +841,10 @@ impl PropertyVaultContract {
         (
             String::from_str(&env, "StellarEstatePropertyVault"),
             1,
-            String::from_str(&env, "On-chain real estate property revenue vault and settlement distributor"),
+            String::from_str(
+                &env,
+                "On-chain real estate property revenue vault and settlement distributor",
+            ),
         )
     }
 
@@ -997,11 +1018,7 @@ mod test {
         let depositor = Address::generate(&env);
 
         // 1. Record $10,000 revenue
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &1_000_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &1_000_000_000);
 
         // 2. Set active distribution agreement
         let agreement_contract = Address::generate(&env);
@@ -1108,11 +1125,7 @@ mod test {
         let (client, admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &1_000_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &1_000_000_000);
 
         let agreement_contract = Address::generate(&env);
         let agreement_hash = String::from_str(&env, "hash1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab");
@@ -1172,14 +1185,13 @@ mod test {
         let (client, admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &1_000_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &1_000_000_000);
 
         let agreement_contract = Address::generate(&env);
-        let locked_hash = String::from_str(&env, "locked_canonical_hash_abc_1234567890abcdef1234567890abcdef12345678");
+        let locked_hash = String::from_str(
+            &env,
+            "locked_canonical_hash_abc_1234567890abcdef1234567890abcdef12345678",
+        );
         client.set_distribution_agreement(&admin, &agreement_contract, &locked_hash);
 
         let alice = Address::generate(&env);
@@ -1192,7 +1204,10 @@ mod test {
             },
         ];
 
-        let wrong_hash = String::from_str(&env, "tampered_fake_hash_99999999999999999999999999999999999999999999999");
+        let wrong_hash = String::from_str(
+            &env,
+            "tampered_fake_hash_99999999999999999999999999999999999999999999999",
+        );
 
         let args = SettlementExecutionArgs {
             settlement_id: String::from_str(&env, "STL-TAMPERED-001"),
@@ -1220,11 +1235,7 @@ mod test {
         let (client, admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &1_000_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &1_000_000_000);
 
         let agreement_hash = String::from_str(&env, "valid_hash");
         let alice = Address::generate(&env);
@@ -1263,11 +1274,7 @@ mod test {
         let (client, admin, _asset) = setup_test_vault(&env);
         let depositor = Address::generate(&env);
 
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &1_000_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &1_000_000_000);
 
         let agreement_hash = String::from_str(&env, "valid_hash");
         let alice = Address::generate(&env);
@@ -1315,11 +1322,7 @@ mod test {
         assert_eq!(status_active, VaultStatus::Active);
 
         // Recording revenue now succeeds
-        let rev_id = client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &500_000_000,
-        );
+        let rev_id = client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &500_000_000);
         assert_eq!(rev_id, 1);
     }
 
@@ -1336,11 +1339,7 @@ mod test {
         client.set_status(&admin, &VaultStatus::Paused);
 
         // Must reject revenue ingestion
-        client.record_revenue(
-            &depositor,
-            &String::from_str(&env, "rental_revenue"),
-            &100_000_000,
-        );
+        client.record_revenue(&depositor, &String::from_str(&env, "rental_revenue"), &100_000_000);
     }
 
     #[test]

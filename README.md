@@ -19,6 +19,16 @@ Stellar-Estate/
 └── stellar-estate-core       (Node.js/Express + TypeScript + Soroban Smart Contracts: Settlement Engine & Reconciliation)
 ```
 
+### "Where Did My Rent Go?" Visual Lineage Trace
+
+![Where Did My Rent Go Trace](docs/assets/where_did_my_rent_go_trace.svg)
+
+---
+
+## Platform Preview
+
+![Stellar Estate Hero Platform](docs/assets/stellar_estate_hero.svg)
+
 ---
 
 ## 1. Product & Architecture Overview
@@ -96,6 +106,10 @@ Every settlement is permanently traceable back to:
                                   ▼
                      COMPLETE AUDIT TRACE & RECEIPT
 ```
+
+### "Where Did My Rent Go?" Visual Lineage Trace
+
+![Where Did My Rent Go Trace](docs/assets/where_did_my_rent_go_trace.svg)
 
 ---
 
@@ -247,6 +261,10 @@ npm run verify:submission
 # 3. Generate Submission Audit Bundle (JSON + Text summary)
 npm run audit:bundle
 ```
+
+### "Where Did My Rent Go?" Visual Lineage Trace
+
+![Where Did My Rent Go Trace](docs/assets/where_did_my_rent_go_trace.svg)
 
 ---
 

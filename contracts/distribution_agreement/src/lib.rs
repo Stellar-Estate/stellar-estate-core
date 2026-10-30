@@ -1,12 +1,10 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String, Symbol, Vec};
 use stellar_estate_shared::{
-    AgreementStatus, AgreementVersionState, ContractError, Stakeholder,
-    INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
+    AgreementStatus, AgreementVersionState, ContractError, Stakeholder, INSTANCE_BUMP_AMOUNT, INSTANCE_BUMP_THRESHOLD,
+    PERSISTENT_BUMP_AMOUNT, PERSISTENT_BUMP_THRESHOLD,
 };
 
 #[contracttype]
@@ -51,7 +49,9 @@ impl DistributionAgreementContract {
         env.storage().instance().set(&DataKey::ActiveVersion, &0u32);
 
         // Extend instance storage TTL to avoid contract archival on Stellar
-        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
         env.events().publish((EVENT_AGR_INIT, admin), property_id);
 
@@ -87,11 +87,7 @@ impl DistributionAgreementContract {
             return Err(ContractError::AlreadyInitialized);
         }
 
-        let current_active: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::ActiveVersion)
-            .unwrap_or(0);
+        let current_active: u32 = env.storage().instance().get(&DataKey::ActiveVersion).unwrap_or(0);
 
         if version != current_active + 1 {
             return Err(ContractError::VersionMismatch);
@@ -108,12 +104,20 @@ impl DistributionAgreementContract {
         };
 
         env.storage().persistent().set(&DataKey::VersionState(version), &state);
-        env.storage().persistent().set(&DataKey::StakeholderCount(version), &0u32);
+        env.storage()
+            .persistent()
+            .set(&DataKey::StakeholderCount(version), &0u32);
         env.storage().instance().set(&DataKey::ActiveVersion, &version);
 
         // Extend instance and persistent TTLs for newly proposed agreement version
-        env.storage().instance().extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::VersionState(version),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
         let agreement_id: String = env
             .storage()
@@ -121,7 +125,8 @@ impl DistributionAgreementContract {
             .get(&DataKey::AgreementId)
             .unwrap_or(String::from_str(&env, "AGR"));
 
-        env.events().publish((EVENT_PROPOSED, agreement_id), (version, agreement_hash, caller));
+        env.events()
+            .publish((EVENT_PROPOSED, agreement_id), (version, agreement_hash, caller));
 
         Ok(())
     }
@@ -179,13 +184,24 @@ impl DistributionAgreementContract {
             .get(&DataKey::StakeholderCount(version))
             .unwrap_or(0);
         count = count.checked_add(1).ok_or(ContractError::Overflow)?;
-        env.storage().persistent().set(&DataKey::StakeholderCount(version), &count);
+        env.storage()
+            .persistent()
+            .set(&DataKey::StakeholderCount(version), &count);
 
         // Extend persistent storage TTL for stakeholder record and version
-        env.storage().persistent().extend_ttl(&DataKey::StakeholderKey(version, stakeholder_address.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::StakeholderKey(version, stakeholder_address.clone()),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
+        env.storage().persistent().extend_ttl(
+            &DataKey::VersionState(version),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
-        env.events().publish((EVENT_STK_ADDED, stakeholder_address), (version, basis_points));
+        env.events()
+            .publish((EVENT_STK_ADDED, stakeholder_address), (version, basis_points));
 
         Ok(())
     }
@@ -226,10 +242,9 @@ impl DistributionAgreementContract {
 
         // Mark approved
         st_record.has_approved = true;
-        env.storage().persistent().set(
-            &DataKey::StakeholderKey(version, stakeholder.clone()),
-            &st_record,
-        );
+        env.storage()
+            .persistent()
+            .set(&DataKey::StakeholderKey(version, stakeholder.clone()), &st_record);
 
         version_state.approved_count = version_state
             .approved_count
@@ -240,11 +255,21 @@ impl DistributionAgreementContract {
             version_state.status = AgreementStatus::ReadyToLock;
         }
 
-        env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
+        env.storage()
+            .persistent()
+            .set(&DataKey::VersionState(version), &version_state);
 
         // Extend persistent storage TTL for updated version and stakeholder approval
-        env.storage().persistent().extend_ttl(&DataKey::StakeholderKey(version, stakeholder.clone()), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
-        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::StakeholderKey(version, stakeholder.clone()),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
+        env.storage().persistent().extend_ttl(
+            &DataKey::VersionState(version),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
         let agreement_id: String = env
             .storage()
@@ -282,10 +307,16 @@ impl DistributionAgreementContract {
         version_state.status = AgreementStatus::Locked;
         version_state.locked_at = env.ledger().timestamp();
 
-        env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
+        env.storage()
+            .persistent()
+            .set(&DataKey::VersionState(version), &version_state);
 
         // Extend persistent storage TTL for locked version state
-        env.storage().persistent().extend_ttl(&DataKey::VersionState(version), PERSISTENT_BUMP_THRESHOLD, PERSISTENT_BUMP_AMOUNT);
+        env.storage().persistent().extend_ttl(
+            &DataKey::VersionState(version),
+            PERSISTENT_BUMP_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
 
         let agreement_id: String = env
             .storage()
@@ -302,11 +333,7 @@ impl DistributionAgreementContract {
     }
 
     /// Revoke a pending agreement version proposal before it becomes locked (Admin only)
-    pub fn revoke_agreement_proposal(
-        env: Env,
-        caller: Address,
-        version: u32,
-    ) -> Result<(), ContractError> {
+    pub fn revoke_agreement_proposal(env: Env, caller: Address, version: u32) -> Result<(), ContractError> {
         caller.require_auth();
 
         let admin: Address = env
@@ -330,16 +357,15 @@ impl DistributionAgreementContract {
         }
 
         version_state.status = AgreementStatus::Revoked;
-        env.storage().persistent().set(&DataKey::VersionState(version), &version_state);
+        env.storage()
+            .persistent()
+            .set(&DataKey::VersionState(version), &version_state);
 
         Ok(())
     }
 
     /// Retrieve authoritative on-chain state of an agreement version
-    pub fn get_agreement_version(
-        env: Env,
-        version: u32,
-    ) -> Result<AgreementVersionState, ContractError> {
+    pub fn get_agreement_version(env: Env, version: u32) -> Result<AgreementVersionState, ContractError> {
         env.storage()
             .persistent()
             .get(&DataKey::VersionState(version))
@@ -347,11 +373,7 @@ impl DistributionAgreementContract {
     }
 
     /// Retrieve stakeholder status for a given version
-    pub fn get_stakeholder(
-        env: Env,
-        version: u32,
-        stakeholder_address: Address,
-    ) -> Result<Stakeholder, ContractError> {
+    pub fn get_stakeholder(env: Env, version: u32, stakeholder_address: Address) -> Result<Stakeholder, ContractError> {
         env.storage()
             .persistent()
             .get(&DataKey::StakeholderKey(version, stakeholder_address))
@@ -359,11 +381,7 @@ impl DistributionAgreementContract {
     }
 
     /// Retrieve role assigned to a stakeholder for a specific agreement version
-    pub fn get_stakeholder_role(
-        env: Env,
-        version: u32,
-        stakeholder_address: Address,
-    ) -> Result<String, ContractError> {
+    pub fn get_stakeholder_role(env: Env, version: u32, stakeholder_address: Address) -> Result<String, ContractError> {
         let st = Self::get_stakeholder(env, version, stakeholder_address)?;
         Ok(st.role)
     }
@@ -411,11 +429,7 @@ impl DistributionAgreementContract {
     }
 
     /// Retrieve specific stakeholder equity basis points for an agreement version
-    pub fn get_stakeholder_basis_points(
-        env: Env,
-        version: u32,
-        stakeholder: Address,
-    ) -> Result<u32, ContractError> {
+    pub fn get_stakeholder_basis_points(env: Env, version: u32, stakeholder: Address) -> Result<u32, ContractError> {
         let st = Self::get_stakeholder(env, version, stakeholder)?;
         Ok(st.basis_points)
     }
@@ -547,11 +561,7 @@ impl DistributionAgreementContract {
     /// Retrieve list of all registered version numbers for this agreement contract
     pub fn get_all_versions(env: Env) -> Vec<u32> {
         let mut versions = Vec::new(&env);
-        let max_ver: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::ActiveVersion)
-            .unwrap_or(0);
+        let max_ver: u32 = env.storage().instance().get(&DataKey::ActiveVersion).unwrap_or(0);
 
         for ver in 1..=max_ver {
             if env.storage().persistent().has(&DataKey::VersionState(ver)) {
@@ -571,7 +581,10 @@ impl DistributionAgreementContract {
         (
             String::from_str(&env, "StellarEstateDistributionAgreement"),
             1,
-            String::from_str(&env, "Multi-party revenue distribution agreement contract for Stellar Estate"),
+            String::from_str(
+                &env,
+                "Multi-party revenue distribution agreement contract for Stellar Estate",
+            ),
         )
     }
 
@@ -590,11 +603,7 @@ impl DistributionAgreementContract {
     }
 
     /// Upgrade the contract WASM code in-place to a new validated WASM hash (restricted to Admin)
-    pub fn upgrade_contract(
-        env: Env,
-        caller: Address,
-        new_wasm_hash: BytesN<32>,
-    ) -> Result<(), ContractError> {
+    pub fn upgrade_contract(env: Env, caller: Address, new_wasm_hash: BytesN<32>) -> Result<(), ContractError> {
         caller.require_auth();
 
         let admin: Address = env
@@ -691,7 +700,10 @@ mod test {
         // Validate hash queries
         assert_eq!(client.get_version_agreement_hash(&1), hash_v1);
         assert!(client.is_agreement_hash_valid(&1, &hash_v1));
-        let fake_hash = String::from_str(&env, "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad");
+        let fake_hash = String::from_str(
+            &env,
+            "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad",
+        );
         assert!(!client.is_agreement_hash_valid(&1, &fake_hash));
         assert!(client.is_version_fully_approved(&1));
         assert!(!client.is_agreement_active());
@@ -843,7 +855,7 @@ mod test {
             &String::from_str(&env, "AGR-01"),
         );
 
-        assert_eq!(client.is_version_superseded(&1), false);
+        assert!(!client.is_version_superseded(&1));
     }
 
     #[test]

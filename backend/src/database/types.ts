@@ -8,6 +8,11 @@ export interface Property {
   unit_count: number;
   occupancy_percentage: number;
   vault_stellar_address: string;
+  vault_contract_id?: string;
+  accepted_asset?: string;
+  total_revenue_pool?: number;
+  distributable_balance?: number;
+  reserve_balance?: number;
   status: 'ACTIVE' | 'PENDING' | 'MAINTENANCE';
   image_url: string;
   metadata: Record<string, any>;
@@ -21,7 +26,7 @@ export interface PropertyUnit {
   unit_identifier: string;
   unit_type: string;
   monthly_rent: number;
-  occupancy_status: 'OCCUPIED' | 'VACANT';
+  occupancy_status: 'OCCUPIED' | 'VACANT' | 'MAINTENANCE';
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -150,6 +155,7 @@ export interface DistributionAgreementVersion {
   id: string;
   agreement_id: string;
   version_number: number;
+  version?: number;
   revenue_source: string;
   accepted_asset: string;
   effective_date: string;
@@ -161,6 +167,7 @@ export interface DistributionAgreementVersion {
   created_at: string;
   locked_at?: string;
   waterfall_rules: WaterfallRule[];
+  waterfallRules?: WaterfallRule[];
   stakeholders: AgreementStakeholder[];
   approvals: AgreementApproval[];
 }
@@ -235,6 +242,10 @@ export interface SettlementPayoutRecord {
   basis_points: number;
   expected_amount: number;
   actual_amount: number;
+  allocated_amount?: number;
+  wallet_address?: string;
+  recipient?: string;
+  amount?: number;
   status: 'PENDING' | 'CONFIRMED' | 'FAILED';
   transaction_hash?: string;
   reconciled: boolean;
@@ -259,6 +270,7 @@ export interface SettlementSnapshot {
 
 export interface Settlement {
   id: string; // e.g. "STL-MERIDIAN-001"
+  settlement_id?: string;
   property_id: string;
   revenue_ids: string[];
   agreement_id: string;
@@ -266,8 +278,12 @@ export interface Settlement {
   agreement_hash: string;
   asset: string;
   gross_revenue: number;
+  total_gross_amount?: number;
+  gross_amount?: number;
   expenses: number;
   reserve: number;
+  reserve_deduction?: number;
+  reserve_amount?: number;
   fees: number;
   distributable_amount: number;
   status: SettlementExecutionStatus;
@@ -276,6 +292,8 @@ export interface Settlement {
   reconciled_at?: string;
   transaction_hashes: string[];
   payouts: SettlementPayoutRecord[];
+  recipient_payouts?: SettlementPayoutRecord[];
+  recipients?: SettlementPayoutRecord[];
   calculation_snapshot: SettlementSnapshot;
   reconciliation_status: 'PENDING' | 'MATCHED' | 'DISCREPANCY';
   reconciliation_notes?: string;

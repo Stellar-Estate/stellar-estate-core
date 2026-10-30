@@ -1,8 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol};
 use stellar_estate_shared::{ContractError, RevenueEntry};
 
 #[contracttype]
@@ -35,23 +33,14 @@ impl RevenueManagerContract {
         Ok(())
     }
 
-    pub fn route_revenue(
-        env: Env,
-        depositor: Address,
-        source: String,
-        amount: i128,
-    ) -> Result<u32, ContractError> {
+    pub fn route_revenue(env: Env, depositor: Address, source: String, amount: i128) -> Result<u32, ContractError> {
         depositor.require_auth();
 
         if amount <= 0 {
             return Err(ContractError::InvalidAmount);
         }
 
-        let mut count: u32 = env
-            .storage()
-            .instance()
-            .get(&DataKey::DepositCount)
-            .unwrap_or(0);
+        let mut count: u32 = env.storage().instance().get(&DataKey::DepositCount).unwrap_or(0);
 
         count = count.checked_add(1).ok_or(ContractError::Overflow)?;
 
@@ -73,10 +62,7 @@ impl RevenueManagerContract {
     }
 
     pub fn get_total_deposits(env: Env) -> u32 {
-        env.storage()
-            .instance()
-            .get(&DataKey::DepositCount)
-            .unwrap_or(0)
+        env.storage().instance().get(&DataKey::DepositCount).unwrap_or(0)
     }
 
     pub fn get_receipt(env: Env, receipt_id: u32) -> Result<RevenueEntry, ContractError> {
@@ -106,11 +92,7 @@ mod test {
 
         client.initialize(&admin, &vault);
 
-        let receipt_id = client.route_revenue(
-            &depositor,
-            &String::from_str(&env, "commercial_lease"),
-            &150_000_000,
-        );
+        let receipt_id = client.route_revenue(&depositor, &String::from_str(&env, "commercial_lease"), &150_000_000);
 
         assert_eq!(receipt_id, 1);
         assert_eq!(client.get_total_deposits(), 1);

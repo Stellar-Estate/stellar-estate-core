@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: stellar-estate-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: STELLAR_NETWORK
+        value: TESTNET
+      - key: STELLAR_HORIZON_URL
+        value: https://horizon-testnet.stellar.org
+      - key: CORS_ORIGIN
+        value: https://stellar-estate-app.netlify.app,http://localhost:5173

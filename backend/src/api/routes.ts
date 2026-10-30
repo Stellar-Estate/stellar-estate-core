@@ -802,7 +802,7 @@ apiRouter.get('/properties/:id/vault-telemetry', (req: Request, res: Response) =
       },
       agreement: activeVersion
         ? {
-            agreement_id: activeAgreement.id,
+            agreement_id: activeAgreement?.id || '',
             version: activeVersion.version_number,
             agreement_hash: activeVersion.agreement_hash,
             contract_reference: activeVersion.contract_reference,
@@ -1894,8 +1894,8 @@ apiRouter.get('/metrics/stellar', async (req: Request, res: Response) => {
         rpc_url: 'https://soroban-testnet.stellar.org',
         protocol_version: 22,
         base_fee_stroops: 100,
-        latest_ledger: ledgerState.latestLedger || 1092831,
-        last_synced_at: ledgerState.lastSyncedAt || new Date().toISOString(),
+        latest_ledger: (ledgerState as any).latestLedger || ledgerState.sequence || 1092831,
+        last_synced_at: (ledgerState as any).lastSyncedAt || ledgerState.syncedAt || new Date().toISOString(),
         friendbot_available: true,
         healthy: true,
       },
@@ -1915,7 +1915,8 @@ apiRouter.post('/properties/:id/reserves/calculate-replenishment', (req: Request
   }
 
   const targetBps = typeof target_ratio_bps === 'number' && target_ratio_bps > 0 ? target_ratio_bps : 1000; // default 10%
-  const targetReserve = (property.total_revenue_pool * targetBps) / 10000;
+  const poolAmount = property.total_revenue_pool ?? property.valuation ?? 0;
+  const targetReserve = (poolAmount * targetBps) / 10000;
   const currentReserve = property.reserve_balance || 0;
   const gap = Math.max(0, targetReserve - currentReserve);
   const isSufficient = currentReserve >= targetReserve;
@@ -1924,7 +1925,7 @@ apiRouter.post('/properties/:id/reserves/calculate-replenishment', (req: Request
     success: true,
     data: {
       property_id: id,
-      total_revenue_pool: property.total_revenue_pool,
+      total_revenue_pool: poolAmount,
       current_reserve: currentReserve,
       target_ratio_bps: targetBps,
       target_reserve: targetReserve,
@@ -1974,7 +1975,7 @@ apiRouter.get('/agreements/:id/versions/:ver/timestamps', (req: Request, res: Re
   }
 
   const createdAt = version.created_at || new Date().toISOString();
-  const lockedAt = version.status === 'LOCKED' ? (version.updated_at || createdAt) : null;
+  const lockedAt = version.status === 'LOCKED' ? ((version as any).updated_at || version.locked_at || createdAt) : null;
 
   res.json({
     success: true,
@@ -2000,7 +2001,7 @@ apiRouter.get('/properties/:id/financials/ratios', (req: Request, res: Response)
   const revenueHistory = db.getRevenueByProperty(id);
   const totalRevenue = revenueHistory.reduce((sum, r) => sum + (r.amount || 0), 0);
   const agreements = db.getAgreementsByProperty(id);
-  const activeAgr = agreements.find(a => a.status === 'ACTIVE' || a.status === 'LOCKED') || agreements[0];
+  const activeAgr = agreements.find(a => (a.status as any) === 'ACTIVE' || a.status === 'LOCKED') || agreements[0];
   const activeVer = activeAgr ? (activeAgr.versions || []).find((v: any) => v.status === 'LOCKED' || v.version_number === activeAgr.current_version) : null;
 
   let opexBps = 1500;
@@ -2272,10 +2273,11 @@ apiRouter.get('/properties/:id/payouts/summary', (req: Request, res: Response) =
   for (const stl of settlements) {
     const payouts = (stl.payouts || stl.recipients || []);
     for (const p of payouts) {
-      totalPayoutAmount += (p.amount || 0);
+      totalPayoutAmount += (p.amount || p.actual_amount || p.expected_amount || 0);
       totalPayoutCount++;
-      if (p.wallet_address || p.recipient) {
-        uniqueRecipients.add((p.wallet_address || p.recipient).toLowerCase());
+      const addr = p.wallet_address || p.recipient || p.recipient_address;
+      if (addr) {
+        uniqueRecipients.add(addr.toLowerCase());
       }
     }
   }

@@ -34,8 +34,8 @@ pub enum ContractError {
 }
 
 /// Ledger TTL bump parameters to prevent contract state archival on Stellar Testnet and Mainnet
-pub const INSTANCE_BUMP_THRESHOLD: u32 = 100_000;   // ~7 days of ledgers threshold
-pub const INSTANCE_BUMP_AMOUNT: u32 = 500_000;      // ~35 days bump
+pub const INSTANCE_BUMP_THRESHOLD: u32 = 100_000; // ~7 days of ledgers threshold
+pub const INSTANCE_BUMP_AMOUNT: u32 = 500_000; // ~35 days bump
 pub const PERSISTENT_BUMP_THRESHOLD: u32 = 100_000;
 pub const PERSISTENT_BUMP_AMOUNT: u32 = 500_000;
 
@@ -79,7 +79,7 @@ pub struct PropertyMetadata {
     pub property_id: String,
     pub name: String,
     pub location: String,
-    pub valuation: i128,      // Valuation in asset base units (e.g., stroops or cents)
+    pub valuation: i128, // Valuation in asset base units (e.g., stroops or cents)
     pub total_units: u32,
     pub occupied_units: u32,
 }
@@ -100,7 +100,7 @@ pub struct VaultFinancialState {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RevenueEntry {
     pub revenue_id: u32,
-    pub source: String,       // e.g., "rental_income", "commercial_lease"
+    pub source: String, // e.g., "rental_income", "commercial_lease"
     pub amount: i128,
     pub depositor: Address,
     pub timestamp: u64,
@@ -114,7 +114,7 @@ pub struct WaterfallRule {
     pub rule_id: u32,
     pub priority: u32,
     pub rule_type: WaterfallRuleType,
-    pub amount_or_bps: i128,   // Fixed amount in stroops or basis points (e.g. 500 = 5.00%)
+    pub amount_or_bps: i128, // Fixed amount in stroops or basis points (e.g. 500 = 5.00%)
     pub description: String,
 }
 
@@ -123,8 +123,8 @@ pub struct WaterfallRule {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Stakeholder {
     pub address: Address,
-    pub basis_points: u32,     // 0 to 10,000 (10,000 = 100.00%)
-    pub role: String,          // e.g., "Majority Equity", "Operator"
+    pub basis_points: u32, // 0 to 10,000 (10,000 = 100.00%)
+    pub role: String,      // e.g., "Majority Equity", "Operator"
     pub has_approved: bool,
 }
 
