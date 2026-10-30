@@ -57,3 +57,4 @@ Major production release submitted for Stellar Hackathon evaluation. Implements 
 - **`docs/stellar_ecosystem.md`:** SEP compliance matrix (SEP-0001, SEP-0007, SEP-0010, SAC).
 - **`docs/assets/`:** High-resolution SVG architecture diagrams and visual trace mockups.
 - **`render.yaml`:** Automated cloud deployment configuration for Render / Railway.
+

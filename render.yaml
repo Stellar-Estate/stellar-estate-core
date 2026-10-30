@@ -18,3 +18,4 @@ services:
         value: https://horizon-testnet.stellar.org
       - key: CORS_ORIGIN
         value: https://stellar-estate-app.netlify.app,http://localhost:5173
+

@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" style="background:#070a13; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
   <defs>
     <linearGradient id="stellar-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#08B5E5"/>
@@ -13,114 +14,120 @@
       <stop offset="0%" stop-color="#F59E0B"/>
       <stop offset="100%" stop-color="#D97706"/>
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="12" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
+    <linearGradient id="btn-glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#08B5E5"/>
+      <stop offset="50%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
   </defs>
 
+  <!-- Complete Solid Background Canvas (renders perfectly in Light and Dark mode) -->
+  <rect width="1200" height="675" fill="#070a13" rx="12" stroke="#1e293b" stroke-width="2"/>
+
   <!-- Top Navigation Bar -->
-  <rect x="0" y="0" width="1200" height="70" fill="#0c1020" stroke="#1e293b" stroke-width="1"/>
+  <rect x="0" y="0" width="1200" height="70" fill="#0c1020" rx="12" stroke="#1e293b" stroke-width="1"/>
+  <rect x="0" y="58" width="1200" height="12" fill="#0c1020"/>
   <circle cx="45" cy="35" r="16" fill="url(#stellar-grad)"/>
-  <text x="75" y="42" fill="#FFFFFF" font-size="20" font-weight="bold" letter-spacing="0.5">STELLAR ESTATE</text>
-  <rect x="235" y="24" width="110" height="24" rx="12" fill="#08b5e5" fill-opacity="0.15" stroke="#08b5e5" stroke-width="1"/>
-  <text x="290" y="40" fill="#08b5e5" font-size="11" font-weight="600" text-anchor="middle">PROTOCOL 22</text>
+  <path d="M40 35 L45 27 L50 35 L45 43 Z" fill="#FFFFFF"/>
+  <text x="75" y="42" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="bold" letter-spacing="0.5">STELLAR ESTATE</text>
+  <rect x="245" y="24" width="115" height="24" rx="12" fill="#08b5e5" fill-opacity="0.15" stroke="#08b5e5" stroke-width="1"/>
+  <text x="302" y="40" fill="#08b5e5" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PROTOCOL 22</text>
   
-  <rect x="860" y="22" width="160" height="28" rx="14" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
-  <circle cx="875" cy="36" r="4" fill="#10b981"/>
-  <text x="945" y="40" fill="#10b981" font-size="12" font-weight="600" text-anchor="middle">Testnet Connected</text>
+  <rect x="850" y="22" width="170" height="28" rx="14" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
+  <circle cx="868" cy="36" r="4" fill="#10b981"/>
+  <text x="942" y="40" fill="#10b981" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" text-anchor="middle">Testnet Connected</text>
 
   <rect x="1035" y="22" width="135" height="28" rx="6" fill="url(#stellar-grad)"/>
-  <text x="1102" y="40" fill="#FFFFFF" font-size="12" font-weight="600" text-anchor="middle">GBTY...4KLCPH</text>
+  <text x="1102" y="40" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" text-anchor="middle">GBTY...4KLCPH</text>
 
   <!-- Hero Title -->
-  <text x="50" y="125" fill="#FFFFFF" font-size="28" font-weight="800">Programmable Real-World Asset Settlement Platform</text>
-  <text x="50" y="152" fill="#94A3B8" font-size="14">Automated rent-to-stakeholder deterministic distribution powered by Soroban Smart Contracts</text>
+  <text x="50" y="125" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="800">Programmable Real-World Asset Settlement Platform</text>
+  <text x="50" y="152" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="14">Automated rent-to-stakeholder deterministic distribution powered by Soroban Smart Contracts</text>
 
   <!-- Left Main Card: Meridian Heights Vault -->
   <rect x="50" y="180" width="680" height="455" rx="12" fill="url(#card-grad)" stroke="#1e293b" stroke-width="1.5"/>
   <rect x="50" y="180" width="680" height="55" rx="12" fill="#161f36" stroke="#1e293b" stroke-width="1"/>
-  <text x="75" y="215" fill="#FFFFFF" font-size="18" font-weight="700">🏢 Meridian Heights Luxury Residences</text>
+  <text x="75" y="215" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700">🏢 Meridian Heights Luxury Residences</text>
   <rect x="575" y="195" width="135" height="24" rx="12" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
-  <text x="642" y="211" fill="#10b981" font-size="11" font-weight="600" text-anchor="middle">Vault: ACTIVE</text>
+  <text x="642" y="211" fill="#10b981" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Vault: ACTIVE</text>
 
   <!-- Vault Contract Metrics -->
   <rect x="75" y="255" width="185" height="75" rx="8" fill="#0d1322" stroke="#334155" stroke-width="1"/>
-  <text x="90" y="278" fill="#64748B" font-size="11" font-weight="600">CONFIRMED REVENUE POOL</text>
-  <text x="90" y="310" fill="#08B5E5" font-size="20" font-weight="800">$25,000.00</text>
+  <text x="90" y="278" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600">CONFIRMED REVENUE POOL</text>
+  <text x="90" y="310" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800">$25,000.00</text>
 
   <rect x="275" y="255" width="185" height="75" rx="8" fill="#0d1322" stroke="#334155" stroke-width="1"/>
-  <text x="290" y="278" fill="#64748B" font-size="11" font-weight="600">ACCEPTED ASSET (SAC)</text>
-  <text x="290" y="310" fill="#FFFFFF" font-size="18" font-weight="800">USDC (Testnet)</text>
+  <text x="290" y="278" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600">ACCEPTED ASSET (SAC)</text>
+  <text x="290" y="310" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="800">USDC (Testnet)</text>
 
   <rect x="475" y="255" width="235" height="75" rx="8" fill="#0d1322" stroke="#334155" stroke-width="1"/>
-  <text x="490" y="278" fill="#64748B" font-size="11" font-weight="600">LOCKED AGREEMENT HASH</text>
-  <text x="490" y="306" fill="#F59E0B" font-size="11" font-family="monospace">e4f9b8c2...8a37f901</text>
-  <text x="490" y="322" fill="#10b981" font-size="10">✓ 100% Stakeholder Consensus</text>
+  <text x="490" y="278" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600">LOCKED AGREEMENT HASH</text>
+  <text x="490" y="306" fill="#F59E0B" font-family="monospace" font-size="11">e4f9b8c2...8a37f901</text>
+  <text x="490" y="322" fill="#10b981" font-family="system-ui, -apple-system, sans-serif" font-size="10">✓ 100% Stakeholder Consensus</text>
 
   <!-- Deterministic Waterfall Breakdown -->
-  <text x="75" y="365" fill="#FFFFFF" font-size="14" font-weight="700">DETERMINISTIC WATERFALL EXECUTION (10,000 BPS)</text>
+  <text x="75" y="365" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="700">DETERMINISTIC WATERFALL EXECUTION (10,000 BPS)</text>
 
   <!-- Tier 1 -->
   <rect x="75" y="380" width="635" height="42" rx="6" fill="#131c31" stroke="#25324d" stroke-width="1"/>
   <circle cx="95" cy="401" r="10" fill="#EF4444" fill-opacity="0.2"/>
-  <text x="95" y="405" fill="#EF4444" font-size="11" font-weight="bold" text-anchor="middle">1</text>
-  <text x="120" y="405" fill="#E2E8F0" font-size="13" font-weight="600">Property Management & Opex (15.00%)</text>
-  <text x="560" y="405" fill="#EF4444" font-size="13" font-weight="bold" text-anchor="end">-$3,750.00</text>
-  <text x="690" y="405" fill="#64748B" font-size="11" text-anchor="end">1,500 bps</text>
+  <text x="95" y="405" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+  <text x="120" y="405" fill="#E2E8F0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Property Management &amp; Opex (15.00%)</text>
+  <text x="560" y="405" fill="#EF4444" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="bold" text-anchor="end">-$3,750.00</text>
+  <text x="690" y="405" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="end">1,500 bps</text>
 
   <!-- Tier 2 -->
   <rect x="75" y="430" width="635" height="42" rx="6" fill="#131c31" stroke="#25324d" stroke-width="1"/>
   <circle cx="95" cy="451" r="10" fill="#F59E0B" fill-opacity="0.2"/>
-  <text x="95" y="455" fill="#F59E0B" font-size="11" font-weight="bold" text-anchor="middle">2</text>
-  <text x="120" y="455" fill="#E2E8F0" font-size="13" font-weight="600">Maintenance & Capital Reserve (10.00%)</text>
-  <text x="560" y="455" fill="#F59E0B" font-size="13" font-weight="bold" text-anchor="end">-$2,500.00</text>
-  <text x="690" y="455" fill="#64748B" font-size="11" text-anchor="end">1,000 bps</text>
+  <text x="95" y="455" fill="#F59E0B" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+  <text x="120" y="455" fill="#E2E8F0" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Maintenance &amp; Capital Reserve (10.00%)</text>
+  <text x="560" y="455" fill="#F59E0B" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="bold" text-anchor="end">-$2,500.00</text>
+  <text x="690" y="455" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="11" text-anchor="end">1,000 bps</text>
 
   <!-- Distributable Total -->
   <rect x="75" y="480" width="635" height="45" rx="6" fill="#08b5e5" fill-opacity="0.1" stroke="#08b5e5" stroke-width="1.5"/>
-  <text x="95" y="507" fill="#08B5E5" font-size="14" font-weight="bold">NET DISTRIBUTABLE YIELD (75.00%)</text>
-  <text x="560" y="507" fill="#08B5E5" font-size="16" font-weight="800" text-anchor="end">$18,750.00</text>
-  <text x="690" y="507" fill="#08B5E5" font-size="12" font-weight="600" text-anchor="end">7,500 bps</text>
+  <text x="95" y="507" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="bold">NET DISTRIBUTABLE YIELD (75.00%)</text>
+  <text x="560" y="507" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" text-anchor="end">$18,750.00</text>
+  <text x="690" y="507" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" text-anchor="end">7,500 bps</text>
 
   <!-- Safe Integer Dust Proof -->
   <rect x="75" y="540" width="635" height="75" rx="8" fill="#071822" stroke="#10b981" stroke-width="1"/>
-  <text x="95" y="565" fill="#10B981" font-size="12" font-weight="bold">⚖️ ZERO-DUST INVARIANT VERIFIED BY PROPERTYVAULT CONTRACT</text>
-  <text x="95" y="585" fill="#94A3B8" font-size="11">Total Distributed ($18,750.00) + Remainder ($0.00) == Distributable Stroops (187,500,000,000)</text>
-  <text x="95" y="602" fill="#64748B" font-size="10">Soroban Contract CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL</text>
+  <text x="95" y="565" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold">⚖️ ZERO-DUST INVARIANT VERIFIED BY PROPERTYVAULT CONTRACT</text>
+  <text x="95" y="585" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="11">Total Distributed ($18,750.00) + Remainder ($0.00) == Distributable Stroops (187,500,000,000)</text>
+  <text x="95" y="602" fill="#64748B" font-family="monospace" font-size="10">Soroban Contract CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL</text>
 
   <!-- Right Sidebar: Payout Roster & Instant Settlement -->
   <rect x="750" y="180" width="400" height="455" rx="12" fill="url(#card-grad)" stroke="#1e293b" stroke-width="1.5"/>
   <rect x="750" y="180" width="400" height="55" rx="12" fill="#161f36" stroke="#1e293b" stroke-width="1"/>
-  <text x="775" y="215" fill="#FFFFFF" font-size="16" font-weight="700">Stakeholder Settlement Roster</text>
+  <text x="775" y="215" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700">Stakeholder Settlement Roster</text>
 
   <!-- Stakeholder 1 -->
   <rect x="770" y="250" width="360" height="65" rx="8" fill="#111827" stroke="#374151" stroke-width="1"/>
-  <text x="785" y="273" fill="#FFFFFF" font-size="13" font-weight="600">Alice Vance (Primary Equity)</text>
-  <text x="785" y="293" fill="#64748B" font-size="10" font-family="monospace">GDBP...RHSYJ • 45.00% (4,500 bps)</text>
-  <text x="1115" y="285" fill="#10B981" font-size="15" font-weight="bold" text-anchor="end">+$8,437.50</text>
-  <text x="1115" y="303" fill="#10B981" font-size="9" text-anchor="end">✓ Reconciled</text>
+  <text x="785" y="273" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Alice Vance (Primary Equity)</text>
+  <text x="785" y="293" fill="#64748B" font-family="monospace" font-size="10">GDBP...RHSYJ • 45.00% (4,500 bps)</text>
+  <text x="1115" y="285" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="bold" text-anchor="end">+$8,437.50</text>
+  <text x="1115" y="303" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="9" text-anchor="end">✓ Reconciled</text>
 
   <!-- Stakeholder 2 -->
   <rect x="770" y="325" width="360" height="65" rx="8" fill="#111827" stroke="#374151" stroke-width="1"/>
-  <text x="785" y="348" fill="#FFFFFF" font-size="13" font-weight="600">Bob Sterling (Secondary Equity)</text>
-  <text x="785" y="368" fill="#64748B" font-size="10" font-family="monospace">GCS7...B3M9W • 35.00% (3,500 bps)</text>
-  <text x="1115" y="360" fill="#10B981" font-size="15" font-weight="bold" text-anchor="end">+$6,562.50</text>
-  <text x="1115" y="378" fill="#10B981" font-size="9" text-anchor="end">✓ Reconciled</text>
+  <text x="785" y="348" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Bob Sterling (Secondary Equity)</text>
+  <text x="785" y="368" fill="#64748B" font-family="monospace" font-size="10">GCS7...B3M9W • 35.00% (3,500 bps)</text>
+  <text x="1115" y="360" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="bold" text-anchor="end">+$6,562.50</text>
+  <text x="1115" y="378" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="9" text-anchor="end">✓ Reconciled</text>
 
   <!-- Stakeholder 3 -->
   <rect x="770" y="400" width="360" height="65" rx="8" fill="#111827" stroke="#374151" stroke-width="1"/>
-  <text x="785" y="423" fill="#FFFFFF" font-size="13" font-weight="600">Charlie Chen (Operating Partner)</text>
-  <text x="785" y="443" fill="#64748B" font-size="10" font-family="monospace">GAK4...97SU4 • 20.00% (2,000 bps)</text>
-  <text x="1115" y="435" fill="#10B981" font-size="15" font-weight="bold" text-anchor="end">+$3,750.00</text>
-  <text x="1115" y="453" fill="#10B981" font-size="9" text-anchor="end">✓ Reconciled</text>
+  <text x="785" y="423" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Charlie Chen (Operating Partner)</text>
+  <text x="785" y="443" fill="#64748B" font-family="monospace" font-size="10">GAK4...97SU4 • 20.00% (2,000 bps)</text>
+  <text x="1115" y="435" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="bold" text-anchor="end">+$3,750.00</text>
+  <text x="1115" y="453" fill="#10B981" font-family="system-ui, -apple-system, sans-serif" font-size="9" text-anchor="end">✓ Reconciled</text>
 
   <!-- Settlement Action Button -->
-  <rect x="770" y="480" width="360" height="50" rx="8" fill="url(#stellar-grad)" filter="url(#glow)"/>
-  <text x="950" y="511" fill="#FFFFFF" font-size="15" font-weight="bold" text-anchor="middle">⚡ Execute Multi-Recipient Settlement</text>
+  <rect x="770" y="480" width="360" height="50" rx="8" fill="url(#btn-glow)" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="950" y="511" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="bold" text-anchor="middle">⚡ Execute Multi-Recipient Settlement</text>
 
   <rect x="770" y="545" width="360" height="70" rx="8" fill="#0d1424" stroke="#1e293b" stroke-width="1"/>
-  <text x="785" y="568" fill="#08B5E5" font-size="11" font-weight="bold">AUDIT TRAIL & FINANCIAL PASSPORT</text>
-  <text x="785" y="586" fill="#94A3B8" font-size="10">Settlement ID: STL-MERIDIAN-001</text>
-  <text x="785" y="602" fill="#64748B" font-size="10">Horizon Ledger: #5080686 • 199 Automated Tests Passing</text>
+  <text x="785" y="568" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold">AUDIT TRAIL &amp; FINANCIAL PASSPORT</text>
+  <text x="785" y="586" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="10">Settlement ID: STL-MERIDIAN-001</text>
+  <text x="785" y="602" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="10">Horizon Ledger: #5080686 • 199 Automated Tests Passing</text>
 </svg>
