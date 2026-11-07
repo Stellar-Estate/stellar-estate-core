@@ -7,12 +7,31 @@ import { reconciliationService } from '../reconciliation/reconciliationService.j
 import { agreementService } from '../services/agreementService.js';
 import { settlementService } from '../services/settlementService.js';
 import { STELLAR_TESTNET_HORIZON, STELLAR_TESTNET_PASSPHRASE } from '../services/stellarVerificationService.js';
-import { isValidStellarAddress, isValidContractAddress, classifyStellarKey } from '../utils/stellarValidator.js';
+import { isValidStellarAddress, isValidContractAddress, isValidTransactionHash, classifyStellarKey } from '../utils/stellarValidator.js';
 import { ledgerTrackerService } from '../services/ledgerTrackerService.js';
 import { dbBackupService } from '../services/dbBackupService.js';
 import { webhookService } from '../services/webhookService.js';
 
 export const apiRouter = Router();
+
+export const requireAdminAuth = (req: Request, res: Response, next: NextFunction): void => {
+  const adminSecret = process.env.ADMIN_API_KEY || 'stellar-estate-admin-key-2026';
+  const incomingKey =
+    req.headers['x-admin-key'] ||
+    (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ')
+      ? req.headers['authorization'].slice(7)
+      : undefined);
+
+  if (!incomingKey || incomingKey !== adminSecret) {
+    res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Administrative authentication required via x-admin-key header.',
+      code: 'ADMIN_AUTH_REQUIRED',
+    });
+    return;
+  }
+  next();
+};
 
 // ==============================================================================
 // VALIDATION SCHEMAS
@@ -96,7 +115,14 @@ const executeSettlementRequestSchema = z.object({
   propertyId: z.string().min(1),
   revenueIds: z.array(z.string().min(1)).min(1),
   executorAddress: z.string().min(1),
-  transactionHashes: z.array(z.string()).optional(),
+  transactionHashes: z
+    .array(
+      z.string().refine(isValidTransactionHash, {
+        message: 'Transaction hash must be a 64-character hexadecimal string',
+      })
+    )
+    .optional(),
+  signature: z.string().optional(),
 });
 
 // ==============================================================================
@@ -558,7 +584,7 @@ apiRouter.post('/revenue/verify', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/revenue/batch', (req: Request, res: Response) => {
+apiRouter.post('/revenue/batch', requireAdminAuth, (req: Request, res: Response) => {
   const { property_id, deposits } = req.body;
   if (!property_id || !Array.isArray(deposits) || deposits.length === 0) {
     return res.status(400).json({
@@ -1238,25 +1264,6 @@ apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
 // ==============================================================================
 // DATABASE BACKUP & RESTORATION
 // ==============================================================================
-
-const requireAdminAuth = (req: Request, res: Response, next: NextFunction): void => {
-  const adminSecret = process.env.ADMIN_API_KEY || 'stellar-estate-admin-key-2026';
-  const incomingKey =
-    req.headers['x-admin-key'] ||
-    (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ')
-      ? req.headers['authorization'].slice(7)
-      : undefined);
-
-  if (!incomingKey || incomingKey !== adminSecret) {
-    res.status(401).json({
-      success: false,
-      error: 'Unauthorized: Administrative authentication required via x-admin-key header.',
-      code: 'ADMIN_AUTH_REQUIRED',
-    });
-    return;
-  }
-  next();
-};
 
 apiRouter.post('/admin/backup', requireAdminAuth, (req: Request, res: Response) => {
   const snapshot = dbBackupService.createBackup();

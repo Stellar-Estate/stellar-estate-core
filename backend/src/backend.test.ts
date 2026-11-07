@@ -776,9 +776,23 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(sanitizedObj.nested.amount).toBe(500);
   });
 
-  it('POST /api/revenue/batch should atomically record multiple revenue deposits', async () => {
+  it('POST /api/revenue/batch should require admin auth and atomically record multiple revenue deposits', async () => {
+    // Unauthenticated request must be rejected
+    const unauthRes = await request(app)
+      .post('/api/revenue/batch')
+      .send({
+        property_id: 'prop-meridian-abuja',
+        deposits: [
+          { amount: 1500, source: 'Unit 1 Rent', description: 'October Rent' },
+        ],
+      });
+    expect(unauthRes.status).toBe(401);
+    expect(unauthRes.body.code).toBe('ADMIN_AUTH_REQUIRED');
+
+    // Authenticated request with x-admin-key succeeds
     const res = await request(app)
       .post('/api/revenue/batch')
+      .set('x-admin-key', 'stellar-estate-admin-key-2026')
       .send({
         property_id: 'prop-meridian-abuja',
         deposits: [

@@ -10,7 +10,7 @@ const envSchema = z.object({
   STELLAR_HORIZON_URL: z.string().url().default('https://horizon-testnet.stellar.org'),
   STELLAR_NETWORK_PASSPHRASE: z.string().default('Test SDF Network ; September 2015'),
   PROPERTY_VAULT_CONTRACT_ID: z.string().default('CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL'),
-  CORS_ORIGIN: z.string().default('*'),
+  CORS_ORIGIN: z.string().default('http://localhost:5173,http://localhost:3000'),
   DATABASE_URL: z.string().optional(),
 });
 
