@@ -29,9 +29,25 @@ export const correlationIdMiddleware = (req: Request, res: Response, next: NextF
  * Determines whether a request should bypass standard rate limiting
  */
 export const shouldBypassRateLimit = (req: Request): boolean => {
-  if (process.env.NODE_ENV === 'test') return true;
-  if (req.path === '/api/health' || req.path.startsWith('/api/docs')) return true;
-  if (req.headers['x-internal-service'] === 'stellar-estate-core') return true;
+  if (req.path === '/api/health' || (req.path && req.path.startsWith('/api/docs'))) return true;
+
+  // Internal service bypass strictly requires a cryptographically verified secret key
+  const internalSecret = process.env.INTERNAL_SERVICE_KEY;
+  const providedKey = req.headers && req.headers['x-internal-service-key'];
+  if (
+    internalSecret &&
+    typeof providedKey === 'string' &&
+    providedKey.length === internalSecret.length
+  ) {
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(providedKey), Buffer.from(internalSecret))) {
+        return true;
+      }
+    } catch {
+      // Ignore timing comparison error
+    }
+  }
+
   return false;
 };
 

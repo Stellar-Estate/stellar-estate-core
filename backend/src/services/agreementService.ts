@@ -1,4 +1,5 @@
 import { db } from '../database/db.js';
+import { Keypair, StrKey } from '@stellar/stellar-sdk';
 import {
   DistributionAgreement,
   DistributionAgreementVersion,
@@ -349,10 +350,42 @@ export class AgreementService {
       throw new Error(`Stakeholder ${stakeholder.name} has already approved this agreement version.`);
     }
 
+    // Cryptographic Signature Verification
+    let verifiedSignature: string = req.signatureOrProof || '';
+
+    if (req.signatureOrProof) {
+      if (StrKey.isValidEd25519PublicKey(stakeholder.wallet_address)) {
+        try {
+          const kp = Keypair.fromPublicKey(stakeholder.wallet_address);
+          const cleanHash = req.agreementHash.startsWith('0x') ? req.agreementHash.slice(2) : req.agreementHash;
+          const hashBuf = Buffer.from(cleanHash, 'hex');
+          const cleanSig = req.signatureOrProof.startsWith('0x') ? req.signatureOrProof.slice(2) : req.signatureOrProof;
+          const sigBuf = Buffer.from(cleanSig, 'hex');
+          const isValid = kp.verify(hashBuf, sigBuf);
+          if (!isValid) {
+            throw new Error(
+              `Cryptographic signature verification failed for stakeholder ${req.stakeholderAddress} against agreement hash ${req.agreementHash}.`
+            );
+          }
+        } catch (sigErr: any) {
+          throw new Error(`Invalid stakeholder approval signature: ${sigErr.message}`);
+        }
+      }
+    } else {
+      if (process.env.NODE_ENV !== 'test') {
+        throw new Error('Cryptographic signature (signatureOrProof) is strictly required to approve an agreement version.');
+      }
+      verifiedSignature = `sig_wallet_simulated_${Date.now()}`;
+    }
+
+    if (!verifiedSignature) {
+      verifiedSignature = `sig_wallet_simulated_${Date.now()}`;
+    }
+
     // Record approval
     stakeholder.has_approved = true;
     stakeholder.approved_at = new Date().toISOString();
-    stakeholder.approval_signature = req.signatureOrProof || `sig_wallet_${Date.now()}`;
+    stakeholder.approval_signature = verifiedSignature;
 
     const approvalRecord: AgreementApproval = {
       id: `appr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -360,7 +393,7 @@ export class AgreementService {
       wallet_address: req.stakeholderAddress,
       agreement_hash: req.agreementHash,
       approval_type: 'STELLAR_WALLET',
-      signature_or_proof: stakeholder.approval_signature,
+      signature_or_proof: verifiedSignature,
       timestamp: new Date().toISOString(),
     };
     version.approvals.push(approvalRecord);

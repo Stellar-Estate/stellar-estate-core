@@ -211,6 +211,58 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(charlieRes.body.data.status).toBe('READY_TO_LOCK');
   });
 
+  it('POST /api/agreements/versions/:versionId/approve should verify Ed25519 cryptographic signature and reject forgery', async () => {
+    const { Keypair } = await import('@stellar/stellar-sdk');
+    const kp = Keypair.random();
+
+    // Propose an agreement version with this stakeholder
+    const propRes = await request(app)
+      .post('/api/agreements/agr-meridian-001/versions')
+      .send({
+        proposerAddress: kp.publicKey(),
+        effectiveDate: '2026-12-01',
+        waterfallRules: [
+          { priority: 1, rule_type: 'PERCENTAGE_BASIS_POINTS', name: 'Reserve', amount_or_bps: 1000, description: 'Safety Reserve' },
+        ],
+        stakeholders: [
+          {
+            wallet_address: kp.publicKey(),
+            name: 'Stellar Investor',
+            role: 'Majority Equity',
+            basis_points: 10000,
+          },
+        ],
+      });
+
+    expect(propRes.status).toBe(200);
+    const ver = propRes.body.data;
+    const cleanHash = ver.agreement_hash.startsWith('0x') ? ver.agreement_hash.slice(2) : ver.agreement_hash;
+    const hashBytes = Buffer.from(cleanHash, 'hex');
+
+    // Attempt approval with forged / invalid signature
+    const badSigRes = await request(app)
+      .post(`/api/agreements/versions/${ver.id}/approve`)
+      .send({
+        stakeholderAddress: kp.publicKey(),
+        agreementHash: ver.agreement_hash,
+        signatureOrProof: 'deadbeef'.repeat(16),
+      });
+    expect(badSigRes.status).toBe(422);
+    expect(badSigRes.body.error).toContain('signature verification failed');
+
+    // Valid Ed25519 cryptographic signature succeeds
+    const validSig = kp.sign(hashBytes).toString('hex');
+    const goodSigRes = await request(app)
+      .post(`/api/agreements/versions/${ver.id}/approve`)
+      .send({
+        stakeholderAddress: kp.publicKey(),
+        agreementHash: ver.agreement_hash,
+        signatureOrProof: validSig,
+      });
+    expect(goodSigRes.status).toBe(200);
+    expect(goodSigRes.body.data.status).toBe('READY_TO_LOCK');
+  });
+
   it('POST /api/agreements/versions/:versionId/lock should lock agreement and make it immutable', async () => {
     const lockRes = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/lock')
@@ -547,8 +599,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body).toHaveProperty('exportedAt');
   });
 
-  it('POST /api/admin/backup should generate database snapshot with stats', async () => {
-    const res = await request(app).post('/api/admin/backup');
+  it('POST /api/admin/backup should require admin authentication and generate snapshot', async () => {
+    // Unauthenticated request must be rejected
+    const unauthRes = await request(app).post('/api/admin/backup');
+    expect(unauthRes.status).toBe(401);
+    expect(unauthRes.body.code).toBe('ADMIN_AUTH_REQUIRED');
+
+    // Authenticated request with x-admin-key must succeed
+    const res = await request(app)
+      .post('/api/admin/backup')
+      .set('x-admin-key', 'stellar-estate-admin-key-2026');
     expect(res.status).toBe(201);
     expect(res.body.success).toBe(true);
     expect(res.body.snapshot).toHaveProperty('version', '1.0.0');
@@ -556,12 +616,18 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.snapshot.data.properties.length).toBeGreaterThan(0);
   });
 
-  it('GET /api/blockchain/verify-key/:key should classify valid and invalid Stellar keys', async () => {
+  it('GET /api/blockchain/verify-key/:key and POST /api/blockchain/verify-key should classify valid and invalid Stellar keys', async () => {
     const validKeyRes = await request(app).get('/api/blockchain/verify-key/GDQE5Q3OFUE2VKP4H2ORTBNSCAOEEVRPK2UB4C2SHRL3FF2L5GIRRCSM');
     expect(validKeyRes.status).toBe(200);
     expect(validKeyRes.body.success).toBe(true);
     expect(validKeyRes.body.data.type).toBe('ED25519_PUBLIC_KEY');
     expect(validKeyRes.body.data.isAccount).toBe(true);
+
+    const postRes = await request(app)
+      .post('/api/blockchain/verify-key')
+      .send({ key: 'GDQE5Q3OFUE2VKP4H2ORTBNSCAOEEVRPK2UB4C2SHRL3FF2L5GIRRCSM' });
+    expect(postRes.status).toBe(200);
+    expect(postRes.body.data.type).toBe('ED25519_PUBLIC_KEY');
 
     const invalidKeyRes = await request(app).get('/api/blockchain/verify-key/not-a-valid-stellar-key');
     expect(invalidKeyRes.status).toBe(200);
@@ -654,12 +720,30 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     expect(res.body.data.standards).toHaveProperty('sep0007');
   });
 
-  it('shouldBypassRateLimit should allow internal service and health checks', () => {
+  it('shouldBypassRateLimit should allow internal service with secure key and reject spoofed headers', () => {
     const healthReq = { path: '/api/health', headers: {} } as any;
     expect(shouldBypassRateLimit(healthReq)).toBe(true);
 
-    const internalReq = { path: '/api/agreements', headers: { 'x-internal-service': 'stellar-estate-core' } } as any;
-    expect(shouldBypassRateLimit(internalReq)).toBe(true);
+    process.env.INTERNAL_SERVICE_KEY = 'secure-internal-secret-token-12345';
+    const validReq = {
+      path: '/api/agreements',
+      headers: { 'x-internal-service-key': 'secure-internal-secret-token-12345' },
+    } as any;
+    expect(shouldBypassRateLimit(validReq)).toBe(true);
+
+    // Spoofed static header must NOT bypass
+    const spoofReq = {
+      path: '/api/agreements',
+      headers: { 'x-internal-service': 'stellar-estate-core' },
+    } as any;
+    expect(shouldBypassRateLimit(spoofReq)).toBe(false);
+
+    // Invalid key must NOT bypass
+    const invalidKeyReq = {
+      path: '/api/agreements',
+      headers: { 'x-internal-service-key': 'wrong-token' },
+    } as any;
+    expect(shouldBypassRateLimit(invalidKeyReq)).toBe(false);
   });
 
   it('GET /api/blockchain/fee-stats/history should return rolling fee stats observations', async () => {

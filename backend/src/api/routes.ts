@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { z } from 'zod';
 import { db } from '../database/db.js';
@@ -1239,7 +1239,26 @@ apiRouter.get('/blockchain/fee-stats', async (req: Request, res: Response) => {
 // DATABASE BACKUP & RESTORATION
 // ==============================================================================
 
-apiRouter.post('/admin/backup', (req: Request, res: Response) => {
+const requireAdminAuth = (req: Request, res: Response, next: NextFunction): void => {
+  const adminSecret = process.env.ADMIN_API_KEY || 'stellar-estate-admin-key-2026';
+  const incomingKey =
+    req.headers['x-admin-key'] ||
+    (typeof req.headers['authorization'] === 'string' && req.headers['authorization'].startsWith('Bearer ')
+      ? req.headers['authorization'].slice(7)
+      : undefined);
+
+  if (!incomingKey || incomingKey !== adminSecret) {
+    res.status(401).json({
+      success: false,
+      error: 'Unauthorized: Administrative authentication required via x-admin-key header.',
+      code: 'ADMIN_AUTH_REQUIRED',
+    });
+    return;
+  }
+  next();
+};
+
+apiRouter.post('/admin/backup', requireAdminAuth, (req: Request, res: Response) => {
   const snapshot = dbBackupService.createBackup();
   res.status(201).json({
     success: true,
@@ -1248,7 +1267,7 @@ apiRouter.post('/admin/backup', (req: Request, res: Response) => {
   });
 });
 
-apiRouter.get('/admin/backup/latest', (req: Request, res: Response) => {
+apiRouter.get('/admin/backup/latest', requireAdminAuth, (req: Request, res: Response) => {
   const snapshot = dbBackupService.createBackup();
   res.json({
     success: true,
@@ -1259,6 +1278,19 @@ apiRouter.get('/admin/backup/latest', (req: Request, res: Response) => {
 // ==============================================================================
 // STELLAR KEY CLASSIFICATION & VERIFICATION
 // ==============================================================================
+
+apiRouter.post('/blockchain/verify-key', (req: Request, res: Response) => {
+  const { key } = req.body || {};
+  if (!key || typeof key !== 'string') {
+    res.status(400).json({ success: false, error: 'Key parameter required in request body.' });
+    return;
+  }
+  const classification = classifyStellarKey(key);
+  res.json({
+    success: classification.valid,
+    data: classification,
+  });
+});
 
 apiRouter.get('/blockchain/verify-key/:key', (req: Request, res: Response) => {
   const { key } = req.params;

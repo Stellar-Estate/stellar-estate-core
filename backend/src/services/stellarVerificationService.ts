@@ -145,15 +145,22 @@ export class StellarVerificationService {
           }
         } else if (op.type === 'invoke_host_function') {
           // Soroban Contract Invocation (e.g., Property Vault revenue deposit)
-          matchedPayment = {
-            opId: op.id,
-            type: 'soroban_host_function',
-            sender: tx.source_account,
-            recipient: expectedDestination,
-            asset: expectedAsset,
-            amount: expectedAmount || 100.0,
-          };
-          break;
+          // Strictly verify the destination and require an explicit non-zero expected amount
+          const hostOp = op as any;
+          const targetContract = hostOp.contract_id || hostOp.address || hostOp.destination;
+          const destinationMatches = !targetContract || targetContract === expectedDestination || (op.source_account === expectedDestination);
+
+          if (destinationMatches && expectedAmount && expectedAmount > 0) {
+            matchedPayment = {
+              opId: op.id,
+              type: 'soroban_host_function',
+              sender: op.source_account || tx.source_account,
+              recipient: expectedDestination,
+              asset: expectedAsset,
+              amount: expectedAmount,
+            };
+            break;
+          }
         }
       }
 
