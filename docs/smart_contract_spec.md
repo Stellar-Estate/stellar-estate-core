@@ -155,5 +155,5 @@ Revokes an unapproved or rejected draft proposal. Admin or proposing partner onl
 ## 6. Verification & Automated Testing
 
 The Soroban smart contract suite is verified through comprehensive offline and online tests:
-- **Offline Rust Harness (`cargo test --offline`)**: 21 unit and invariant tests covering state transitions, unauthorized invocation traps, double-spending prevention, and accounting invariants.
+- **Offline Rust Harness (`cargo test --offline`)**: 26 unit and invariant tests covering state transitions, unauthorized invocation traps, double-spending prevention, and accounting invariants.
 - **Network Deployment**: Stellar Testnet with contract instances referenced in `backend/src/constants/contracts.ts` and verifiable via StellarExpert.

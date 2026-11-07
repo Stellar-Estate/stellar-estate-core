@@ -2,9 +2,9 @@
   "project": "Stellar Estate",
   "organization": "Stellar-Estate",
   "version": "1.0.0",
-  "generated_at": "2026-10-29T23:08:03.689Z",
+  "generated_at": "2026-11-07T11:56:11.757Z",
   "git": {
-    "commit": "ab770cc4d6a27b15a6d252241f30379e83510501",
+    "commit": "0127e91b3a415b6a684de4bfa91b37462a564066",
     "branch": "main"
   },
   "stellar": {
@@ -38,10 +38,10 @@
     }
   ],
   "test_suite_metrics": {
-    "soroban_contract_tests": 23,
-    "backend_integration_tests": 81,
-    "frontend_component_tests": 82,
-    "total_passing_tests": 186,
+    "soroban_contract_tests": 26,
+    "backend_integration_tests": 86,
+    "frontend_component_tests": 88,
+    "total_passing_tests": 200,
     "coverage_status": "HEALTHY"
   },
   "compliance": {

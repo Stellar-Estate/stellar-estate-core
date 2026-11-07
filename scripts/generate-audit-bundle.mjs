@@ -73,10 +73,10 @@ const bundle = {
     },
   ],
   test_suite_metrics: {
-    soroban_contract_tests: 23,
-    backend_integration_tests: 81,
-    frontend_component_tests: 82,
-    total_passing_tests: 186,
+    soroban_contract_tests: 26,
+    backend_integration_tests: 86,
+    frontend_component_tests: 88,
+    total_passing_tests: 200,
     coverage_status: 'HEALTHY',
   },
   compliance: {

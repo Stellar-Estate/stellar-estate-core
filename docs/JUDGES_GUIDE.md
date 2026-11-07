@@ -91,10 +91,10 @@ For evaluators using Freighter Wallet or Albedo, the following testnet accounts 
 
 ## 5. Automated Verification & Quality Assurance
 
-Stellar Estate features an end-to-end automated test harness with **186 passing tests**:
-- **Soroban Smart Contracts**: 23 Rust tests verifying invariants, panics, and state upgrades (`cargo test --offline`).
-- **Financial Core Backend**: 81 Vitest integration tests covering Horizon polling, multi-sig consensus, and PostgreSQL persistence.
-- **Frontend UI/UX**: 82 component tests covering all modals, charts, and responsive views.
+Stellar Estate features an end-to-end automated test harness with **200 passing tests**:
+- **Soroban Smart Contracts**: 26 Rust tests verifying invariants, panics, and state upgrades (`cargo test --offline`).
+- **Financial Core Backend**: 86 Vitest integration tests covering Horizon polling, multi-sig consensus, and PostgreSQL persistence.
+- **Frontend UI/UX**: 88 component tests covering all modals, charts, and responsive views.
 
 To run the complete verification suite locally:
 ```bash

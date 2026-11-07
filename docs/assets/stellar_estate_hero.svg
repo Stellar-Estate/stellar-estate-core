@@ -129,5 +129,5 @@
   <rect x="770" y="545" width="360" height="70" rx="8" fill="#0d1424" stroke="#1e293b" stroke-width="1"/>
   <text x="785" y="568" fill="#08B5E5" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="bold">AUDIT TRAIL &amp; FINANCIAL PASSPORT</text>
   <text x="785" y="586" fill="#94A3B8" font-family="system-ui, -apple-system, sans-serif" font-size="10">Settlement ID: STL-MERIDIAN-001</text>
-  <text x="785" y="602" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="10">Horizon Ledger: #5080686 • 199 Automated Tests Passing</text>
+  <text x="785" y="602" fill="#64748B" font-family="system-ui, -apple-system, sans-serif" font-size="10">Horizon Ledger: #5080686 • 200 Automated Tests Passing</text>
 </svg>

@@ -9,7 +9,7 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/bc5fc4fd-0dfb-4954-8a2d-f4fabc7e3402/deploy-status)](https://stellar-estate-app.netlify.app)
 [![Protocol 22](https://img.shields.io/badge/Stellar-Protocol%2022-08B5E5?logo=stellar&logoColor=white)](https://stellar.org)
 [![Soroban SDK](https://img.shields.io/badge/Soroban%20SDK-v22.1.3-black?logo=rust&logoColor=white)](https://soroban.stellar.org)
-[![Automated Tests](https://img.shields.io/badge/Tests-199%2F199%20Passing-brightgreen?logo=vitest&logoColor=white)](https://github.com/Stellar-Estate/stellar-estate-core)
+[![Automated Tests](https://img.shields.io/badge/Tests-200%2F200%20Passing-brightgreen?logo=vitest&logoColor=white)](https://github.com/Stellar-Estate/stellar-estate-core)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 **🌐 Live Production Platform:** [https://stellar-estate-app.netlify.app](https://stellar-estate-app.netlify.app)  
@@ -248,14 +248,14 @@ CREATED ──> VALIDATING ──> CALCULATING ──> READY ──> SUBMITTING 
 
 ## 7. Automated Testing & Verification
 
-The project includes **199 automated unit, integration, invariant, and component tests** passing with 100% success across the monorepo:
+The project includes **200 automated unit, integration, invariant, and component tests** passing with 100% success across the monorepo:
 
 | Test Suite | Framework | Passing Tests | Execution Scope |
 | :--- | :--- | :--- | :--- |
 | **Soroban Contracts** | `cargo test` (Rust) | **26 / 26** | Math invariants, consensus locking, double-spend prevention |
-| **Backend Core** | `vitest` (TypeScript) | **85 / 85** | APIs, idempotency, simulated fault recovery, reconciliation |
+| **Backend Core** | `vitest` (TypeScript) | **86 / 86** | APIs, idempotency, cryptographic verification, fault recovery, reconciliation |
 | **Frontend UI** | `vitest` (React 19) | **88 / 88** | Components, wallet adapters, visual trace, judges badge |
-| **Total** | | **199 / 199** | **Complete Zero-Regression Suite** |
+| **Total** | | **200 / 200** | **Complete Zero-Regression Suite** |
 
 ### Execution Commands:
 
@@ -315,7 +315,7 @@ For hackathon judges evaluating the codebase:
 1. **Live Web App:** Visit [https://stellar-estate-app.netlify.app](https://stellar-estate-app.netlify.app).
 2. **Evaluation Guide:** Read [docs/JUDGES_GUIDE.md](docs/JUDGES_GUIDE.md) for a 2-minute walkthrough.
 3. **Smart Contract Spec:** Inspect [docs/smart_contract_spec.md](docs/smart_contract_spec.md) for contract interfaces and math proofs.
-4. **Pre-Submission Check:** Run `npm run verify:submission` in `stellar-estate-core` to verify all 199 tests pass locally in ~12 seconds.
+4. **Pre-Submission Check:** Run `npm run verify:submission` in `stellar-estate-core` to verify all 200 tests pass locally in ~12 seconds.
 
 ---
 

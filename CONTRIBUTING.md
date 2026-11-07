@@ -44,7 +44,7 @@ stellar-estate-core/
 ```bash
 cd backend
 npm install
-npm test            # Run 19/19 Vitest integration tests
+npm test            # Run 86/86 Vitest integration tests
 npm run build       # Validate TypeScript compilation
 npm run dev         # Launch local API on port 3001
 ```
