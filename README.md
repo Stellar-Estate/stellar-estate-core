@@ -150,8 +150,8 @@ All smart contracts are written in Rust for Soroban Protocol 22 (Soroban SDK `v2
 | Contract / Entity | Identifier / Value | StellarExpert Explorer |
 | :--- | :--- | :--- |
 | **`property_vault`** | `CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL` | [View Contract](https://stellar.expert/explorer/testnet/contract/CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL) |
-| **`distribution_agreement`** | `CB2A4L3Q7M6W9V1XZ...TESTNET_CANONICAL` | [View Contract](https://stellar.expert/explorer/testnet/contract/CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL) |
-| **`Testnet USDC SAC`** | `CAQCFVLOBWS5ZK3CSQ7TVMT5UT6CSWIKNLFUB3MOGOBYNQ7SU4KLCPH` | [View Asset Contract](https://stellar.expert/explorer/testnet/contract/CAQCFVLOBWS5ZK3CSQ7TVMT5UT6CSWIKNLFUB3MOGOBYNQ7SU4KLCPH) |
+| **`distribution_agreement`** | `CB45MNM3LIRZJWQGNTHFSMWHCL4BGVSM2ZLZRPBDK742FGGGFK6QDJBB` | [View Contract](https://stellar.expert/explorer/testnet/contract/CB45MNM3LIRZJWQGNTHFSMWHCL4BGVSM2ZLZRPBDK742FGGGFK6QDJBB) |
+| **`Testnet USDC SAC`** | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` | [View Asset Contract](https://stellar.expert/explorer/testnet/contract/CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA) |
 | **Deployer Account** | `GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ` | [View Account](https://stellar.expert/explorer/testnet/account/GDBPVECOODV7XMJESSY3QP7ASUBLHIN7BOVK7MSTBEJQJJPRSM3RHSYJ) |
 | **Deployment Tx** | `9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939` | [View Transaction](https://stellar.expert/explorer/testnet/tx/9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939) |
 | **WASM Hash** | `48e83035a07f93569ebe473bb4c0d74ee91830e222b33d3fea1f22a33d4b1db7` | Protocol 22 Optimized WASM |

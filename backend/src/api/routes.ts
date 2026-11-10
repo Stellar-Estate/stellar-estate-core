@@ -837,7 +837,7 @@ apiRouter.get('/properties/:id/vault-telemetry', (req: Request, res: Response) =
         : null,
       explorer_links: {
         vault: `https://stellar.expert/explorer/testnet/account/${property.vault_stellar_address}`,
-        asset: 'https://stellar.expert/explorer/testnet/asset/USDC-GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        asset: 'https://stellar.expert/explorer/testnet/asset/USDC-GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
       },
       timestamp: new Date().toISOString(),
     },
@@ -1193,7 +1193,7 @@ apiRouter.get('/blockchain/network-info', (req: Request, res: Response) => {
         {
           code: 'USDC',
           issuer: 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5',
-          contract_id: 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+          contract_id: 'CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA',
           decimals: 7,
         },
         {
@@ -1618,7 +1618,7 @@ apiRouter.post('/blockchain/simulate-tx', (req: Request, res: Response) => {
     simulation: {
       contract_id,
       function_name,
-      caller_address: caller_address || 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      caller_address: caller_address || 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       status: 'SUCCESS',
       footprint: {
         read_only_keys: readKeys,
@@ -1984,7 +1984,7 @@ apiRouter.get('/properties/:id/vault/accepted-asset', (req: Request, res: Respon
   }
 
   const assetCode = property.accepted_asset || 'USDC';
-  const contractId = property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH';
+  const contractId = property.vault_contract_id || 'CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL';
 
   res.json({
     success: true,
@@ -2234,7 +2234,7 @@ apiRouter.get('/properties/:id/vault/summary', (req: Request, res: Response) => 
     data: {
       property_id: id,
       property_name: property.name,
-      contract_id: property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+      contract_id: property.vault_contract_id || 'CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL',
       status: property.status || 'ACTIVE',
       accepted_asset: property.accepted_asset || 'USDC',
       contract_version: '1.0.0',
@@ -2264,7 +2264,7 @@ apiRouter.get('/properties/:id/vault/age', (req: Request, res: Response) => {
     data: {
       property_id: id,
       property_name: property.name,
-      contract_id: property.vault_contract_id || 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+      contract_id: property.vault_contract_id || 'CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL',
       initialized_at: createdAt,
       init_timestamp_seconds: initTimestamp,
       vault_age_seconds: ageSeconds,

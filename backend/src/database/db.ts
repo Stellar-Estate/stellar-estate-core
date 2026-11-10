@@ -54,7 +54,7 @@ class InMemoryDatabase {
       valuation: 500000.0,
       unit_count: 10,
       occupancy_percentage: 90.0,
-      vault_stellar_address: 'GAU6PZRLYQZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      vault_stellar_address: 'GDWIPNYBR4DNUTT27XZ54OPNZRHSAH2NEXHJICFHLLU7ZJ3JQJJDNZPC',
       status: 'ACTIVE',
       image_url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80',
       metadata: {
@@ -62,7 +62,7 @@ class InMemoryDatabase {
         gross_floor_area_sqm: 1850,
         energy_rating: 'A',
         accepted_revenue_assets: ['XLM', 'USDC'],
-        soroban_vault_contract: 'CAU6PZRLYQZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5VAULT',
+        soroban_vault_contract: 'CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL',
       },
       created_at: new Date('2026-01-15T09:00:00Z').toISOString(),
       updated_at: new Date('2026-10-07T12:00:00Z').toISOString(),
@@ -78,7 +78,7 @@ class InMemoryDatabase {
       valuation: 1800000.0,
       unit_count: 24,
       occupancy_percentage: 95.8,
-      vault_stellar_address: 'GBVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDEKOT',
+      vault_stellar_address: 'GDQLJOX777NDD3B7QMRY2THYFTFTLT45M5X5G54VJRN3DFSO6UGJNM4M',
       status: 'ACTIVE',
       image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80',
       metadata: {
@@ -86,7 +86,7 @@ class InMemoryDatabase {
         gross_floor_area_sqm: 4200,
         energy_rating: 'A+',
         accepted_revenue_assets: ['XLM', 'USDC'],
-        soroban_vault_contract: 'CBVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5EKOVAULT',
+        soroban_vault_contract: 'CAO5DKIK63JJ2M7INJ6QZ5CMCBTHQ3TS534366QZQL6UV5HD6LRQ5BTT',
       },
       created_at: new Date('2026-02-01T10:00:00Z').toISOString(),
       updated_at: new Date('2026-10-07T14:30:00Z').toISOString(),
@@ -102,7 +102,7 @@ class InMemoryDatabase {
       valuation: 750000.0,
       unit_count: 16,
       occupancy_percentage: 87.5,
-      vault_stellar_address: 'GCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDKLMN',
+      vault_stellar_address: 'GB2PPB7FPBH3MRGKU6UPAIBDEZUOPLMQWXIMNJQVYPWB2VYQ46F7SM6T',
       status: 'ACTIVE',
       image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
       metadata: {
@@ -110,7 +110,7 @@ class InMemoryDatabase {
         gross_floor_area_sqm: 2100,
         energy_rating: 'B+',
         accepted_revenue_assets: ['XLM', 'USDC'],
-        soroban_vault_contract: 'CCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5KLMVAULT',
+        soroban_vault_contract: 'CCQL2W4NJ5O4WIN4727NVQ6UZPRWLBUCST7DEHI3VFBMJ3BXF6VDTVF5',
       },
       created_at: new Date('2026-03-10T11:00:00Z').toISOString(),
       updated_at: new Date('2026-10-07T16:00:00Z').toISOString(),
@@ -139,14 +139,14 @@ class InMemoryDatabase {
     // Participants
     const participantOwner: Participant = {
       id: 'part-owner-01',
-      wallet_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      wallet_address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       display_name: 'Meridian Capital Partners (Alice)',
       role: 'OWNER',
       created_at: meridian.created_at,
     };
     const participantOperator: Participant = {
       id: 'part-operator-01',
-      wallet_address: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ',
+      wallet_address: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU',
       display_name: 'Apex Property Management (Bob)',
       role: 'OPERATOR',
       created_at: meridian.created_at,
@@ -155,14 +155,14 @@ class InMemoryDatabase {
     this.participants.set(participantOperator.id, participantOperator);
 
     // Seed initial verified Testnet revenue event for The Meridian ($10,000 USDC)
-    const initialTxHash = '6a3f81e8435d648083818e7e163b71f92e079010467b7e211516e877c44e8c1e';
+    const initialTxHash = '9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939';
     const bTx: BlockchainTransaction = {
       id: 'tx-meridian-rev-001',
       transaction_hash: initialTxHash,
       network: 'TESTNET',
       asset: 'USDC',
       amount: 10000.0,
-      sender: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      sender: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       recipient: meridian.vault_stellar_address,
       operation_type: 'PAYMENT',
       status: 'SUCCESS',
@@ -184,7 +184,7 @@ class InMemoryDatabase {
       amount: 10000.0,
       asset: 'USDC',
       transaction_hash: initialTxHash,
-      depositor_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      depositor_address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       destination_address: meridian.vault_stellar_address,
       status: 'CONFIRMED',
       verified_at: '2026-10-06T11:01:00Z',
@@ -238,7 +238,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v1-01',
         agreement_version_id: 'ver-meridian-001-v1',
-        wallet_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        wallet_address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         name: 'Alice (Meridian Capital)',
         role: 'Majority Equity',
         basis_points: 4000, // 40.00%
@@ -249,7 +249,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v1-02',
         agreement_version_id: 'ver-meridian-001-v1',
-        wallet_address: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ',
+        wallet_address: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU',
         name: 'Bob (Apex Property Mgmt)',
         role: 'Operating Partner',
         basis_points: 3500, // 35.00%
@@ -260,7 +260,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v1-03',
         agreement_version_id: 'ver-meridian-001-v1',
-        wallet_address: 'GCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDKLMN',
+        wallet_address: 'GCTU5IKE7MAWNKETN62ZPDYQPPOFHVVJ3N4EH7X73NFURSVHENBVBTPU',
         name: 'Charlie (Strategic Investor)',
         role: 'Equity Participant',
         basis_points: 2500, // 25.00%
@@ -363,7 +363,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v2-01',
         agreement_version_id: 'ver-meridian-001-v2',
-        wallet_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        wallet_address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         name: 'Alice (Meridian Capital)',
         role: 'Majority Equity',
         basis_points: 4500, // adjusted to 45.00%
@@ -374,7 +374,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v2-02',
         agreement_version_id: 'ver-meridian-001-v2',
-        wallet_address: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ',
+        wallet_address: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU',
         name: 'Bob (Apex Property Mgmt)',
         role: 'Operating Partner',
         basis_points: 3000, // adjusted to 30.00%
@@ -383,7 +383,7 @@ class InMemoryDatabase {
       {
         id: 'stk-v2-03',
         agreement_version_id: 'ver-meridian-001-v2',
-        wallet_address: 'GCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDKLMN',
+        wallet_address: 'GCTU5IKE7MAWNKETN62ZPDYQPPOFHVVJ3N4EH7X73NFURSVHENBVBTPU',
         name: 'Charlie (Strategic Investor)',
         role: 'Equity Participant',
         basis_points: 2500, // 25.00%
@@ -435,7 +435,7 @@ class InMemoryDatabase {
       agreement_identifier: 'MERIDIAN-REV-001',
       current_version: 2,
       status: 'LOCKED', // active authoritative version is v1
-      created_by: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      created_by: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       created_at: '2026-09-10T09:00:00Z',
       updated_at: '2026-10-06T14:00:00Z',
       versions: [v1, v2],

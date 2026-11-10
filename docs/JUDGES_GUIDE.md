@@ -33,7 +33,7 @@ Follow these 5 streamlined steps to experience the complete platform flow:
 - Inspect **Agreement Version Lineage (v1 vs v2)**.
 - Note the **Canonical SHA-256 Hash**:
   ```
-  a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0
+  68caa9d397658fa2fa0baf530b50018204cfc0bde56435c494b37100217e1c35
   ```
 - Review the **Stakeholder Consensus Quorum** card showing real-time ED25519 signature collection across Alice (45%), Bob (30%), and Charlie (25%).
 
@@ -64,9 +64,11 @@ Stellar Estate is natively built for **Stellar Protocol 22** and the Soroban run
 
 | Smart Contract | Address / Identifier | Storage Model | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Property Vault** | `CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH` | Instance & Nonce Keys | Invariant revenue accounting & reserve retention |
-| **Distribution Agreement** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | Persistent Multi-Sig | Canonical hash anchoring & version lifecycle |
-| **Accepted Asset (USDC SAC)** | `CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH` | Stellar Asset Contract | Fast, low-fee institutional payments |
+| **Property Vault** | `CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL` | Instance & Nonce Keys | Invariant revenue accounting & reserve retention |
+| **Distribution Agreement** | `CB45MNM3LIRZJWQGNTHFSMWHCL4BGVSM2ZLZRPBDK742FGGGFK6QDJBB` | Persistent Multi-Sig | Canonical hash anchoring & version lifecycle |
+| **Revenue Manager** | `CC4A6IZXQWBCVKWBHGY2VC26GTDOJP3E5ILDPZA2ZLRMYMABLO3TJMRD` | Deterministic Tracker | High-throughput batch ledger reconciliation |
+| **Accepted Asset (USDC SAC)** | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` | Stellar Asset Contract | Fast, low-fee institutional payments |
+| **Native Asset (XLM SAC)** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | Stellar Asset Contract | Protocol native operations and settlement |
 
 ### Stellar Standards (SEPs) Implemented:
 - **SEP-0001 (`stellar.toml`)**: Standardized organization and token discoverability.
@@ -81,9 +83,9 @@ For evaluators using Freighter Wallet or Albedo, the following testnet accounts 
 
 | Role | Name | Public Key | Status |
 | :--- | :--- | :--- | :--- |
-| **Admin / Operator** | Meridian Operations | `GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD` | Active / Funded |
-| **Institutional Equity** | Apex Global Real Estate | `GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ` | Verified Stakeholder |
-| **Retail Participant** | Charlie | `GCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDKLMN` | Verified Stakeholder |
+| **Admin / Operator** | Meridian Operations (Alice) | `GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV` | Active / Funded |
+| **Institutional Equity** | Apex Global Real Estate (Bob) | `GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU` | Verified Stakeholder |
+| **Retail Participant** | Charlie | `GCTU5IKE7MAWNKETN62ZPDYQPPOFHVVJ3N4EH7X73NFURSVHENBVBTPU` | Verified Stakeholder |
 
 *Tip:* You can also click **Instant Testnet Dev Account** inside the platform's Wallet Modal to test with zero setup required.
 

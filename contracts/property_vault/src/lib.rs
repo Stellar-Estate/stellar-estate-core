@@ -1022,7 +1022,7 @@ mod test {
 
         // 2. Set active distribution agreement
         let agreement_contract = Address::generate(&env);
-        let agreement_hash = String::from_str(&env, "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0");
+        let agreement_hash = String::from_str(&env, "68caa9d397658fa2fa0baf530b50018204cfc0bde56435c494b37100217e1c35");
         client.set_distribution_agreement(&admin, &agreement_contract, &agreement_hash);
 
         // Verify eligibility before settlement

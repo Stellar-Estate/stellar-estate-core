@@ -641,7 +641,7 @@ mod test {
 
         let prop_id = String::from_str(&env, "prop-meridian-abuja");
         let agr_id = String::from_str(&env, "MERIDIAN-REV-001");
-        let hash_v1 = String::from_str(&env, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        let hash_v1 = String::from_str(&env, "68caa9d397658fa2fa0baf530b50018204cfc0bde56435c494b37100217e1c35");
 
         // 1. Initialize
         client.initialize(&admin, &prop_id, &agr_id);

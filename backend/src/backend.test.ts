@@ -58,7 +58,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
         source: 'RENTAL_REVENUE',
         amount: 8000.0,
         asset: 'XLM',
-        depositorAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        depositorAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       });
 
     expect(res.status).toBe(200);
@@ -82,7 +82,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   });
 
   it('POST /api/revenue/verify should handle idempotent replays for already recorded hashes', async () => {
-    const existingHash = '6a3f81e8435d648083818e7e163b71f92e079010467b7e211516e877c44e8c1e';
+    const existingHash = '9d5fbb8fc2e44366555cc3afcf621ef82a09e99d7096fb675d4720db10a46939';
     const res = await request(app)
       .post('/api/revenue/verify')
       .send({
@@ -127,7 +127,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
         revenueSource: 'Rental Revenue',
         acceptedAsset: 'USDC',
         effectiveDate: '2026-11-01',
-        createdBy: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        createdBy: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         waterfallRules: [
           { priority: 1, rule_type: 'FIXED_AMOUNT', name: 'Operating Expenses', amount_or_bps: 1000 },
         ],
@@ -151,7 +151,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
         revenueSource: 'Rental Revenue',
         acceptedAsset: 'USDC',
         effectiveDate: '2026-11-01',
-        createdBy: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        createdBy: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         waterfallRules: [
           { priority: 1, rule_type: 'FIXED_AMOUNT', name: 'Operating Expenses', amount_or_bps: 1000 },
           { priority: 2, rule_type: 'PERCENTAGE_BASIS_POINTS', name: 'Management Fee', amount_or_bps: 500 },
@@ -174,7 +174,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const res = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/approve')
       .send({
-        stakeholderAddress: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ', // Bob
+        stakeholderAddress: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU', // Bob
         agreementHash: '0000000000000000000000000000000000000000000000000000000000000000',
       });
 
@@ -191,7 +191,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const bobRes = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/approve')
       .send({
-        stakeholderAddress: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ',
+        stakeholderAddress: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU',
         agreementHash: exactHash,
       });
 
@@ -202,7 +202,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const charlieRes = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/approve')
       .send({
-        stakeholderAddress: 'GCVRQYZCRG6E4V7P6E4J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCDKLMN',
+        stakeholderAddress: 'GCTU5IKE7MAWNKETN62ZPDYQPPOFHVVJ3N4EH7X73NFURSVHENBVBTPU',
         agreementHash: exactHash,
       });
 
@@ -267,7 +267,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const lockRes = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/lock')
       .send({
-        callerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        callerAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       });
 
     expect(lockRes.status).toBe(200);
@@ -278,7 +278,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const postLockApprove = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/approve')
       .send({
-        stakeholderAddress: 'GCDZ42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5WXYZ',
+        stakeholderAddress: 'GB6TTFIWACAGYBNLTZ7SD3KN4CPGA5FKELGFOTGWUXIIHIZOOGB6NDZU',
         agreementHash: lockRes.body.data.agreement_hash,
       });
 
@@ -333,7 +333,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const res = await request(app)
       .post('/api/agreements/agr-meridian-001/fork')
       .send({
-        proposerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        proposerAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         sourceVersionNumber: 2,
       });
 
@@ -399,7 +399,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       .send({
         propertyId: 'prop-meridian-abuja',
         revenueIds: ['rev-meridian-001'],
-        executorAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        executorAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       });
 
     expect(res.status).toBe(200);
@@ -425,7 +425,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
       .send({
         propertyId: 'prop-meridian-abuja',
         revenueIds: ['rev-meridian-001'], // already consumed in previous test!
-        executorAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        executorAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       });
 
     expect(replayRes.status).toBe(422);
@@ -479,7 +479,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   });
 
   it('GET /api/stakeholders/:address/earnings should return real settled amounts for Alice', async () => {
-    const aliceAddress = 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD';
+    const aliceAddress = 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV';
     const res = await request(app).get(`/api/stakeholders/${aliceAddress}/earnings`);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -509,16 +509,16 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
 
   it('stellarUriService should generate and parse SEP-0007 pay and tx URIs', () => {
     const payUri = stellarUriService.generatePayUri({
-      destination: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      destination: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       amount: 500,
       assetCode: 'USDC',
-      assetIssuer: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+      assetIssuer: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
       memo: 'RENT-01',
       msg: 'Pay monthly rent',
     });
 
     expect(payUri).toContain('web+stellar:pay');
-    expect(payUri).toContain('destination=GBTY42VFL');
+    expect(payUri).toContain('destination=GDO45IXJT');
     expect(payUri).toContain('asset_code=USDC');
 
     const parsedPay = stellarUriService.parseUri(payUri);
@@ -676,7 +676,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   });
 
   it('GET /api/stakeholders/:address/export.csv should export stakeholder statement CSV attachment', async () => {
-    const res = await request(app).get('/api/stakeholders/GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD/export.csv');
+    const res = await request(app).get('/api/stakeholders/GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV/export.csv');
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/csv');
     expect(res.headers['content-disposition']).toContain('attachment');
@@ -809,7 +809,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
 
   it('POST /api/contracts/verify-upgrade should validate contract address and 32-byte hex hash', async () => {
     const validContract = 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM';
-    const validHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    const validHash = '48e83035a07f93569ebe473bb4c0d74ee91830e222b33d3fea1f22a33d4b1db7';
 
     const res = await request(app)
       .post('/api/contracts/verify-upgrade')
@@ -934,7 +934,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     // 1. Attempting to revoke locked version v2 should fail
     const lockedRes = await request(app)
       .post('/api/agreements/versions/ver-meridian-001-v2/revoke')
-      .send({ callerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD' });
+      .send({ callerAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV' });
     expect(lockedRes.status).toBe(422);
     expect(lockedRes.body.error).toContain('already locked');
 
@@ -942,14 +942,14 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const createRes = await request(app)
       .post('/api/agreements/agr-meridian-001/versions')
       .send({
-        proposerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        proposerAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         effectiveDate: '2026-12-01',
         waterfallRules: [
           { priority: 1, rule_type: 'PERCENTAGE_BASIS_POINTS', name: 'Reserve', amount_or_bps: 1000, description: 'Safety Reserve' },
         ],
         stakeholders: [
           {
-            wallet_address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+            wallet_address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
             name: 'Alice',
             role: 'Majority Equity',
             basis_points: 10000,
@@ -963,7 +963,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const pendingRes = await request(app)
       .post(`/api/agreements/versions/${newVerId}/revoke`)
       .send({
-        callerAddress: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        callerAddress: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         reason: 'Term renegotiation',
       });
     expect(pendingRes.status).toBe(200);
@@ -1071,7 +1071,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   });
 
   it('GET /api/stakeholders/:address/portfolio should aggregate property equity holdings and lifetime payouts', async () => {
-    const aliceAddress = 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD';
+    const aliceAddress = 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV';
     const res = await request(app).get(`/api/stakeholders/${aliceAddress}/portfolio`);
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -1086,7 +1086,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
     const res = await request(app)
       .post('/api/blockchain/simulate-tx')
       .send({
-        contract_id: 'CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH',
+        contract_id: 'CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL',
         function_name: 'execute_settlement',
       });
 
@@ -1261,7 +1261,7 @@ describe('Stellar Estate Core Backend — Comprehensive Test Suite', () => {
   it('POST /api/agreements/:id/versions/:ver/check-stakeholder should verify stakeholder participation', async () => {
     const resValid = await request(app)
       .post('/api/agreements/agr-meridian-001/versions/2/check-stakeholder')
-      .send({ address: 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD' });
+      .send({ address: 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV' });
     expect(resValid.status).toBe(200);
     expect(resValid.body.success).toBe(true);
     expect(resValid.body.data.is_stakeholder).toBe(true);

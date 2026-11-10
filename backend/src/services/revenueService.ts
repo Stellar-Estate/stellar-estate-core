@@ -272,7 +272,7 @@ export class RevenueService {
         amount: item.amount,
         asset: item.asset || 'USDC',
         transaction_hash: `batch_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
-        depositor_address: item.depositor || 'GBTY42VFL7XJ6Q7L35R62L4J7J5J67U4F26C6DVEOD6DGEGZ6E6DDEE5ABCD',
+        depositor_address: item.depositor || 'GDO45IXJTKZ337DL4IEPLZDOIGZDPA2RJ5EOTI4SHLI36V54NKW2BYVV',
         destination_address: property.vault_stellar_address,
         status: 'CONFIRMED',
         verified_at: now,

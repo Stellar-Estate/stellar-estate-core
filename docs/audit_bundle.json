@@ -2,9 +2,9 @@
   "project": "Stellar Estate",
   "organization": "Stellar-Estate",
   "version": "1.0.0",
-  "generated_at": "2026-11-07T11:56:11.757Z",
+  "generated_at": "2026-11-10T19:21:08.289Z",
   "git": {
-    "commit": "0127e91b3a415b6a684de4bfa91b37462a564066",
+    "commit": "604fd7af288e4c08fff98d7f9c4a2d3a931d4e5d",
     "branch": "main"
   },
   "stellar": {
@@ -17,22 +17,36 @@
   "smart_contracts": [
     {
       "id": "stellar-estate-property-vault",
-      "address": "CAQCFV2AUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH",
+      "address": "CA3JRBKPQ7V5FZBXT3KUR6HQIZBPQGOWZ7J3WSOUM7LCMUHLJKBWMUAL",
       "type": "Soroban Instance Storage",
       "version": "1.0.0",
       "status": "VERIFIED"
     },
     {
       "id": "stellar-estate-distribution-agreement",
-      "address": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "address": "CB45MNM3LIRZJWQGNTHFSMWHCL4BGVSM2ZLZRPBDK742FGGGFK6QDJBB",
       "type": "Soroban Persistent Multi-Sig",
       "version": "1.0.0-stellar-estate",
       "status": "VERIFIED"
     },
     {
       "id": "stellar-estate-revenue-manager",
-      "address": "CBDAUUXA2RFYGI4HD4KSGYYEB5Q5OC54ZAWU4HBPWZ7AL64KLCPH1234",
+      "address": "CC4A6IZXQWBCVKWBHGY2VC26GTDOJP3E5ILDPZA2ZLRMYMABLO3TJMRD",
       "type": "Deterministic Ledger Tracker",
+      "version": "1.0.0",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "stellar-estate-usdc-sac",
+      "address": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+      "type": "Stellar Asset Contract (USDC Testnet)",
+      "version": "1.0.0",
+      "status": "VERIFIED"
+    },
+    {
+      "id": "stellar-estate-native-sac",
+      "address": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+      "type": "Stellar Asset Contract (Native XLM)",
       "version": "1.0.0",
       "status": "VERIFIED"
     }
